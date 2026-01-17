@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { MessageCircle, Sparkles } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
+import { isInAppBrowser, openInExternalBrowser } from "@/lib/inapp"
 
 interface LoginScreenProps {
   onLogin: () => void
@@ -10,6 +11,7 @@ interface LoginScreenProps {
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const mockUserName = "테스트유저"
+  const inApp = isInAppBrowser()
 
   const doMockLogin = () => {
     localStorage.setItem("v0-mock-user", mockUserName)
@@ -17,7 +19,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   }
 
   const signInWithProvider = async (provider: "google" | "kakao") => {
-    // ✅ 환경 상관없이 “운영 기능 그대로” 실행
     const redirectTo = `${window.location.origin}/auth/callback`
 
     const { error } = await supabase.auth.signInWithOAuth({
@@ -39,23 +40,22 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-gradient-to-br from-primary/12 to-accent/8 blur-[120px]" />
       </div>
 
-      <div className="w-full max-w-sm space-y-12 text-center relative z-10">
+      <div className="w-full max-w-sm space-y-6 text-center relative z-10">
         {/* Logo & Title */}
         <div className="space-y-8">
           <div className="mx-auto relative w-28 h-28 flex items-center justify-center">
-            {/* Outer zodiac ring */}
             <div className="absolute inset-0 rounded-full border border-primary/20 animate-[spin_30s_linear_infinite]">
               <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-primary/60" />
               <div className="absolute top-1/2 -right-1 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-accent/50" />
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary/40" />
               <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 rounded-full bg-accent/60" />
             </div>
-            {/* Inner logo */}
             <div className="flex h-20 w-20 items-center justify-center rounded-full gradient-cosmic shadow-xl animate-float relative">
               <div className="absolute inset-0 rounded-full animate-pulse-glow" />
               <span className="font-serif text-3xl text-white drop-shadow-md">命</span>
             </div>
           </div>
+
           <div className="space-y-3">
             <h1 className="text-3xl font-bold tracking-tight gradient-text">너의 운명은</h1>
             <div className="flex items-center justify-center gap-2">
@@ -65,6 +65,24 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             </div>
           </div>
         </div>
+
+        {/* ✅ 인앱 브라우저 안내 (카톡/인스타/네이버앱 등) */}
+        {inApp && (
+          <div className="rounded-2xl border border-primary/20 bg-background/60 p-4 text-left backdrop-blur">
+            <p className="text-sm font-semibold">인앱 브라우저 감지</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              카카오톡/인스타/네이버앱 내 브라우저에서는 구글 로그인이 403으로 차단될 수 있어요.
+              아래 버튼으로 Safari/Chrome에서 열어주세요.
+            </p>
+            <Button
+              onClick={() => openInExternalBrowser()}
+              className="mt-3 w-full rounded-xl"
+              variant="secondary"
+            >
+              브라우저에서 열기
+            </Button>
+          </div>
+        )}
 
         {/* Buttons */}
         <div className="space-y-4">
