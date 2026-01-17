@@ -145,54 +145,15 @@ export default function MainScreen({
               <CardContent className="flex items-center gap-4 p-4 relative">
                 <div className="absolute top-2 right-2 opacity-20">
                   <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                    <circle
-                      cx="14"
-                      cy="14"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="0.5"
-                      className="text-violet-300"
-                    />
+                    <circle cx="14" cy="14" r="10" stroke="currentColor" strokeWidth="0.5" className="text-violet-300" />
                     <circle cx="6" cy="8" r="1.5" fill="currentColor" className="text-violet-300" />
                     <circle cx="22" cy="10" r="1" fill="currentColor" className="text-violet-300" />
                     <circle cx="14" cy="24" r="1.5" fill="currentColor" className="text-violet-300" />
                     <circle cx="8" cy="20" r="1" fill="currentColor" className="text-violet-300" />
-                    <line
-                      x1="6"
-                      y1="8"
-                      x2="22"
-                      y2="10"
-                      stroke="currentColor"
-                      strokeWidth="0.5"
-                      className="text-violet-300/50"
-                    />
-                    <line
-                      x1="22"
-                      y1="10"
-                      x2="14"
-                      y2="24"
-                      stroke="currentColor"
-                      strokeWidth="0.5"
-                      className="text-violet-300/50"
-                    />
-                    <line
-                      x1="14"
-                      y1="24"
-                      x2="8"
-                      y2="20"
-                      stroke="currentColor"
-                      strokeWidth="0.5"
-                      className="text-violet-300/50"
-                    />
-                    <line
-                      x1="8"
-                      y1="20"
-                      x2="6"
-                      y2="8"
-                      stroke="currentColor"
-                      strokeWidth="0.5"
-                      className="text-violet-300/50"
-                    />
+                    <line x1="6" y1="8" x2="22" y2="10" stroke="currentColor" strokeWidth="0.5" className="text-violet-300/50" />
+                    <line x1="22" y1="10" x2="14" y2="24" stroke="currentColor" strokeWidth="0.5" className="text-violet-300/50" />
+                    <line x1="14" y1="24" x2="8" y2="20" stroke="currentColor" strokeWidth="0.5" className="text-violet-300/50" />
+                    <line x1="8" y1="20" x2="6" y2="8" stroke="currentColor" strokeWidth="0.5" className="text-violet-300/50" />
                   </svg>
                 </div>
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl gradient-cosmic shadow-md">
@@ -201,9 +162,7 @@ export default function MainScreen({
                 <div className="flex-1 space-y-0.5">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-card-foreground text-sm">운명 보기</h3>
-                    <span className="rounded-full gradient-primary px-2 py-0.5 text-[10px] font-bold text-white">
-                      2026년
-                    </span>
+                    <span className="rounded-full gradient-primary px-2 py-0.5 text-[10px] font-bold text-white">2026년</span>
                   </div>
                   <p className="text-xs text-muted-foreground">생년월일로 알아보는 나의 운명</p>
                 </div>
@@ -221,24 +180,8 @@ export default function MainScreen({
                     <circle cx="12" cy="4" r="1.5" fill="currentColor" className="text-cyan-300" />
                     <circle cx="4" cy="16" r="1" fill="currentColor" className="text-cyan-300" />
                     <circle cx="20" cy="18" r="1.5" fill="currentColor" className="text-cyan-300" />
-                    <line
-                      x1="12"
-                      y1="4"
-                      x2="4"
-                      y2="16"
-                      stroke="currentColor"
-                      strokeWidth="0.5"
-                      className="text-cyan-300/50"
-                    />
-                    <line
-                      x1="12"
-                      y1="4"
-                      x2="20"
-                      y2="18"
-                      stroke="currentColor"
-                      strokeWidth="0.5"
-                      className="text-cyan-300/50"
-                    />
+                    <line x1="12" y1="4" x2="4" y2="16" stroke="currentColor" strokeWidth="0.5" className="text-cyan-300/50" />
+                    <line x1="12" y1="4" x2="20" y2="18" stroke="currentColor" strokeWidth="0.5" className="text-cyan-300/50" />
                   </svg>
                 </div>
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 via-cyan-400 to-teal-400 shadow-md">
@@ -247,9 +190,7 @@ export default function MainScreen({
                 <div className="flex-1 space-y-0.5">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-card-foreground text-sm">운세 보기</h3>
-                    <span className="rounded-full bg-gradient-to-r from-sky-400 to-cyan-500 px-2 py-0.5 text-[10px] font-bold text-white">
-                      2026년
-                    </span>
+                    <span className="rounded-full bg-gradient-to-r from-sky-400 to-cyan-500 px-2 py-0.5 text-[10px] font-bold text-white">2026년</span>
                   </div>
                   <p className="text-xs text-muted-foreground">2026년 한 해 운세를 알아보세요</p>
                 </div>
@@ -265,9 +206,7 @@ export default function MainScreen({
                 <div className="flex-1 space-y-0.5">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-card-foreground/50 text-sm">궁합 보기</h3>
-                    <span className="rounded-full bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground/60">
-                      준비중
-                    </span>
+                    <span className="rounded-full bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground/60">준비중</span>
                   </div>
                   <p className="text-xs text-muted-foreground/50">두 사람의 운명적 궁합 분석</p>
                 </div>
