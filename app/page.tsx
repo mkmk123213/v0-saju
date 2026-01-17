@@ -32,7 +32,17 @@ type Screen =
   | "yearly-fortune-input"
   | "yearly-fortune-result"
 
+export type Relationship =
+  | "self"
+  | "spouse"
+  | "partner"
+  | "parent"
+  | "child"
+  | "friend"
+  | "acquaintance"
+
 export interface SajuInput {
+  relationship?: Relationship // ✅ optional (다른 input 화면들 빌드 깨짐 방지)
   name: string
   birthDate: string
   birthTime: string // 'unknown' | '23-01' ...
@@ -42,6 +52,7 @@ export interface SajuInput {
 
 export interface SavedProfile {
   id: string
+  relationship?: Relationship // ✅ optional
   name: string
   birthDate: string
   birthTime: string
@@ -181,13 +192,14 @@ export default function Home() {
   const refreshProfiles = async () => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id,name,birth_date,birth_time_code,gender,calendar_type")
+      .select("id,relationship,name,birth_date,birth_time_code,gender,calendar_type")
       .order("created_at", { ascending: false })
     if (error) throw error
 
     const mapped: SavedProfile[] =
       (data ?? []).map((p: any) => ({
         id: p.id,
+        relationship: (p.relationship ?? "self") as Relationship,
         name: p.name,
         birthDate: p.birth_date,
         birthTime: p.birth_time_code ?? "unknown",
@@ -199,6 +211,7 @@ export default function Home() {
   }
 
   const readingToSajuInput = (snap: any): SajuInput => ({
+    relationship: (snap?.relationship ?? "self") as Relationship,
     name: String(snap?.name ?? ""),
     birthDate: String(snap?.birthDate ?? snap?.birth_date ?? ""),
     birthTime: String(snap?.birthTime ?? snap?.birth_time_code ?? "unknown"),
@@ -259,7 +272,6 @@ export default function Home() {
     await Promise.all([refreshCoins(), refreshProfiles(), refreshReadings()])
   }
 
-  // 로그인되면 DB 로드
   useEffect(() => {
     if (!isLoggedIn) return
     refreshAll().catch(console.error)
@@ -267,31 +279,32 @@ export default function Home() {
   }, [isLoggedIn])
 
   // -----------------------------
-  // Profiles: upsert (이름+생일 기준으로 “없으면 만들기”)
+  // Profiles: UPSERT (중복 방지 핵심)
   // -----------------------------
   const upsertProfileFromInput = async (input: SajuInput) => {
-    const { data: u } = await supabase.auth.getUser()
+    const { data: u, error: uerr } = await supabase.auth.getUser()
+    if (uerr) throw uerr
     const uid = u.user?.id
     if (!uid) throw new Error("로그인이 필요해요")
-  
-    const existing = savedProfiles.find((p) => p.name === input.name && p.birthDate === input.birthDate)
-    if (existing) return existing.id
-  
+
+    const payload = {
+      user_id: uid,
+      name: input.name,
+      relationship: (input.relationship ?? "self") as Relationship,
+      birth_date: input.birthDate,
+      birth_time_code: input.birthTime ?? "unknown",
+      gender: input.gender,
+      calendar_type: input.calendarType,
+    }
+
     const { data, error } = await supabase
       .from("profiles")
-      .insert({
-        user_id: uid,                 // ✅ 추가
-        name: input.name,
-        relationship: "self",
-        birth_date: input.birthDate,
-        birth_time_code: input.birthTime ?? "unknown",
-        gender: input.gender,
-        calendar_type: input.calendarType,
-      })
+      .upsert(payload, { onConflict: "user_id,name,birth_date" })
       .select("id")
       .single()
-  
+
     if (error) throw error
+    // 선택: UI가 즉시 반영되도록 갱신
     await refreshProfiles()
     return data.id as string
   }
@@ -349,26 +362,26 @@ export default function Home() {
       const { data: u } = await supabase.auth.getUser()
       const uid = u.user?.id
       if (!uid) throw new Error("로그인이 필요해요")
-  
+
       setSajuInput(input)
       const profileId = await upsertProfileFromInput(input)
-  
+
       const { data, error } = await supabase
         .from("readings")
         .insert({
-          user_id: uid,              // ✅ 추가
+          user_id: uid,
           profile_id: profileId,
           type: "saju",
           target_year: defaultYear,
-          input_snapshot: input,
+          input_snapshot: { ...input, relationship: input.relationship ?? "self" },
           result_summary: { text: "요약 생성 예정" },
           result_detail: null,
         })
         .select("id, created_at")
         .single()
-  
+
       if (error) throw error
-  
+
       await refreshReadings()
       setSelectedResult({
         id: data.id,
@@ -384,7 +397,6 @@ export default function Home() {
     }
   }
 
-
   const handleViewResult = (result: SajuResult) => {
     setSelectedResult(result)
     setSajuInput(result.sajuInput)
@@ -398,14 +410,11 @@ export default function Home() {
       const { data, error } = await supabase.rpc("rpc_unlock_detail", { p_reading_id: resultId })
       if (error) throw error
 
-      // unlocked / already_unlocked 모두 refresh 하면 됨
       await refreshAll()
 
-      // 선택된 결과 최신화
       const updated = savedResults.find((r) => r.id === resultId)
       if (updated) setSelectedResult(updated)
 
-      // (선택) insufficient_coins면 코인 구매 화면 유도
       if (data?.status === "insufficient_coins") {
         handleOpenCoinPurchase()
       }
@@ -428,46 +437,45 @@ export default function Home() {
   }
 
   const handleDailyFortuneSubmit = async (input: SajuInput) => {
-  try {
-    const { data: u } = await supabase.auth.getUser()
-    const uid = u.user?.id
-    if (!uid) throw new Error("로그인이 필요해요")
+    try {
+      const { data: u } = await supabase.auth.getUser()
+      const uid = u.user?.id
+      if (!uid) throw new Error("로그인이 필요해요")
 
-    setSajuInput(input)
-    const profileId = await upsertProfileFromInput(input)
-    const today = new Date().toISOString().slice(0, 10)
+      setSajuInput(input)
+      const profileId = await upsertProfileFromInput(input)
+      const today = new Date().toISOString().slice(0, 10)
 
-    const { data, error } = await supabase
-      .from("readings")
-      .insert({
-        user_id: uid,             // ✅ 추가
-        profile_id: profileId,
-        type: "daily",
-        target_date: today,
-        input_snapshot: input,
-        result_summary: { text: "요약 생성 예정" },
-        result_detail: null,
+      const { data, error } = await supabase
+        .from("readings")
+        .insert({
+          user_id: uid,
+          profile_id: profileId,
+          type: "daily",
+          target_date: today,
+          input_snapshot: { ...input, relationship: input.relationship ?? "self" },
+          result_summary: { text: "요약 생성 예정" },
+          result_detail: null,
+        })
+        .select("id, created_at")
+        .single()
+
+      if (error) throw error
+
+      await refreshReadings()
+      setSelectedDailyResult({
+        id: data.id,
+        sajuInput: input,
+        createdAt: data.created_at,
+        date: today,
+        isDetailUnlocked: false,
       })
-      .select("id, created_at")
-      .single()
-
-    if (error) throw error
-
-    await refreshReadings()
-    setSelectedDailyResult({
-      id: data.id,
-      sajuInput: input,
-      createdAt: data.created_at,
-      date: today,
-      isDetailUnlocked: false,
-    })
-    setCurrentScreen("daily-fortune-result")
-  } catch (e: any) {
-    console.error(e)
-    alert(e?.message ?? "오늘의 운세 저장 중 오류가 발생했어요")
+      setCurrentScreen("daily-fortune-result")
+    } catch (e: any) {
+      console.error(e)
+      alert(e?.message ?? "오늘의 운세 저장 중 오류가 발생했어요")
+    }
   }
-}
-
 
   const handleViewDailyResult = (result: DailyFortuneResult) => {
     setSelectedDailyResult(result)
@@ -476,7 +484,6 @@ export default function Home() {
   }
 
   const handleUnlockDailyDetail = async (resultId: string) => {
-    // DB 가격표/해금은 동일 RPC로 처리 (type=daily에 맞는 가격 적용)
     await handleUnlockDetail(resultId)
     const updated = dailyFortuneResults.find((r) => r.id === resultId)
     if (updated) setSelectedDailyResult(updated)
@@ -495,45 +502,45 @@ export default function Home() {
     setCurrentScreen("yearly-fortune-input")
   }
 
- const handleYearlyFortuneSubmit = async (input: SajuInput) => {
-  try {
-    const { data: u } = await supabase.auth.getUser()
-    const uid = u.user?.id
-    if (!uid) throw new Error("로그인이 필요해요")
+  const handleYearlyFortuneSubmit = async (input: SajuInput) => {
+    try {
+      const { data: u } = await supabase.auth.getUser()
+      const uid = u.user?.id
+      if (!uid) throw new Error("로그인이 필요해요")
 
-    setSajuInput(input)
-    const profileId = await upsertProfileFromInput(input)
+      setSajuInput(input)
+      const profileId = await upsertProfileFromInput(input)
 
-    const { data, error } = await supabase
-      .from("readings")
-      .insert({
-        user_id: uid,            // ✅ 추가
-        profile_id: profileId,
-        type: "yearly",
-        target_year: defaultYear,
-        input_snapshot: input,
-        result_summary: { text: "요약 생성 예정" },
-        result_detail: null,
+      const { data, error } = await supabase
+        .from("readings")
+        .insert({
+          user_id: uid,
+          profile_id: profileId,
+          type: "yearly",
+          target_year: defaultYear,
+          input_snapshot: { ...input, relationship: input.relationship ?? "self" },
+          result_summary: { text: "요약 생성 예정" },
+          result_detail: null,
+        })
+        .select("id, created_at")
+        .single()
+
+      if (error) throw error
+
+      await refreshReadings()
+      setSelectedYearlyResult({
+        id: data.id,
+        sajuInput: input,
+        createdAt: data.created_at,
+        year: defaultYear,
+        isDetailUnlocked: false,
       })
-      .select("id, created_at")
-      .single()
-
-    if (error) throw error
-
-    await refreshReadings()
-    setSelectedYearlyResult({
-      id: data.id,
-      sajuInput: input,
-      createdAt: data.created_at,
-      year: defaultYear,
-      isDetailUnlocked: false,
-    })
-    setCurrentScreen("yearly-fortune-result")
-  } catch (e: any) {
-    console.error(e)
-    alert(e?.message ?? "연간 운세 저장 중 오류가 발생했어요")
+      setCurrentScreen("yearly-fortune-result")
+    } catch (e: any) {
+      console.error(e)
+      alert(e?.message ?? "연간 운세 저장 중 오류가 발생했어요")
+    }
   }
-}
 
   const handleViewYearlyResult = (result: YearlyFortuneResult) => {
     setSelectedYearlyResult(result)
@@ -567,11 +574,20 @@ export default function Home() {
 
       {/* 사주 */}
       {currentScreen === "result-list" && (
-        <ResultListScreen results={savedResults} onNewSaju={handleNewSaju} onViewResult={handleViewResult} onBack={handleBackToMain} />
+        <ResultListScreen
+          results={savedResults}
+          onNewSaju={handleNewSaju}
+          onViewResult={handleViewResult}
+          onBack={handleBackToMain}
+        />
       )}
 
       {currentScreen === "saju-input" && (
-        <SajuInputScreen savedProfiles={savedProfiles} onSubmit={handleSajuSubmit} onBack={() => setCurrentScreen("result-list")} />
+        <SajuInputScreen
+          savedProfiles={savedProfiles}
+          onSubmit={handleSajuSubmit}
+          onBack={() => setCurrentScreen("result-list")}
+        />
       )}
 
       {currentScreen === "result" && (sajuInput || selectedResult) && (
@@ -588,7 +604,9 @@ export default function Home() {
       )}
 
       {/* 코인 구매(DEV) */}
-      {currentScreen === "coin-purchase" && <CoinPurchaseScreen onPurchase={handlePurchaseCoins} onBack={handleBackFromCoinPurchase} />}
+      {currentScreen === "coin-purchase" && (
+        <CoinPurchaseScreen onPurchase={handlePurchaseCoins} onBack={handleBackFromCoinPurchase} />
+      )}
 
       {/* 오늘의 운세 */}
       {currentScreen === "daily-fortune-list" && (
