@@ -29,6 +29,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
       if (signUpError) {
         alert(`개발용 로그인 실패: ${signUpError.message}`)
+        console.log("SUPABASE_URL", process.env.NEXT_PUBLIC_SUPABASE_URL)
+        console.log("HAS_ANON_KEY", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
         return
       }
 
@@ -103,8 +105,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             onClick={handleDevEmailLogin}
             variant="outline"
             className="h-12 w-full rounded-2xl text-sm"
-            console.log("SUPABASE_URL", process.env.NEXT_PUBLIC_SUPABASE_URL)
-            console.log("HAS_ANON_KEY", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
           >
             (개발용) 이메일로 로그인
           </Button>
