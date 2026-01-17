@@ -87,6 +87,8 @@ export default function Home() {
   const [yearlyFortuneResults, setYearlyFortuneResults] = useState<YearlyFortuneResult[]>([])
   const [selectedYearlyResult, setSelectedYearlyResult] = useState<YearlyFortuneResult | null>(null)
 
+  const [userName, setUserName] = useState<string>("")
+
   useEffect(() => {
     const saved = localStorage.getItem("sajuResults")
     if (saved) {
@@ -151,29 +153,53 @@ export default function Home() {
     }
   }, [yearlyFortuneResults])
 
-  useEffect(() => {
-  // 1) 처음 로드될 때: 이미 로그인된 세션이 있는지 확인
-  supabase.auth.getSession().then(({ data }) => {
-    if (data.session) {
-      setIsLoggedIn(true)
-      setCurrentScreen("main")
-    } else {
-      setIsLoggedIn(false)
-      setCurrentScreen("login")
+   useEffect(() => {
+    const applyUser = async () => {
+      const { data } = await supabase.auth.getUser()
+      const user = data.user
+      if (!user) {
+        setUserName("")
+        return
+      }
+  
+      const meta: any = user.user_metadata || {}
+      const name =
+        meta.full_name ||
+        meta.name ||
+        (user.email ? user.email.split("@")[0] : "손님")
+  
+      setUserName(String(name))
     }
-  })
+  
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        setIsLoggedIn(true)
+        setCurrentScreen("main")
+        applyUser()
+      } else {
+        setIsLoggedIn(false)
+        setCurrentScreen("login")
+        setUserName("")
+      }
+    })
+  
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setIsLoggedIn(true)
+        setCurrentScreen("main")
+        applyUser()
+      } else {
+        setIsLoggedIn(false)
+        setCurrentScreen("login")
+        setUserName("")
+      }
+    })
 
-  // 2) 로그인/로그아웃이 일어날 때마다 자동 반영
-  const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-    if (session) {
-      setIsLoggedIn(true)
-      setCurrentScreen("main")
-    } else {
-      setIsLoggedIn(false)
-      setCurrentScreen("login")
-    }
-  })
-
+  return () => {
+    listener.subscription.unsubscribe()
+  }
+}, [])
+  
   return () => {
     listener.subscription.unsubscribe()
   }
@@ -361,6 +387,7 @@ export default function Home() {
       {currentScreen === "login" && <LoginScreen onLogin={handleLogin} />}
       {currentScreen === "main" && (
         <MainScreen
+          userName={userName}
           coins={coins}
           isDarkMode={isDarkMode}
           onToggleDarkMode={handleToggleDarkMode}
