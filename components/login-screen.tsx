@@ -2,12 +2,35 @@
 
 import { Button } from "@/components/ui/button"
 import { MessageCircle, Sparkles } from "lucide-react"
+import { supabase } from "@/lib/supabaseClient"
 
 interface LoginScreenProps {
-  onLogin: () => void
+  onLogin: () => void // 일단 유지 (다른 파일 깨질까봐)
 }
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
+  // ✅ 카카오 로그인 (Supabase OAuth)
+  const loginWithKakao = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "kakao",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+    // ⚠️ 여기서 onLogin() 호출하지 마! (화면만 바뀌어버림)
+  }
+
+  // ✅ 구글 로그인 (Supabase OAuth)
+  const loginWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+    // ⚠️ 여기서 onLogin() 호출하지 마!
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 relative overflow-hidden starfield">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -46,14 +69,15 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         {/* Login Button */}
         <div className="space-y-4">
           <Button
-            onClick={onLogin}
+            onClick={loginWithKakao}
             className="h-14 w-full gap-3 rounded-2xl bg-kakao text-kakao-foreground hover:bg-kakao/90 text-base font-semibold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <MessageCircle className="h-5 w-5" />
             카카오톡으로 시작하기
           </Button>
+
           <Button
-            onClick={onLogin}
+            onClick={loginWithGoogle}
             className="h-14 w-full gap-3 rounded-2xl bg-white text-gray-700 hover:bg-gray-50 text-base font-semibold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] border border-gray-200"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -76,6 +100,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             </svg>
             Google로 시작하기
           </Button>
+
           <p className="text-xs text-muted-foreground/50 mt-4">
             로그인 시 서비스 이용약관에 동의하는 것으로 간주됩니다
           </p>
