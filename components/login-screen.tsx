@@ -2,12 +2,37 @@
 
 import { Button } from "@/components/ui/button"
 import { MessageCircle, Sparkles } from "lucide-react"
+import { supabase } from "@/lib/supabaseClient"
 
 interface LoginScreenProps {
-  onLogin: () => void
+  // 기존 구조 유지 (필요 없으면 나중에 제거 가능)
+  onLogin?: () => void
 }
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
+  async function loginWithKakao() {
+    // (선택) 기존 onLogin 훅이 있으면 같이 호출
+    onLogin?.()
+
+    await supabase.auth.signInWithOAuth({
+      provider: "kakao",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+  }
+
+  async function loginWithGoogle() {
+    onLogin?.()
+
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 relative overflow-hidden starfield">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -38,21 +63,37 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             <div className="flex items-center justify-center gap-2">
               <Sparkles className="h-3.5 w-3.5 text-primary/70 animate-twinkle" />
               <p className="text-muted-foreground text-sm">사주와 별자리가 만나는 곳</p>
-              <Sparkles className="h-3.5 w-3.5 text-accent/70 animate-twinkle" style={{ animationDelay: "1s" }} />
+              <Sparkles
+                className="h-3.5 w-3.5 text-accent/70 animate-twinkle"
+                style={{ animationDelay: "1s" }}
+              />
             </div>
           </div>
         </div>
 
-        {/* Login Button */}
+        {/* Login Buttons */}
         <div className="space-y-4">
+          {/* ✅ 카카오 */}
           <Button
-            onClick={onLogin}
+            onClick={loginWithKakao}
             className="h-14 w-full gap-3 rounded-2xl bg-kakao text-kakao-foreground hover:bg-kakao/90 text-base font-semibold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <MessageCircle className="h-5 w-5" />
             카카오톡으로 시작하기
           </Button>
-          <p className="text-xs text-muted-foreground/50">로그인 시 서비스 이용약관에 동의하는 것으로 간주됩니다</p>
+
+          {/* ✅ 구글 (추가) */}
+          <Button
+            onClick={loginWithGoogle}
+            variant="outline"
+            className="h-14 w-full gap-3 rounded-2xl text-base font-semibold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            Google로 시작하기
+          </Button>
+
+          <p className="text-xs text-muted-foreground/50">
+            로그인 시 서비스 이용약관에 동의하는 것으로 간주됩니다
+          </p>
         </div>
       </div>
     </div>
