@@ -1,5 +1,6 @@
 "use client"
 
+import { supabase } from "@/lib/supabaseClient"
 import { useState, useEffect } from "react"
 import LoginScreen from "@/components/login-screen"
 import MainScreen from "@/components/main-screen"
@@ -150,6 +151,34 @@ export default function Home() {
     }
   }, [yearlyFortuneResults])
 
+  useEffect(() => {
+  // 1) 처음 로드될 때: 이미 로그인된 세션이 있는지 확인
+  supabase.auth.getSession().then(({ data }) => {
+    if (data.session) {
+      setIsLoggedIn(true)
+      setCurrentScreen("main")
+    } else {
+      setIsLoggedIn(false)
+      setCurrentScreen("login")
+    }
+  })
+
+  // 2) 로그인/로그아웃이 일어날 때마다 자동 반영
+  const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (session) {
+      setIsLoggedIn(true)
+      setCurrentScreen("main")
+    } else {
+      setIsLoggedIn(false)
+      setCurrentScreen("login")
+    }
+  })
+
+  return () => {
+    listener.subscription.unsubscribe()
+  }
+}, [])
+
   const saveProfile = (input: SajuInput) => {
     const existingProfile = savedProfiles.find((p) => p.name === input.name && p.birthDate === input.birthDate)
     if (!existingProfile) {
@@ -166,13 +195,13 @@ export default function Home() {
   }
 
   const handleLogin = () => {
-    setIsLoggedIn(true)
-    setCurrentScreen("main")
+    // 로그인은 Supabase가 처리하므로 여기서는 아무 것도 안 해도 됨
+    // onAuthStateChange에서 자동으로 main으로 보내줌
   }
 
-  const handleLogout = () => {
-    setIsLoggedIn(false)
-    setCurrentScreen("login")
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    // 나머지는 onAuthStateChange가 자동으로 login으로 보내줌
   }
 
   const handleStartSaju = () => {
