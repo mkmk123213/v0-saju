@@ -1,0 +1,335 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Light mode - bright cosmic theme */
+  --background: oklch(0.96 0.01 250);
+  --foreground: oklch(0.15 0.03 250);
+  --card: oklch(0.99 0.005 250);
+  --card-foreground: oklch(0.15 0.03 250);
+  --popover: oklch(0.99 0.005 250);
+  --popover-foreground: oklch(0.15 0.03 250);
+  --primary: oklch(0.5 0.18 250);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.92 0.015 250);
+  --secondary-foreground: oklch(0.25 0.03 250);
+  --muted: oklch(0.9 0.01 250);
+  --muted-foreground: oklch(0.45 0.02 250);
+  --accent: oklch(0.6 0.15 220);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.88 0.015 250);
+  --input: oklch(0.92 0.01 250);
+  --ring: oklch(0.5 0.15 250);
+  --chart-1: oklch(0.5 0.18 250);
+  --chart-2: oklch(0.55 0.15 220);
+  --chart-3: oklch(0.5 0.18 280);
+  --chart-4: oklch(0.65 0.15 60);
+  --chart-5: oklch(0.45 0.18 180);
+  --radius: 1rem;
+  --sidebar: oklch(0.95 0.01 250);
+  --sidebar-foreground: oklch(0.15 0.03 250);
+  --sidebar-primary: oklch(0.5 0.18 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.92 0.015 250);
+  --sidebar-accent-foreground: oklch(0.15 0.03 250);
+  --sidebar-border: oklch(0.88 0.015 250);
+  --sidebar-ring: oklch(0.5 0.15 250);
+  /* Kakao yellow color */
+  --kakao: oklch(0.88 0.15 95);
+  --kakao-foreground: oklch(0.25 0.02 50);
+  /* Light mode gradient colors */
+  --gradient-start: oklch(0.5 0.18 250);
+  --gradient-mid: oklch(0.55 0.15 280);
+  --gradient-end: oklch(0.6 0.12 220);
+  --glow: oklch(0.5 0.18 250 / 0.25);
+  --star: oklch(0.5 0.15 250);
+  --glass-bg: oklch(0.99 0.005 250 / 0.85);
+  --glass-border: oklch(0.85 0.02 250 / 0.4);
+}
+
+.dark {
+  /* Dark mode - deep navy cosmic theme */
+  --background: oklch(0.18 0.03 250);
+  --foreground: oklch(0.93 0.01 250);
+  --card: oklch(0.22 0.025 250);
+  --card-foreground: oklch(0.93 0.01 250);
+  --popover: oklch(0.22 0.025 250);
+  --popover-foreground: oklch(0.93 0.01 250);
+  --primary: oklch(0.68 0.15 250);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.25 0.025 250);
+  --secondary-foreground: oklch(0.85 0.01 250);
+  --muted: oklch(0.28 0.02 250);
+  --muted-foreground: oklch(0.6 0.02 250);
+  --accent: oklch(0.72 0.12 220);
+  --accent-foreground: oklch(0.1 0.02 250);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.3 0.025 250);
+  --input: oklch(0.25 0.025 250);
+  --ring: oklch(0.65 0.12 250);
+  --chart-1: oklch(0.65 0.15 250);
+  --chart-2: oklch(0.7 0.12 220);
+  --chart-3: oklch(0.65 0.15 280);
+  --chart-4: oklch(0.75 0.12 60);
+  --chart-5: oklch(0.6 0.15 180);
+  --sidebar: oklch(0.19 0.025 250);
+  --sidebar-foreground: oklch(0.93 0.01 250);
+  --sidebar-primary: oklch(0.68 0.15 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.25 0.025 250);
+  --sidebar-accent-foreground: oklch(0.93 0.01 250);
+  --sidebar-border: oklch(0.3 0.025 250);
+  --sidebar-ring: oklch(0.65 0.12 250);
+  /* Dark mode gradient colors */
+  --gradient-start: oklch(0.55 0.15 250);
+  --gradient-mid: oklch(0.6 0.12 280);
+  --gradient-end: oklch(0.65 0.1 220);
+  --glow: oklch(0.6 0.15 250 / 0.35);
+  --star: oklch(0.92 0.04 60);
+  --glass-bg: oklch(0.22 0.025 250 / 0.75);
+  --glass-border: oklch(0.35 0.025 250 / 0.3);
+}
+
+@theme inline {
+  --font-sans: "Pretendard Variable", "Geist", sans-serif;
+  --font-serif: "Noto Serif KR", serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-kakao: var(--kakao);
+  --color-kakao-foreground: var(--kakao-foreground);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Cosmic mystical animations and styles */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px var(--glow), 0 0 40px oklch(0.6 0.15 250 / 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px var(--glow), 0 0 60px oklch(0.6 0.15 250 / 0.25);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes constellation-pulse {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes orbit {
+  0% {
+    transform: rotate(0deg) translateX(8px) rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg) translateX(8px) rotate(-360deg);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, oklch(1 0 0 / 0.2) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-twinkle {
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-orbit {
+  animation: orbit 8s linear infinite;
+}
+
+/* Cosmic gradients */
+.gradient-cosmic {
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
+}
+
+.gradient-primary {
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid));
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-gold {
+  background: linear-gradient(135deg, oklch(0.8 0.12 70), oklch(0.72 0.14 55));
+}
+
+/* Constellation and Saju pattern - combines zodiac circles with constellation lines */
+.starfield {
+  position: relative;
+  overflow: hidden;
+}
+
+.starfield::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(1.5px 1.5px at 25px 35px, var(--star) / 0.6, transparent),
+    radial-gradient(1px 1px at 85px 70px, var(--star) / 0.5, transparent),
+    radial-gradient(1.5px 1.5px at 150px 45px, var(--star) / 0.6, transparent),
+    radial-gradient(1px 1px at 210px 95px, var(--star) / 0.4, transparent),
+    radial-gradient(2px 2px at 270px 25px, var(--star) / 0.7, transparent),
+    radial-gradient(1px 1px at 330px 80px, var(--star) / 0.5, transparent),
+    radial-gradient(1.5px 1.5px at 390px 55px, var(--star) / 0.5, transparent),
+    radial-gradient(1px 1px at 50px 120px, var(--star) / 0.4, transparent),
+    radial-gradient(2px 2px at 180px 140px, var(--star) / 0.6, transparent),
+    radial-gradient(1px 1px at 300px 130px, var(--star) / 0.5, transparent);
+  background-size: 420px 180px;
+  animation: constellation-pulse 10s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.starfield::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 15% 20%, transparent 18px, var(--primary) / 0.08 19px, transparent 20px),
+    radial-gradient(circle at 85% 75%, transparent 25px, var(--primary) / 0.06 26px, transparent 27px),
+    radial-gradient(circle at 70% 15%, transparent 12px, var(--accent) / 0.07 13px, transparent 14px),
+    radial-gradient(circle at 30% 80%, transparent 20px, var(--primary) / 0.05 21px, transparent 22px),
+    linear-gradient(var(--primary) / 0.06 1px, transparent 1px),
+    linear-gradient(90deg, var(--primary) / 0.06 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 80px 80px, 80px 80px;
+  background-position: 0 0, 0 0, 0 0, 0 0, 40px 40px, 40px 40px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Glass morphism effect */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Mystical card hover effect */
+.card-mystical {
+  transition: all 0.3s ease;
+}
+
+.card-mystical:hover {
+  box-shadow: 0 0 25px var(--glow);
+  transform: translateY(-3px);
+}
+
+/* Saju element badge styling */
+.saju-element {
+  position: relative;
+}
+
+.saju-element::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    var(--primary) /
+    0.3,
+    var(--gradient-mid) /
+    0.3,
+    var(--accent) /
+    0.3,
+    var(--primary) /
+    0.3
+  );
+  z-index: -1;
+  animation: orbit 12s linear infinite;
+}
