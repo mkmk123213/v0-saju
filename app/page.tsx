@@ -164,13 +164,9 @@ export default function Home() {
       return
     }
 
-    // ✅ 2) v0/iframe 환경이면(프리뷰 안정) supabase 세션 체크 자체를 건너뜀
-    if (isV0Preview()) {
-      setIsLoggedIn(false)
-      setCurrentScreen("login")
-      setUserName("")
-      return
-    }
+    // ✅ v0 프리뷰(iframe)일 때만 supabase 세션 체크 스킵
+    if (isV0Preview()) return
+
 
     const applyUser = async () => {
       const { data } = await supabase.auth.getUser()
