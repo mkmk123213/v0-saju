@@ -153,53 +153,50 @@ export default function Home() {
     }
   }, [yearlyFortuneResults])
 
-   useEffect(() => {
-    const applyUser = async () => {
-      const { data } = await supabase.auth.getUser()
-      const user = data.user
-      if (!user) {
-        setUserName("")
-        return
-      }
-  
-      const meta: any = user.user_metadata || {}
-      const name =
-        meta.full_name ||
-        meta.name ||
-        (user.email ? user.email.split("@")[0] : "손님")
-  
-      setUserName(String(name))
+  useEffect(() => {
+  const applyUser = async () => {
+    const { data } = await supabase.auth.getUser()
+    const user = data.user
+    if (!user) {
+      setUserName("")
+      return
     }
-  
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        setIsLoggedIn(true)
-        setCurrentScreen("main")
-        applyUser()
-      } else {
-        setIsLoggedIn(false)
-        setCurrentScreen("login")
-        setUserName("")
-      }
-    })
-  
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setIsLoggedIn(true)
-        setCurrentScreen("main")
-        applyUser()
-      } else {
-        setIsLoggedIn(false)
-        setCurrentScreen("login")
-        setUserName("")
-      }
-    })
 
-  return () => {
-    listener.subscription.unsubscribe()
+    const meta: any = user.user_metadata || {}
+    const name =
+      meta.full_name ||
+      meta.name ||
+      (user.email ? user.email.split("@")[0] : "손님")
+
+    setUserName(String(name))
   }
-}, [])
-  
+
+  // 최초 세션 확인
+  supabase.auth.getSession().then(({ data }) => {
+    if (data.session) {
+      setIsLoggedIn(true)
+      setCurrentScreen("main")
+      applyUser()
+    } else {
+      setIsLoggedIn(false)
+      setCurrentScreen("login")
+      setUserName("")
+    }
+  })
+
+  // 로그인/로그아웃 변경 감지
+  const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (session) {
+      setIsLoggedIn(true)
+      setCurrentScreen("main")
+      applyUser()
+    } else {
+      setIsLoggedIn(false)
+      setCurrentScreen("login")
+      setUserName("")
+    }
+  })
+
   return () => {
     listener.subscription.unsubscribe()
   }
