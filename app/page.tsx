@@ -14,6 +14,7 @@ import DailyFortuneListScreen from "@/components/daily-fortune-list-screen"
 import YearlyFortuneInputScreen from "@/components/yearly-fortune-input-screen"
 import YearlyFortuneResultScreen from "@/components/yearly-fortune-result-screen"
 import YearlyFortuneListScreen from "@/components/yearly-fortune-list-screen"
+import { isV0Preview } from "@/lib/runtime"
 
 type Screen =
   | "login"
@@ -154,53 +155,66 @@ export default function Home() {
   }, [yearlyFortuneResults])
 
   useEffect(() => {
-  const applyUser = async () => {
-    const { data } = await supabase.auth.getUser()
-    const user = data.user
-    if (!user) {
-      setUserName("")
+    // ✅ v0 프리뷰에서는 Supabase 호출 자체를 피하고,
+    // localStorage에 저장된 mock 로그인 상태만 사용
+    if (isV0Preview()) {
+      const mockName = localStorage.getItem("v0-mock-user")
+      if (mockName) {
+        setIsLoggedIn(true)
+        setCurrentScreen("main")
+        setUserName(mockName)
+      } else {
+        setIsLoggedIn(false)
+        setCurrentScreen("login")
+        setUserName("")
+      }
       return
     }
 
-    const meta: any = user.user_metadata || {}
-    const name =
-      meta.full_name ||
-      meta.name ||
-      (user.email ? user.email.split("@")[0] : "손님")
+    const applyUser = async () => {
+      const { data } = await supabase.auth.getUser()
+      const user = data.user
+      if (!user) {
+        setUserName("")
+        return
+      }
 
-    setUserName(String(name))
-  }
+      const meta: any = user.user_metadata || {}
+      const name = meta.full_name || meta.name || (user.email ? user.email.split("@")[0] : "손님")
 
-  // 최초 세션 확인
-  supabase.auth.getSession().then(({ data }) => {
-    if (data.session) {
-      setIsLoggedIn(true)
-      setCurrentScreen("main")
-      applyUser()
-    } else {
-      setIsLoggedIn(false)
-      setCurrentScreen("login")
-      setUserName("")
+      setUserName(String(name))
     }
-  })
 
-  // 로그인/로그아웃 변경 감지
-  const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-    if (session) {
-      setIsLoggedIn(true)
-      setCurrentScreen("main")
-      applyUser()
-    } else {
-      setIsLoggedIn(false)
-      setCurrentScreen("login")
-      setUserName("")
+    // 최초 세션 확인
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        setIsLoggedIn(true)
+        setCurrentScreen("main")
+        applyUser()
+      } else {
+        setIsLoggedIn(false)
+        setCurrentScreen("login")
+        setUserName("")
+      }
+    })
+
+    // 로그인/로그아웃 변경 감지
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setIsLoggedIn(true)
+        setCurrentScreen("main")
+        applyUser()
+      } else {
+        setIsLoggedIn(false)
+        setCurrentScreen("login")
+        setUserName("")
+      }
+    })
+
+    return () => {
+      listener.subscription.unsubscribe()
     }
-  })
-
-  return () => {
-    listener.subscription.unsubscribe()
-  }
-}, [])
+  }, [])
 
   const saveProfile = (input: SajuInput) => {
     const existingProfile = savedProfiles.find((p) => p.name === input.name && p.birthDate === input.birthDate)
@@ -218,11 +232,29 @@ export default function Home() {
   }
 
   const handleLogin = () => {
-    // 로그인은 Supabase가 처리하므로 여기서는 아무 것도 안 해도 됨
+    // ✅ v0 프리뷰에서는 LoginScreen이 onLogin()을 호출하면서
+    // localStorage에 mockName을 저장하고, 여기서 화면 전환해주면 즉시 반영됨
+    if (isV0Preview()) {
+      const mockName = localStorage.getItem("v0-mock-user")
+      setIsLoggedIn(true)
+      setCurrentScreen("main")
+      setUserName(mockName || "테스트유저")
+      return
+    }
+
+    // ✅ 실제 로그인은 Supabase가 처리하므로 여기서는 아무 것도 안 해도 됨
     // onAuthStateChange에서 자동으로 main으로 보내줌
   }
 
   const handleLogout = async () => {
+    if (isV0Preview()) {
+      localStorage.removeItem("v0-mock-user")
+      setIsLoggedIn(false)
+      setCurrentScreen("login")
+      setUserName("")
+      return
+    }
+
     await supabase.auth.signOut()
     // 나머지는 onAuthStateChange가 자동으로 login으로 보내줌
   }
