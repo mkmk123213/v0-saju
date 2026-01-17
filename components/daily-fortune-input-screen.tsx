@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Calendar, User, Sun } from "lucide-react"
-import type { SajuInput, SavedProfile } from "@/app/page"
+import type { SajuInput, SavedProfile, Relationship } from "@/app/page"
 
 interface DailyFortuneInputScreenProps {
   savedProfiles: SavedProfile[]
@@ -32,7 +32,18 @@ const birthTimeOptions = [
   { value: "21-23", label: "해시 (21:00~23:00)" },
 ]
 
+const relationshipOptions: { value: Relationship; label: string }[] = [
+  { value: "self", label: "본인" },
+  { value: "spouse", label: "배우자" },
+  { value: "partner", label: "연인" },
+  { value: "parent", label: "부모" },
+  { value: "child", label: "자녀" },
+  { value: "friend", label: "친구" },
+  { value: "acquaintance", label: "지인" },
+]
+
 export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBack }: DailyFortuneInputScreenProps) {
+  const [relationship, setRelationship] = useState<Relationship>("self")
   const [name, setName] = useState("")
   const [birthDate, setBirthDate] = useState("")
   const [birthTime, setBirthTime] = useState("unknown")
@@ -40,29 +51,37 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
   const [calendarType, setCalendarType] = useState<"solar" | "lunar">("solar")
   const [selectedProfileId, setSelectedProfileId] = useState<string>("")
 
+  const relationshipLabel = (value?: Relationship) =>
+    relationshipOptions.find((r) => r.value === (value ?? "self"))?.label ?? "본인"
+
   const handleProfileSelect = (profileId: string) => {
     setSelectedProfileId(profileId)
+
     if (profileId === "new") {
+      setRelationship("self")
       setName("")
       setBirthDate("")
       setBirthTime("unknown")
       setGender("male")
       setCalendarType("solar")
-    } else {
-      const profile = savedProfiles.find((p) => p.id === profileId)
-      if (profile) {
-        setName(profile.name)
-        setBirthDate(profile.birthDate)
-        setBirthTime(profile.birthTime)
-        setGender(profile.gender)
-        setCalendarType(profile.calendarType)
-      }
+      return
     }
+
+    const profile = savedProfiles.find((p) => p.id === profileId)
+    if (!profile) return
+
+    setRelationship((profile.relationship ?? "self") as Relationship)
+    setName(profile.name)
+    setBirthDate(profile.birthDate)
+    setBirthTime(profile.birthTime)
+    setGender(profile.gender)
+    setCalendarType(profile.calendarType)
   }
 
   const handleSubmit = () => {
     if (!name || !birthDate) return
     onSubmit({
+      relationship,
       name,
       birthDate,
       birthTime,
@@ -114,7 +133,7 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
                       <SelectItem key={profile.id} value={profile.id}>
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4" />
-                          {profile.name} ({profile.birthDate})
+                          {relationshipLabel(profile.relationship)} · {profile.name} ({profile.birthDate})
                         </div>
                       </SelectItem>
                     ))}
@@ -123,6 +142,25 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
               </CardContent>
             </Card>
           )}
+
+          {/* ✅ 관계 */}
+          <Card className="border-none glass shadow-sm">
+            <CardContent className="p-5 space-y-3">
+              <Label className="text-sm font-medium text-foreground">관계</Label>
+              <Select value={relationship} onValueChange={(v) => setRelationship(v as Relationship)}>
+                <SelectTrigger className="h-12 rounded-xl border-border bg-secondary/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {relationshipOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
 
           <Card className="border-none glass shadow-sm">
             <CardContent className="p-5 space-y-3">
