@@ -12,13 +12,18 @@ interface LoginScreenProps {
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const mockUserName = "테스트유저"
+  const v0 = isV0Preview()
+
+  const doMockLogin = () => {
+    localStorage.setItem("v0-mock-user", mockUserName)
+    onLogin()
+  }
 
   const signInWithProvider = async (provider: "google" | "kakao") => {
     // ✅ v0 프리뷰에서는 Supabase가 CSP 때문에 막힐 수 있으므로,
     // Supabase 호출 없이 “임시 로그인” 처리
-    if (isV0Preview()) {
-      localStorage.setItem("v0-mock-user", mockUserName)
-      onLogin()
+    if (v0) {
+      doMockLogin()
       return
     }
 
@@ -71,8 +76,19 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           </div>
         </div>
 
-        {/* Login Button */}
+        {/* Login Buttons */}
         <div className="space-y-4">
+          {/* ✅ v0 프리뷰에서만 보이는 임시 로그인 버튼 */}
+          {v0 && (
+            <Button
+              onClick={doMockLogin}
+              className="h-12 w-full rounded-2xl text-sm font-semibold shadow-md transition-all hover:scale-[1.01] active:scale-[0.99]"
+              variant="secondary"
+            >
+              임시 로그인(프리뷰)
+            </Button>
+          )}
+
           <Button
             onClick={() => signInWithProvider("kakao")}
             className="h-14 w-full gap-3 rounded-2xl bg-kakao text-kakao-foreground hover:bg-kakao/90 text-base font-semibold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
