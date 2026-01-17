@@ -11,7 +11,7 @@ interface LoginScreenProps {
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
   // ✅ 개발용 이메일 로그인
   const handleDevEmailLogin = async () => {
-    const email = "dev@test.com"
+    const email = "dev+test@test.com"
     const password = "12345678"
 
     // 1) 먼저 로그인 시도
@@ -103,6 +103,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             onClick={handleDevEmailLogin}
             variant="outline"
             className="h-12 w-full rounded-2xl text-sm"
+            console.log("SUPABASE_URL", process.env.NEXT_PUBLIC_SUPABASE_URL)
+            console.log("HAS_ANON_KEY", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
           >
             (개발용) 이메일로 로그인
           </Button>
