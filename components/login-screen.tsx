@@ -3,16 +3,13 @@
 import { Button } from "@/components/ui/button"
 import { MessageCircle, Sparkles } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
-import { isV0Preview } from "@/lib/runtime"
 
 interface LoginScreenProps {
-  // 기존 props 유지 (다른 파일 안 깨지게)
   onLogin: () => void
 }
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const mockUserName = "테스트유저"
-  const v0 = isV0Preview()
 
   const doMockLogin = () => {
     localStorage.setItem("v0-mock-user", mockUserName)
@@ -20,14 +17,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   }
 
   const signInWithProvider = async (provider: "google" | "kakao") => {
-    // ✅ v0 프리뷰에서는 Supabase가 CSP 때문에 막힐 수 있으므로,
-    // Supabase 호출 없이 “임시 로그인” 처리
-    if (v0) {
-      doMockLogin()
-      return
-    }
-
-    // ✅ 실제 도메인/로컬에서는 기존 Supabase OAuth 그대로
+    // ✅ 환경 상관없이 “운영 기능 그대로” 실행
     const redirectTo = `${window.location.origin}/auth/callback`
 
     const { error } = await supabase.auth.signInWithOAuth({
@@ -76,19 +66,18 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           </div>
         </div>
 
-        {/* Login Buttons */}
+        {/* Buttons */}
         <div className="space-y-4">
-          {/* ✅ v0 프리뷰에서만 보이는 임시 로그인 버튼 */}
-          {v0 && (
-            <Button
-              onClick={doMockLogin}
-              className="h-12 w-full rounded-2xl text-sm font-semibold shadow-md transition-all hover:scale-[1.01] active:scale-[0.99]"
-              variant="secondary"
-            >
-              임시 로그인(프리뷰)
-            </Button>
-          )}
+          {/* ✅ 임시 로그인: 환경 상관없이 항상 가능 */}
+          <Button
+            onClick={doMockLogin}
+            variant="secondary"
+            className="h-12 w-full rounded-2xl text-sm font-semibold shadow-md transition-all hover:scale-[1.01] active:scale-[0.99]"
+          >
+            임시 로그인(테스트)
+          </Button>
 
+          {/* ✅ 운영 로그인: 환경 상관없이 원래 기능 그대로 */}
           <Button
             onClick={() => signInWithProvider("kakao")}
             className="h-14 w-full gap-3 rounded-2xl bg-kakao text-kakao-foreground hover:bg-kakao/90 text-base font-semibold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
