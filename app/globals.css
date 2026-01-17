@@ -4,14 +4,13 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Light mode - bright cosmic theme */
   --background: oklch(0.96 0.01 250);
   --foreground: oklch(0.15 0.03 250);
   --card: oklch(0.99 0.005 250);
   --card-foreground: oklch(0.15 0.03 250);
   --popover: oklch(0.99 0.005 250);
   --popover-foreground: oklch(0.15 0.03 250);
-  --primary: oklch(0.5 0.18 250);
+  --primary: oklch(0.5 0.18 280);
   --primary-foreground: oklch(0.98 0 0);
   --secondary: oklch(0.92 0.015 250);
   --secondary-foreground: oklch(0.25 0.03 250);
@@ -29,7 +28,7 @@
   --chart-3: oklch(0.5 0.18 280);
   --chart-4: oklch(0.65 0.15 60);
   --chart-5: oklch(0.45 0.18 180);
-  --radius: 1rem;
+  --radius: 0.625rem;
   --sidebar: oklch(0.95 0.01 250);
   --sidebar-foreground: oklch(0.15 0.03 250);
   --sidebar-primary: oklch(0.5 0.18 250);
@@ -38,28 +37,18 @@
   --sidebar-accent-foreground: oklch(0.15 0.03 250);
   --sidebar-border: oklch(0.88 0.015 250);
   --sidebar-ring: oklch(0.5 0.15 250);
-  /* Kakao yellow color */
-  --kakao: oklch(0.88 0.15 95);
-  --kakao-foreground: oklch(0.25 0.02 50);
-  /* Light mode gradient colors */
-  --gradient-start: oklch(0.5 0.18 250);
-  --gradient-mid: oklch(0.55 0.15 280);
-  --gradient-end: oklch(0.6 0.12 220);
-  --glow: oklch(0.5 0.18 250 / 0.25);
-  --star: oklch(0.5 0.15 250);
-  --glass-bg: oklch(0.99 0.005 250 / 0.85);
-  --glass-border: oklch(0.85 0.02 250 / 0.4);
+  --kakao: #fee500;
+  --kakao-foreground: #191919;
 }
 
 .dark {
-  /* Dark mode - deep navy cosmic theme */
   --background: oklch(0.18 0.03 250);
   --foreground: oklch(0.93 0.01 250);
   --card: oklch(0.22 0.025 250);
   --card-foreground: oklch(0.93 0.01 250);
   --popover: oklch(0.22 0.025 250);
   --popover-foreground: oklch(0.93 0.01 250);
-  --primary: oklch(0.68 0.15 250);
+  --primary: oklch(0.68 0.15 280);
   --primary-foreground: oklch(0.98 0 0);
   --secondary: oklch(0.25 0.025 250);
   --secondary-foreground: oklch(0.85 0.01 250);
@@ -85,19 +74,12 @@
   --sidebar-accent-foreground: oklch(0.93 0.01 250);
   --sidebar-border: oklch(0.3 0.025 250);
   --sidebar-ring: oklch(0.65 0.12 250);
-  /* Dark mode gradient colors */
-  --gradient-start: oklch(0.55 0.15 250);
-  --gradient-mid: oklch(0.6 0.12 280);
-  --gradient-end: oklch(0.65 0.1 220);
-  --glow: oklch(0.6 0.15 250 / 0.35);
-  --star: oklch(0.92 0.04 60);
-  --glass-bg: oklch(0.22 0.025 250 / 0.75);
-  --glass-border: oklch(0.35 0.025 250 / 0.3);
+  --kakao: #fee500;
+  --kakao-foreground: #191919;
 }
 
 @theme inline {
-  --font-sans: "Pretendard Variable", "Geist", sans-serif;
-  --font-serif: "Noto Serif KR", serif;
+  --font-sans: "Geist", "Geist Fallback";
   --font-mono: "Geist Mono", "Geist Mono Fallback";
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -148,23 +130,24 @@
   }
 }
 
-/* Cosmic mystical animations and styles */
-@keyframes pulse-glow {
+/* Custom Animations */
+@keyframes float {
   0%,
   100% {
-    box-shadow: 0 0 20px var(--glow), 0 0 40px oklch(0.6 0.15 250 / 0.2);
+    transform: translateY(0);
   }
   50% {
-    box-shadow: 0 0 30px var(--glow), 0 0 60px oklch(0.6 0.15 250 / 0.25);
+    transform: translateY(-8px);
   }
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -200% center;
-  }
+@keyframes pulse-glow {
+  0%,
   100% {
-    background-position: 200% center;
+    box-shadow: 0 0 20px oklch(0.6 0.15 280 / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px oklch(0.6 0.15 280 / 0.5);
   }
 }
 
@@ -176,160 +159,76 @@
   }
   50% {
     opacity: 1;
-    transform: scale(1.15);
+    transform: scale(1.2);
   }
 }
 
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-@keyframes constellation-pulse {
-  0%,
-  100% {
-    opacity: 0.15;
-  }
-  50% {
-    opacity: 0.4;
-  }
-}
-
-@keyframes orbit {
+@keyframes shimmer {
   0% {
-    transform: rotate(0deg) translateX(8px) rotate(0deg);
+    transform: translateX(-100%);
   }
   100% {
-    transform: rotate(360deg) translateX(8px) rotate(-360deg);
+    transform: translateX(100%);
   }
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 2.5s ease-in-out infinite;
-}
-
-.animate-shimmer {
-  background: linear-gradient(90deg, transparent 0%, oklch(1 0 0 / 0.2) 50%, transparent 100%);
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
-}
-
-.animate-twinkle {
-  animation: twinkle 3s ease-in-out infinite;
-}
-
+/* Custom Utility Classes */
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
 
-.animate-orbit {
-  animation: orbit 8s linear infinite;
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
 }
 
-/* Cosmic gradients */
+.animate-twinkle {
+  animation: twinkle 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+}
+
 .gradient-cosmic {
-  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
-}
-
-.gradient-primary {
-  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid));
+  background: linear-gradient(135deg, oklch(0.55 0.2 280), oklch(0.5 0.18 300), oklch(0.6 0.15 220));
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, var(--primary), var(--accent));
+  background: linear-gradient(135deg, oklch(0.65 0.18 280), oklch(0.7 0.15 220));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.gradient-gold {
-  background: linear-gradient(135deg, oklch(0.8 0.12 70), oklch(0.72 0.14 55));
-}
-
-/* Constellation and Saju pattern - combines zodiac circles with constellation lines */
 .starfield {
-  position: relative;
-  overflow: hidden;
+  background-image: radial-gradient(1px 1px at 20px 30px, white, transparent),
+    radial-gradient(1px 1px at 40px 70px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 50px 160px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 90px 40px, white, transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 160px 120px, white, transparent),
+    radial-gradient(1px 1px at 200px 50px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 250px 140px, white, transparent),
+    radial-gradient(1px 1px at 300px 30px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 350px 90px, white, transparent);
 }
 
-.starfield::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(1.5px 1.5px at 25px 35px, var(--star) / 0.6, transparent),
-    radial-gradient(1px 1px at 85px 70px, var(--star) / 0.5, transparent),
-    radial-gradient(1.5px 1.5px at 150px 45px, var(--star) / 0.6, transparent),
-    radial-gradient(1px 1px at 210px 95px, var(--star) / 0.4, transparent),
-    radial-gradient(2px 2px at 270px 25px, var(--star) / 0.7, transparent),
-    radial-gradient(1px 1px at 330px 80px, var(--star) / 0.5, transparent),
-    radial-gradient(1.5px 1.5px at 390px 55px, var(--star) / 0.5, transparent),
-    radial-gradient(1px 1px at 50px 120px, var(--star) / 0.4, transparent),
-    radial-gradient(2px 2px at 180px 140px, var(--star) / 0.6, transparent),
-    radial-gradient(1px 1px at 300px 130px, var(--star) / 0.5, transparent);
-  background-size: 420px 180px;
-  animation: constellation-pulse 10s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.starfield::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle at 15% 20%, transparent 18px, var(--primary) / 0.08 19px, transparent 20px),
-    radial-gradient(circle at 85% 75%, transparent 25px, var(--primary) / 0.06 26px, transparent 27px),
-    radial-gradient(circle at 70% 15%, transparent 12px, var(--accent) / 0.07 13px, transparent 14px),
-    radial-gradient(circle at 30% 80%, transparent 20px, var(--primary) / 0.05 21px, transparent 22px),
-    linear-gradient(var(--primary) / 0.06 1px, transparent 1px),
-    linear-gradient(90deg, var(--primary) / 0.06 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 80px 80px, 80px 80px;
-  background-position: 0 0, 0 0, 0 0, 0 0, 40px 40px, 40px 40px;
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* Glass morphism effect */
 .glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
+  background: oklch(0.25 0.02 250 / 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid oklch(0.4 0.02 250 / 0.2);
 }
 
-/* Mystical card hover effect */
-.card-mystical {
-  transition: all 0.3s ease;
+.glass-light {
+  background: oklch(0.98 0.01 250 / 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid oklch(0.9 0.01 250 / 0.5);
 }
 
-.card-mystical:hover {
-  box-shadow: 0 0 25px var(--glow);
-  transform: translateY(-3px);
+.bg-kakao {
+  background-color: var(--kakao);
 }
 
-/* Saju element badge styling */
-.saju-element {
-  position: relative;
-}
-
-.saju-element::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  background: conic-gradient(
-    from 0deg,
-    var(--primary) /
-    0.3,
-    var(--gradient-mid) /
-    0.3,
-    var(--accent) /
-    0.3,
-    var(--primary) /
-    0.3
-  );
-  z-index: -1;
-  animation: orbit 12s linear infinite;
+.text-kakao-foreground {
+  color: var(--kakao-foreground);
 }
