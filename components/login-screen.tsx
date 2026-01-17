@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { MessageCircle, Sparkles } from "lucide-react"
-import { supabase } from "@/lib/supabaseClient"
+import { supabase } from "../lib/supabaseClient"
 
 interface LoginScreenProps {
   onLogin: () => void // 일단 유지 (다른 파일 깨질까봐)
