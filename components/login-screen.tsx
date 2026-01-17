@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { MessageCircle, Sparkles } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
+import { isV0Preview } from "@/lib/runtime"
 
 interface LoginScreenProps {
   // 기존 props 유지 (다른 파일 안 깨지게)
@@ -10,9 +11,18 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
+  const mockUserName = "테스트유저"
+
   const signInWithProvider = async (provider: "google" | "kakao") => {
-    // ✅ 로그인 성공/실패는 Supabase가 처리.
-    // 여기서는 OAuth 시작만 시킴.
+    // ✅ v0 프리뷰에서는 Supabase가 CSP 때문에 막힐 수 있으므로,
+    // Supabase 호출 없이 “임시 로그인” 처리
+    if (isV0Preview()) {
+      localStorage.setItem("v0-mock-user", mockUserName)
+      onLogin()
+      return
+    }
+
+    // ✅ 실제 도메인/로컬에서는 기존 Supabase OAuth 그대로
     const redirectTo = `${window.location.origin}/auth/callback`
 
     const { error } = await supabase.auth.signInWithOAuth({
