@@ -155,19 +155,20 @@ export default function Home() {
   }, [yearlyFortuneResults])
 
   useEffect(() => {
-    // ✅ v0 프리뷰에서는 Supabase 호출 자체를 피하고,
-    // localStorage에 저장된 mock 로그인 상태만 사용
+    // ✅ 1) 임시 로그인 키가 있으면 "환경 상관없이" 테스트 모드로 고정
+    const mockName = localStorage.getItem("v0-mock-user")
+    if (mockName) {
+      setIsLoggedIn(true)
+      setCurrentScreen("main")
+      setUserName(mockName)
+      return
+    }
+
+    // ✅ 2) v0/iframe 환경이면(프리뷰 안정) supabase 세션 체크 자체를 건너뜀
     if (isV0Preview()) {
-      const mockName = localStorage.getItem("v0-mock-user")
-      if (mockName) {
-        setIsLoggedIn(true)
-        setCurrentScreen("main")
-        setUserName(mockName)
-      } else {
-        setIsLoggedIn(false)
-        setCurrentScreen("login")
-        setUserName("")
-      }
+      setIsLoggedIn(false)
+      setCurrentScreen("login")
+      setUserName("")
       return
     }
 
@@ -232,22 +233,20 @@ export default function Home() {
   }
 
   const handleLogin = () => {
-    // ✅ v0 프리뷰에서는 LoginScreen이 onLogin()을 호출하면서
-    // localStorage에 mockName을 저장하고, 여기서 화면 전환해주면 즉시 반영됨
-    if (isV0Preview()) {
-      const mockName = localStorage.getItem("v0-mock-user")
+    // ✅ 임시 로그인 버튼 누르면 localStorage에 값이 들어가므로 즉시 반영
+    const mockName = localStorage.getItem("v0-mock-user")
+    if (mockName) {
       setIsLoggedIn(true)
       setCurrentScreen("main")
-      setUserName(mockName || "테스트유저")
-      return
+      setUserName(mockName)
     }
-
-    // ✅ 실제 로그인은 Supabase가 처리하므로 여기서는 아무 것도 안 해도 됨
-    // onAuthStateChange에서 자동으로 main으로 보내줌
+    // ✅ 운영 로그인(구글/카카오)은 Supabase가 처리하므로 여기서는 아무 것도 안 해도 됨
   }
 
   const handleLogout = async () => {
-    if (isV0Preview()) {
+    // ✅ 임시 로그인 세션이면 로컬만 지우고 바로 로그아웃 처리
+    const mockName = localStorage.getItem("v0-mock-user")
+    if (mockName) {
       localStorage.removeItem("v0-mock-user")
       setIsLoggedIn(false)
       setCurrentScreen("login")
@@ -255,6 +254,7 @@ export default function Home() {
       return
     }
 
+    // ✅ 운영 로그인 세션은 Supabase signOut
     await supabase.auth.signOut()
     // 나머지는 onAuthStateChange가 자동으로 login으로 보내줌
   }
@@ -414,6 +414,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-background">
       {currentScreen === "login" && <LoginScreen onLogin={handleLogin} />}
+
       {currentScreen === "main" && (
         <MainScreen
           userName={userName}
@@ -427,6 +428,7 @@ export default function Home() {
           onOpenCoinPurchase={handleOpenCoinPurchase}
         />
       )}
+
       {currentScreen === "result-list" && (
         <ResultListScreen
           results={savedResults}
@@ -435,6 +437,7 @@ export default function Home() {
           onBack={handleBackToMain}
         />
       )}
+
       {currentScreen === "saju-input" && (
         <SajuInputScreen
           savedProfiles={savedProfiles}
@@ -442,9 +445,11 @@ export default function Home() {
           onBack={() => setCurrentScreen("result-list")}
         />
       )}
+
       {currentScreen === "coin-purchase" && (
         <CoinPurchaseScreen onPurchase={handlePurchaseCoins} onBack={handleBackFromCoinPurchase} />
       )}
+
       {currentScreen === "result" && (sajuInput || selectedResult) && (
         <ResultScreen
           sajuInput={selectedResult?.sajuInput || sajuInput!}
@@ -467,6 +472,7 @@ export default function Home() {
           onBack={handleBackToMain}
         />
       )}
+
       {currentScreen === "daily-fortune-input" && (
         <DailyFortuneInputScreen
           savedProfiles={savedProfiles}
@@ -474,6 +480,7 @@ export default function Home() {
           onBack={() => setCurrentScreen("daily-fortune-list")}
         />
       )}
+
       {currentScreen === "daily-fortune-result" && (sajuInput || selectedDailyResult) && (
         <DailyFortuneResultScreen
           sajuInput={selectedDailyResult?.sajuInput || sajuInput!}
@@ -496,6 +503,7 @@ export default function Home() {
           onBack={handleBackToMain}
         />
       )}
+
       {currentScreen === "yearly-fortune-input" && (
         <YearlyFortuneInputScreen
           savedProfiles={savedProfiles}
@@ -503,6 +511,7 @@ export default function Home() {
           onBack={() => setCurrentScreen("yearly-fortune-list")}
         />
       )}
+
       {currentScreen === "yearly-fortune-result" && (sajuInput || selectedYearlyResult) && (
         <YearlyFortuneResultScreen
           sajuInput={selectedYearlyResult?.sajuInput || sajuInput!}
