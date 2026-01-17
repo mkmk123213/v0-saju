@@ -359,6 +359,9 @@ export default function Home() {
 
   const handleSajuSubmit = async (input: SajuInput) => {
     try {
+      const { data: s } = await supabase.auth.getSession()
+      console.log("hasSession?", !!s.session)
+  
       const { data: u } = await supabase.auth.getUser()
       const uid = u.user?.id
       if (!uid) throw new Error("로그인이 필요해요")
