@@ -2,33 +2,28 @@
 
 import { Button } from "@/components/ui/button"
 import { MessageCircle, Sparkles } from "lucide-react"
-import { supabase } from "../lib/supabaseClient"
+import { supabase } from "@/lib/supabaseClient"
 
 interface LoginScreenProps {
-  onLogin: () => void // 일단 유지 (다른 파일 깨질까봐)
+  // 기존 props 유지 (다른 파일 안 깨지게)
+  onLogin: () => void
 }
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
-  // ✅ 카카오 로그인 (Supabase OAuth)
-  const loginWithKakao = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "kakao",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-    // ⚠️ 여기서 onLogin() 호출하지 마! (화면만 바뀌어버림)
-  }
+  const signInWithProvider = async (provider: "google" | "kakao") => {
+    // ✅ 로그인 성공/실패는 Supabase가 처리.
+    // 여기서는 OAuth 시작만 시킴.
+    const redirectTo = `${window.location.origin}/auth/callback`
 
-  // ✅ 구글 로그인 (Supabase OAuth)
-  const loginWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo },
     })
-    // ⚠️ 여기서 onLogin() 호출하지 마!
+
+    if (error) {
+      console.error(error)
+      alert(`로그인 시작에 실패했어요: ${error.message}`)
+    }
   }
 
   return (
@@ -69,7 +64,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         {/* Login Button */}
         <div className="space-y-4">
           <Button
-            onClick={loginWithKakao}
+            onClick={() => signInWithProvider("kakao")}
             className="h-14 w-full gap-3 rounded-2xl bg-kakao text-kakao-foreground hover:bg-kakao/90 text-base font-semibold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <MessageCircle className="h-5 w-5" />
@@ -77,7 +72,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           </Button>
 
           <Button
-            onClick={loginWithGoogle}
+            onClick={() => signInWithProvider("google")}
             className="h-14 w-full gap-3 rounded-2xl bg-white text-gray-700 hover:bg-gray-50 text-base font-semibold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] border border-gray-200"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
