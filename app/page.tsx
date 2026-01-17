@@ -270,15 +270,19 @@ export default function Home() {
   // Profiles: upsert (이름+생일 기준으로 “없으면 만들기”)
   // -----------------------------
   const upsertProfileFromInput = async (input: SajuInput) => {
-    // 기존 프로필 있으면 그걸 사용
+    const { data: u } = await supabase.auth.getUser()
+    const uid = u.user?.id
+    if (!uid) throw new Error("로그인이 필요해요")
+  
     const existing = savedProfiles.find((p) => p.name === input.name && p.birthDate === input.birthDate)
     if (existing) return existing.id
-
+  
     const { data, error } = await supabase
       .from("profiles")
       .insert({
+        user_id: uid,                 // ✅ 추가
         name: input.name,
-        relationship: "self", // UI 추가되면 여기만 바꾸면 됨
+        relationship: "self",
         birth_date: input.birthDate,
         birth_time_code: input.birthTime ?? "unknown",
         gender: input.gender,
@@ -286,7 +290,7 @@ export default function Home() {
       })
       .select("id")
       .single()
-
+  
     if (error) throw error
     await refreshProfiles()
     return data.id as string
@@ -342,14 +346,17 @@ export default function Home() {
 
   const handleSajuSubmit = async (input: SajuInput) => {
     try {
+      const { data: u } = await supabase.auth.getUser()
+      const uid = u.user?.id
+      if (!uid) throw new Error("로그인이 필요해요")
+  
       setSajuInput(input)
-
       const profileId = await upsertProfileFromInput(input)
-
-      // readings 저장 (요약/상세는 일단 플레이스홀더로)
+  
       const { data, error } = await supabase
         .from("readings")
         .insert({
+          user_id: uid,              // ✅ 추가
           profile_id: profileId,
           type: "saju",
           target_year: defaultYear,
@@ -359,28 +366,24 @@ export default function Home() {
         })
         .select("id, created_at")
         .single()
-
+  
       if (error) throw error
-
+  
       await refreshReadings()
-
-      // 방금 만든 결과를 선택
-      const createdId = data.id as string
-      const created = (savedResults.find((r) => r.id === createdId) ??
-        ({
-          id: createdId,
-          sajuInput: input,
-          createdAt: data.created_at,
-          year: defaultYear,
-          isDetailUnlocked: false,
-        } as SajuResult))
-
-      setSelectedResult(created)
+      setSelectedResult({
+        id: data.id,
+        sajuInput: input,
+        createdAt: data.created_at,
+        year: defaultYear,
+        isDetailUnlocked: false,
+      })
       setCurrentScreen("result")
-    } catch (e) {
+    } catch (e: any) {
       console.error(e)
+      alert(e?.message ?? "사주 저장 중 오류가 발생했어요")
     }
   }
+
 
   const handleViewResult = (result: SajuResult) => {
     setSelectedResult(result)
@@ -425,45 +428,46 @@ export default function Home() {
   }
 
   const handleDailyFortuneSubmit = async (input: SajuInput) => {
-    try {
-      setSajuInput(input)
+  try {
+    const { data: u } = await supabase.auth.getUser()
+    const uid = u.user?.id
+    if (!uid) throw new Error("로그인이 필요해요")
 
-      const profileId = await upsertProfileFromInput(input)
-      const today = new Date().toISOString().slice(0, 10)
+    setSajuInput(input)
+    const profileId = await upsertProfileFromInput(input)
+    const today = new Date().toISOString().slice(0, 10)
 
-      const { data, error } = await supabase
-        .from("readings")
-        .insert({
-          profile_id: profileId,
-          type: "daily",
-          target_date: today,
-          input_snapshot: input,
-          result_summary: { text: "요약 생성 예정" },
-          result_detail: null,
-        })
-        .select("id, created_at")
-        .single()
+    const { data, error } = await supabase
+      .from("readings")
+      .insert({
+        user_id: uid,             // ✅ 추가
+        profile_id: profileId,
+        type: "daily",
+        target_date: today,
+        input_snapshot: input,
+        result_summary: { text: "요약 생성 예정" },
+        result_detail: null,
+      })
+      .select("id, created_at")
+      .single()
 
-      if (error) throw error
+    if (error) throw error
 
-      await refreshReadings()
-
-      const createdId = data.id as string
-      const created = (dailyFortuneResults.find((r) => r.id === createdId) ??
-        ({
-          id: createdId,
-          sajuInput: input,
-          createdAt: data.created_at,
-          date: today,
-          isDetailUnlocked: false,
-        } as DailyFortuneResult))
-
-      setSelectedDailyResult(created)
-      setCurrentScreen("daily-fortune-result")
-    } catch (e) {
-      console.error(e)
-    }
+    await refreshReadings()
+    setSelectedDailyResult({
+      id: data.id,
+      sajuInput: input,
+      createdAt: data.created_at,
+      date: today,
+      isDetailUnlocked: false,
+    })
+    setCurrentScreen("daily-fortune-result")
+  } catch (e: any) {
+    console.error(e)
+    alert(e?.message ?? "오늘의 운세 저장 중 오류가 발생했어요")
   }
+}
+
 
   const handleViewDailyResult = (result: DailyFortuneResult) => {
     setSelectedDailyResult(result)
@@ -491,45 +495,45 @@ export default function Home() {
     setCurrentScreen("yearly-fortune-input")
   }
 
-  const handleYearlyFortuneSubmit = async (input: SajuInput) => {
-    try {
-      setSajuInput(input)
+ const handleYearlyFortuneSubmit = async (input: SajuInput) => {
+  try {
+    const { data: u } = await supabase.auth.getUser()
+    const uid = u.user?.id
+    if (!uid) throw new Error("로그인이 필요해요")
 
-      const profileId = await upsertProfileFromInput(input)
+    setSajuInput(input)
+    const profileId = await upsertProfileFromInput(input)
 
-      const { data, error } = await supabase
-        .from("readings")
-        .insert({
-          profile_id: profileId,
-          type: "yearly",
-          target_year: defaultYear,
-          input_snapshot: input,
-          result_summary: { text: "요약 생성 예정" },
-          result_detail: null,
-        })
-        .select("id, created_at")
-        .single()
+    const { data, error } = await supabase
+      .from("readings")
+      .insert({
+        user_id: uid,            // ✅ 추가
+        profile_id: profileId,
+        type: "yearly",
+        target_year: defaultYear,
+        input_snapshot: input,
+        result_summary: { text: "요약 생성 예정" },
+        result_detail: null,
+      })
+      .select("id, created_at")
+      .single()
 
-      if (error) throw error
+    if (error) throw error
 
-      await refreshReadings()
-
-      const createdId = data.id as string
-      const created = (yearlyFortuneResults.find((r) => r.id === createdId) ??
-        ({
-          id: createdId,
-          sajuInput: input,
-          createdAt: data.created_at,
-          year: defaultYear,
-          isDetailUnlocked: false,
-        } as YearlyFortuneResult))
-
-      setSelectedYearlyResult(created)
-      setCurrentScreen("yearly-fortune-result")
-    } catch (e) {
-      console.error(e)
-    }
+    await refreshReadings()
+    setSelectedYearlyResult({
+      id: data.id,
+      sajuInput: input,
+      createdAt: data.created_at,
+      year: defaultYear,
+      isDetailUnlocked: false,
+    })
+    setCurrentScreen("yearly-fortune-result")
+  } catch (e: any) {
+    console.error(e)
+    alert(e?.message ?? "연간 운세 저장 중 오류가 발생했어요")
   }
+}
 
   const handleViewYearlyResult = (result: YearlyFortuneResult) => {
     setSelectedYearlyResult(result)
