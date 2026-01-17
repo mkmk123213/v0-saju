@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Calendar, User, Sparkles } from "lucide-react"
-import type { SajuInput, SavedProfile } from "@/app/page"
+import type { SajuInput, SavedProfile, Relationship } from "@/app/page"
 
 interface SajuInputScreenProps {
   savedProfiles: SavedProfile[]
@@ -32,7 +32,18 @@ const birthTimeOptions = [
   { value: "21-23", label: "해시 (21:00~23:00)" },
 ]
 
+const relationshipOptions: { value: Relationship; label: string }[] = [
+  { value: "self", label: "본인" },
+  { value: "spouse", label: "배우자" },
+  { value: "partner", label: "연인" },
+  { value: "parent", label: "부모" },
+  { value: "child", label: "자녀" },
+  { value: "friend", label: "친구" },
+  { value: "acquaintance", label: "지인" },
+]
+
 export default function SajuInputScreen({ savedProfiles, onSubmit, onBack }: SajuInputScreenProps) {
+  const [relationship, setRelationship] = useState<Relationship>("self")
   const [name, setName] = useState("")
   const [birthDate, setBirthDate] = useState("")
   const [birthTime, setBirthTime] = useState("unknown")
@@ -42,27 +53,33 @@ export default function SajuInputScreen({ savedProfiles, onSubmit, onBack }: Saj
 
   const handleProfileSelect = (profileId: string) => {
     setSelectedProfileId(profileId)
+
     if (profileId === "new") {
+      setRelationship("self")
       setName("")
       setBirthDate("")
       setBirthTime("unknown")
       setGender("male")
       setCalendarType("solar")
-    } else {
-      const profile = savedProfiles.find((p) => p.id === profileId)
-      if (profile) {
-        setName(profile.name)
-        setBirthDate(profile.birthDate)
-        setBirthTime(profile.birthTime)
-        setGender(profile.gender)
-        setCalendarType(profile.calendarType)
-      }
+      return
     }
+
+    const profile = savedProfiles.find((p) => p.id === profileId)
+    if (!profile) return
+
+    setRelationship((profile.relationship ?? "self") as Relationship)
+    setName(profile.name)
+    setBirthDate(profile.birthDate)
+    setBirthTime(profile.birthTime)
+    setGender(profile.gender)
+    setCalendarType(profile.calendarType)
   }
 
   const handleSubmit = () => {
     if (!name || !birthDate) return
+
     onSubmit({
+      relationship,
       name,
       birthDate,
       birthTime,
@@ -75,13 +92,11 @@ export default function SajuInputScreen({ savedProfiles, onSubmit, onBack }: Saj
 
   return (
     <div className="flex min-h-screen flex-col starfield">
-      {/* Cosmic background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-0 w-64 h-64 rounded-full bg-primary/15 blur-[80px]" />
         <div className="absolute bottom-40 -left-20 w-48 h-48 rounded-full bg-accent/10 blur-[60px]" />
       </div>
 
-      {/* Header */}
       <header className="flex items-center gap-3 px-4 py-4 relative z-10">
         <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full hover:bg-muted">
           <ArrowLeft className="h-5 w-5" />
@@ -93,7 +108,6 @@ export default function SajuInputScreen({ savedProfiles, onSubmit, onBack }: Saj
         </div>
       </header>
 
-      {/* Form Content */}
       <div className="flex-1 px-6 pb-8 relative z-10">
         <div className="mx-auto max-w-sm space-y-6">
           {savedProfiles.length > 0 && (
@@ -115,6 +129,7 @@ export default function SajuInputScreen({ savedProfiles, onSubmit, onBack }: Saj
                       <SelectItem key={profile.id} value={profile.id}>
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4" />
+                          {(profile.relationship ? relationshipOptions.find(r => r.value === profile.relationship)?.label : "본인") ?? "본인"} ·{" "}
                           {profile.name} ({profile.birthDate})
                         </div>
                       </SelectItem>
@@ -124,6 +139,25 @@ export default function SajuInputScreen({ savedProfiles, onSubmit, onBack }: Saj
               </CardContent>
             </Card>
           )}
+
+          {/* ✅ 관계 */}
+          <Card className="border-none glass shadow-sm">
+            <CardContent className="p-5 space-y-3">
+              <Label className="text-sm font-medium text-foreground">관계</Label>
+              <Select value={relationship} onValueChange={(v) => setRelationship(v as Relationship)}>
+                <SelectTrigger className="h-12 rounded-xl border-border bg-secondary/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {relationshipOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
 
           <Card className="border-none glass shadow-sm">
             <CardContent className="p-5 space-y-3">
@@ -140,7 +174,6 @@ export default function SajuInputScreen({ savedProfiles, onSubmit, onBack }: Saj
             </CardContent>
           </Card>
 
-          {/* Birth Date */}
           <Card className="border-none glass shadow-sm">
             <CardContent className="p-5 space-y-3">
               <Label className="text-sm font-medium text-foreground">
@@ -158,7 +191,6 @@ export default function SajuInputScreen({ savedProfiles, onSubmit, onBack }: Saj
             </CardContent>
           </Card>
 
-          {/* Birth Time */}
           <Card className="border-none glass shadow-sm">
             <CardContent className="p-5 space-y-3">
               <Label className="text-sm font-medium text-foreground">
@@ -179,7 +211,6 @@ export default function SajuInputScreen({ savedProfiles, onSubmit, onBack }: Saj
             </CardContent>
           </Card>
 
-          {/* Gender */}
           <Card className="border-none glass shadow-sm">
             <CardContent className="p-5 space-y-3">
               <Label className="text-sm font-medium text-foreground">성별</Label>
@@ -212,7 +243,6 @@ export default function SajuInputScreen({ savedProfiles, onSubmit, onBack }: Saj
             </CardContent>
           </Card>
 
-          {/* Calendar Type */}
           <Card className="border-none glass shadow-sm">
             <CardContent className="p-5 space-y-3">
               <Label className="text-sm font-medium text-foreground">양력 / 음력</Label>
@@ -247,7 +277,6 @@ export default function SajuInputScreen({ savedProfiles, onSubmit, onBack }: Saj
         </div>
       </div>
 
-      {/* Submit Button */}
       <div className="sticky bottom-0 border-t border-border glass px-6 py-4 relative z-10">
         <div className="mx-auto max-w-sm">
           <Button
