@@ -42,7 +42,7 @@ export type Relationship =
   | "acquaintance"
 
 export interface SajuInput {
-  relationship?: Relationship // ✅ optional (다른 input 화면들 빌드 깨짐 방지)
+  relationship?: Relationship // 다른 input 화면들 빌드 깨짐 방지
   name: string
   birthDate: string
   birthTime: string // 'unknown' | '23-01' ...
@@ -52,7 +52,7 @@ export interface SajuInput {
 
 export interface SavedProfile {
   id: string
-  relationship?: Relationship // ✅ optional
+  relationship?: Relationship
   name: string
   birthDate: string
   birthTime: string
@@ -61,7 +61,7 @@ export interface SavedProfile {
 }
 
 export interface SajuResult {
-  id: string // = readings.id (uuid)
+  id: string // readings.id (uuid)
   sajuInput: SajuInput
   createdAt: string
   year: number
@@ -279,7 +279,7 @@ export default function Home() {
   }, [isLoggedIn])
 
   // -----------------------------
-  // Profiles: UPSERT (중복 방지 핵심)
+  // Profiles: UPSERT
   // -----------------------------
   const upsertProfileFromInput = async (input: SajuInput) => {
     const { data: u, error: uerr } = await supabase.auth.getUser()
@@ -304,7 +304,6 @@ export default function Home() {
       .single()
 
     if (error) throw error
-    // 선택: UI가 즉시 반영되도록 갱신
     await refreshProfiles()
     return data.id as string
   }
@@ -361,7 +360,7 @@ export default function Home() {
     try {
       const { data: s } = await supabase.auth.getSession()
       console.log("hasSession?", !!s.session)
-  
+
       const { data: u } = await supabase.auth.getUser()
       const uid = u.user?.id
       if (!uid) throw new Error("로그인이 필요해요")
@@ -369,27 +368,28 @@ export default function Home() {
       setSajuInput(input)
       const profileId = await upsertProfileFromInput(input)
 
-      const { data, error } = await supabase
-        .from("readings")
-        .insert({
-          user_id: uid,
-          profile_id: profileId,
-          type: "saju",
-          target_year: defaultYear,
-          input_snapshot: { ...input, relationship: input.relationship ?? "self" },
-          result_summary: { text: "요약 생성 예정" },
-          result_detail: null,
-        })
-        .select("id, created_at")
-        .single()
+      // ✅ SELECT 권한 없이도 동작하게: id를 미리 만들고 반환을 받지 않음
+      const readingId = crypto.randomUUID()
+      const createdAt = new Date().toISOString()
 
+      const { error } = await supabase.from("readings").insert({
+        id: readingId,
+        user_id: uid,
+        profile_id: profileId,
+        type: "saju",
+        target_year: defaultYear,
+        input_snapshot: { ...input, relationship: input.relationship ?? "self" },
+        result_summary: { text: "요약 생성 예정" },
+        result_detail: null,
+      })
       if (error) throw error
 
       await refreshReadings()
+
       setSelectedResult({
-        id: data.id,
+        id: readingId,
         sajuInput: input,
-        createdAt: data.created_at,
+        createdAt,
         year: defaultYear,
         isDetailUnlocked: false,
       })
@@ -449,27 +449,27 @@ export default function Home() {
       const profileId = await upsertProfileFromInput(input)
       const today = new Date().toISOString().slice(0, 10)
 
-      const { data, error } = await supabase
-        .from("readings")
-        .insert({
-          user_id: uid,
-          profile_id: profileId,
-          type: "daily",
-          target_date: today,
-          input_snapshot: { ...input, relationship: input.relationship ?? "self" },
-          result_summary: { text: "요약 생성 예정" },
-          result_detail: null,
-        })
-        .select("id, created_at")
-        .single()
+      const readingId = crypto.randomUUID()
+      const createdAt = new Date().toISOString()
 
+      const { error } = await supabase.from("readings").insert({
+        id: readingId,
+        user_id: uid,
+        profile_id: profileId,
+        type: "daily",
+        target_date: today,
+        input_snapshot: { ...input, relationship: input.relationship ?? "self" },
+        result_summary: { text: "요약 생성 예정" },
+        result_detail: null,
+      })
       if (error) throw error
 
       await refreshReadings()
+
       setSelectedDailyResult({
-        id: data.id,
+        id: readingId,
         sajuInput: input,
-        createdAt: data.created_at,
+        createdAt,
         date: today,
         isDetailUnlocked: false,
       })
@@ -514,27 +514,27 @@ export default function Home() {
       setSajuInput(input)
       const profileId = await upsertProfileFromInput(input)
 
-      const { data, error } = await supabase
-        .from("readings")
-        .insert({
-          user_id: uid,
-          profile_id: profileId,
-          type: "yearly",
-          target_year: defaultYear,
-          input_snapshot: { ...input, relationship: input.relationship ?? "self" },
-          result_summary: { text: "요약 생성 예정" },
-          result_detail: null,
-        })
-        .select("id, created_at")
-        .single()
+      const readingId = crypto.randomUUID()
+      const createdAt = new Date().toISOString()
 
+      const { error } = await supabase.from("readings").insert({
+        id: readingId,
+        user_id: uid,
+        profile_id: profileId,
+        type: "yearly",
+        target_year: defaultYear,
+        input_snapshot: { ...input, relationship: input.relationship ?? "self" },
+        result_summary: { text: "요약 생성 예정" },
+        result_detail: null,
+      })
       if (error) throw error
 
       await refreshReadings()
+
       setSelectedYearlyResult({
-        id: data.id,
+        id: readingId,
         sajuInput: input,
-        createdAt: data.created_at,
+        createdAt,
         year: defaultYear,
         isDetailUnlocked: false,
       })
