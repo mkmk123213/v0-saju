@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Calendar, User, Star } from "lucide-react"
+import { ArrowLeft, Calendar, Clock, User, Star } from "lucide-react"
 import type { SajuInput, SavedProfile, Relationship } from "@/app/page"
 
 interface YearlyFortuneInputScreenProps {
@@ -15,22 +15,6 @@ interface YearlyFortuneInputScreenProps {
   onSubmit: (input: SajuInput) => void
   onBack: () => void
 }
-
-const birthTimeOptions = [
-  { value: "unknown", label: "모름" },
-  { value: "23-01", label: "자시 (23:00~01:00)" },
-  { value: "01-03", label: "축시 (01:00~03:00)" },
-  { value: "03-05", label: "인시 (03:00~05:00)" },
-  { value: "05-07", label: "묘시 (05:00~07:00)" },
-  { value: "07-09", label: "진시 (07:00~09:00)" },
-  { value: "09-11", label: "사시 (09:00~11:00)" },
-  { value: "11-13", label: "오시 (11:00~13:00)" },
-  { value: "13-15", label: "미시 (13:00~15:00)" },
-  { value: "15-17", label: "신시 (15:00~17:00)" },
-  { value: "17-19", label: "유시 (17:00~19:00)" },
-  { value: "19-21", label: "술시 (19:00~21:00)" },
-  { value: "21-23", label: "해시 (21:00~23:00)" },
-]
 
 const relationshipOptions: { value: Relationship; label: string }[] = [
   { value: "self", label: "본인" },
@@ -46,7 +30,7 @@ export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBa
   const [relationship, setRelationship] = useState<Relationship>("self")
   const [name, setName] = useState("")
   const [birthDate, setBirthDate] = useState("")
-  const [birthTime, setBirthTime] = useState("unknown")
+  const [birthTime, setBirthTime] = useState("")
   const [gender, setGender] = useState<"male" | "female">("male")
   const [calendarType, setCalendarType] = useState<"solar" | "lunar">("solar")
   const [selectedProfileId, setSelectedProfileId] = useState<string>("")
@@ -61,7 +45,7 @@ export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBa
       setRelationship("self")
       setName("")
       setBirthDate("")
-      setBirthTime("unknown")
+      setBirthTime("")
       setGender("male")
       setCalendarType("solar")
       return
@@ -73,7 +57,7 @@ export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBa
     setRelationship((profile.relationship ?? "self") as Relationship)
     setName(profile.name)
     setBirthDate(profile.birthDate)
-    setBirthTime(profile.birthTime)
+    setBirthTime(profile.birthTime || "")
     setGender(profile.gender)
     setCalendarType(profile.calendarType)
   }
@@ -84,7 +68,7 @@ export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBa
       relationship,
       name,
       birthDate,
-      birthTime,
+      birthTime: birthTime || "",
       gender,
       calendarType,
     })
@@ -94,13 +78,11 @@ export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBa
 
   return (
     <div className="flex min-h-screen flex-col starfield">
-      {/* Cosmic background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-0 w-64 h-64 rounded-full bg-sky-500/10 blur-[80px]" />
         <div className="absolute bottom-40 -left-20 w-48 h-48 rounded-full bg-cyan-500/10 blur-[60px]" />
       </div>
 
-      {/* Header */}
       <header className="flex items-center gap-3 px-4 py-4 relative z-10">
         <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full hover:bg-muted">
           <ArrowLeft className="h-5 w-5" />
@@ -114,7 +96,6 @@ export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBa
         </div>
       </header>
 
-      {/* Form Content */}
       <div className="flex-1 px-6 pb-8 relative z-10">
         <div className="mx-auto max-w-sm space-y-6">
           {savedProfiles.length > 0 && (
@@ -146,7 +127,6 @@ export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBa
             </Card>
           )}
 
-          {/* ✅ 관계 */}
           <Card className="border-none glass shadow-sm">
             <CardContent className="p-5 space-y-3">
               <Label className="text-sm font-medium text-foreground">관계</Label>
@@ -202,18 +182,17 @@ export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBa
               <Label className="text-sm font-medium text-foreground">
                 태어난 시간 <span className="text-muted-foreground font-normal">(선택)</span>
               </Label>
-              <Select value={birthTime} onValueChange={setBirthTime}>
-                <SelectTrigger className="h-12 rounded-xl border-border bg-secondary/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {birthTimeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <input
+                  type="time"
+                  value={birthTime}
+                  onChange={(e) => setBirthTime(e.target.value)}
+                  placeholder="예: 14:30"
+                  className="h-12 w-full rounded-xl border border-border bg-secondary/50 px-4 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <Clock className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground">모르면 비워두세요</p>
             </CardContent>
           </Card>
 
@@ -283,7 +262,6 @@ export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBa
         </div>
       </div>
 
-      {/* Submit Button */}
       <div className="sticky bottom-0 border-t border-border glass px-6 py-4 relative z-10">
         <div className="mx-auto max-w-sm">
           <Button

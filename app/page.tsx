@@ -192,7 +192,7 @@ export default function Home() {
   const refreshProfiles = async () => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id,relationship,name,birth_date,birth_time_code,gender,calendar_type")
+      .select("id,relationship,name,birth_date,birth_time,gender,calendar_type")
       .order("created_at", { ascending: false })
     if (error) throw error
 
@@ -202,7 +202,7 @@ export default function Home() {
         relationship: (p.relationship ?? "self") as Relationship,
         name: p.name,
         birthDate: p.birth_date,
-        birthTime: p.birth_time_code ?? "unknown",
+        birthTime: p.birth_time ?? "",
         gender: p.gender,
         calendarType: p.calendar_type,
       })) ?? []
@@ -214,7 +214,7 @@ export default function Home() {
     relationship: (snap?.relationship ?? "self") as Relationship,
     name: String(snap?.name ?? ""),
     birthDate: String(snap?.birthDate ?? snap?.birth_date ?? ""),
-    birthTime: String(snap?.birthTime ?? snap?.birth_time_code ?? "unknown"),
+    birthTime: String(snap?.birthTime ?? snap?.birth_time ?? ""),
     gender: (snap?.gender === "female" ? "female" : "male") as "male" | "female",
     calendarType: (snap?.calendarType === "lunar" ? "lunar" : "solar") as "solar" | "lunar",
   })
@@ -292,7 +292,7 @@ export default function Home() {
       name: input.name,
       relationship: (input.relationship ?? "self") as Relationship,
       birth_date: input.birthDate,
-      birth_time_code: input.birthTime ?? "unknown",
+      birth_time: input.birthTime || null,
       gender: input.gender,
       calendar_type: input.calendarType,
     }
