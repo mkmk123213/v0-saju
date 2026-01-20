@@ -184,7 +184,25 @@ export default function DailyFortuneResultScreen({
                 <div className="pt-2">
                   {coins >= 1 ? (
                     <Button
-                      onClick={() => onUnlockDetail(resultId)}
+                      onClick={async () => {
+                        try {
+                          const supabase = (await import("@/lib/supabaseClient")).supabase
+                          const { data: s } = await supabase.auth.getSession()
+                          const token = s.session?.access_token
+                          if (!token) throw new Error("세션 오류")
+                          await fetch("/api/readings/generate-detail", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({ reading_id: resultId }),
+                          })
+                          onUnlockDetail(resultId)
+                        } catch (e) {
+                          console.error(e)
+                        }
+                      }}
                       className="w-full h-14 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold text-base shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] animate-pulse-glow relative overflow-hidden"
                     >
                       <span className="animate-shimmer absolute inset-0 rounded-2xl" />
