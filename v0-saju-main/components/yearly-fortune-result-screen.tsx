@@ -11,8 +11,6 @@ interface YearlyFortuneResultScreenProps {
   isDetailUnlocked: boolean
   coins: number
   resultId: string
-  resultSummary?: any
-  resultDetail?: any | null
   onUnlockDetail: (resultId: string) => void
   onOpenCoinPurchase: () => void
   onBack: () => void
@@ -24,8 +22,6 @@ export default function YearlyFortuneResultScreen({
   isDetailUnlocked,
   coins,
   resultId,
-  resultSummary,
-  resultDetail,
   onUnlockDetail,
   onOpenCoinPurchase,
   onBack,
@@ -34,27 +30,6 @@ export default function YearlyFortuneResultScreen({
     const date = new Date(dateStr)
     return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
   }
-
-  const scoreToBars = (score: number | undefined) => {
-    const s = typeof score === "number" ? Math.max(0, Math.min(100, score)) : 0
-    return Math.max(1, Math.ceil(s / 20))
-  }
-
-  const bars = {
-    overall: scoreToBars(resultSummary?.scores?.overall),
-    money: scoreToBars(resultSummary?.scores?.money),
-    love: scoreToBars(resultSummary?.scores?.love),
-    health: scoreToBars(resultSummary?.scores?.health),
-  }
-
-  const title = resultSummary?.title ?? `${sajuInput.name}님의 ${year}년 운세`
-  const subtitle = resultSummary?.subtitle ?? `기준일: ${formatDate(new Date().toISOString().slice(0, 10))}`
-
-  const summaryText =
-    (typeof resultSummary?.summary_text === "string" && resultSummary.summary_text) ||
-    (typeof resultSummary?.text === "string" && resultSummary.text) ||
-    `${year}년 운세 요약을 불러오지 못했어요. 다시 시도해주세요.`
-
 
   return (
     <div className="flex min-h-screen flex-col starfield">
@@ -115,7 +90,7 @@ export default function YearlyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= bars.overall ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= 4 ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
@@ -126,7 +101,7 @@ export default function YearlyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= bars.money ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= 3 ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
@@ -137,7 +112,7 @@ export default function YearlyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= bars.overall ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= 4 ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
@@ -148,18 +123,21 @@ export default function YearlyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= bars.love ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= 5 ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{summaryText}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {year}년은 새로운 도전과 성장의 해입니다. 상반기에는 안정을 추구하고, 하반기에는 적극적으로 기회를
+                잡아보세요.
+              </p>
             </CardContent>
           </Card>
 
           {/* Detail Section */}
-          {isDetailUnlocked && resultDetail ? (
+          {isDetailUnlocked ? (
             <Card className="border-none glass shadow-lg">
               <CardContent className="p-5 space-y-4">
                 <div className="flex items-center gap-2">
