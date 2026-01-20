@@ -24,7 +24,8 @@ export async function POST(req: Request) {
   if (userErr || !user_id) return NextResponse.json({ error: "invalid_token" }, { status: 401 });
 
   const body = await req.json();
-  const { profile_id, type = "daily_saju_astrology", target_date = null } = body ?? {};
+  // type: "daily" | "yearly" | "saju" (프론트에서 기존 타입을 유지하면 list/view 로직이 단순해집니다)
+  const { profile_id, type = "daily", target_date = null, target_year = null } = body ?? {};
   if (!profile_id) return NextResponse.json({ error: "missing_profile_id" }, { status: 400 });
 
   const { data: profile, error: pErr } = await supabaseAdmin
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
       calendar_type: profile.calendar_type,
       timezone: "Asia/Seoul",
     },
-    reading: { type, target_date },
+    reading: { type, target_date, target_year },
   };
 
   const reading_id = crypto.randomUUID();
@@ -121,7 +122,7 @@ ${JSON.stringify(input_snapshot)}
     profile_id,
     type,
     target_date,
-    target_year: null,
+    target_year,
     input_snapshot,
     result_summary,
     result_detail: null,

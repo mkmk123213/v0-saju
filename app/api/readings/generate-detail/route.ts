@@ -48,7 +48,17 @@ export async function POST(req: Request) {
     { global: { headers: { Authorization: `Bearer ${token}` } } }
   );
 
-  const { error: unlockErr } = await supabaseUser.rpc("rpc_unlock_detail", { reading_id });
+  // rpc 파라미터명이 프로젝트마다 (reading_id / p_reading_id) 다를 수 있어 안전하게 처리
+  const tryUnlock = async (args: Record<string, any>) => {
+    const { error } = await supabaseUser.rpc("rpc_unlock_detail", args);
+    return error;
+  };
+
+  let unlockErr = await tryUnlock({ reading_id });
+  if (unlockErr && /p_reading_id|parameter|unknown/i.test(unlockErr.message)) {
+    unlockErr = await tryUnlock({ p_reading_id: reading_id });
+  }
+
   if (unlockErr) {
     return NextResponse.json({ error: "unlock_failed", detail: unlockErr.message }, { status: 402 });
   }

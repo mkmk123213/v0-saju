@@ -11,6 +11,8 @@ interface DailyFortuneResultScreenProps {
   isDetailUnlocked: boolean
   coins: number
   resultId: string
+  resultSummary?: any
+  resultDetail?: any | null
   onUnlockDetail: (resultId: string) => void
   onOpenCoinPurchase: () => void
   onBack: () => void
@@ -22,6 +24,8 @@ export default function DailyFortuneResultScreen({
   isDetailUnlocked,
   coins,
   resultId,
+  resultSummary,
+  resultDetail,
   onUnlockDetail,
   onOpenCoinPurchase,
   onBack,
@@ -30,6 +34,23 @@ export default function DailyFortuneResultScreen({
     const d = new Date(dateStr)
     return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`
   }
+
+  const scoreToBars = (score: number | undefined) => {
+    const s = typeof score === "number" ? Math.max(0, Math.min(100, score)) : 0
+    return Math.max(1, Math.ceil(s / 20))
+  }
+
+  const bars = {
+    overall: scoreToBars(resultSummary?.scores?.overall),
+    money: scoreToBars(resultSummary?.scores?.money),
+    love: scoreToBars(resultSummary?.scores?.love),
+    health: scoreToBars(resultSummary?.scores?.health),
+  }
+
+  const summaryText =
+    (typeof resultSummary?.summary_text === "string" && resultSummary.summary_text) ||
+    (typeof resultSummary?.text === "string" && resultSummary.text) ||
+    "운세 요약을 불러오지 못했어요. 다시 시도해주세요."
 
   return (
     <div className="flex min-h-screen flex-col starfield">
@@ -87,7 +108,7 @@ export default function DailyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= 4 ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= bars.overall ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
@@ -98,7 +119,7 @@ export default function DailyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= 3 ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= bars.money ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
@@ -109,45 +130,95 @@ export default function DailyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= 5 ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= bars.love ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">건강운</span>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div
+                        key={i}
+                        className={`h-2 w-6 rounded-full ${i <= bars.health ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                오늘은 새로운 기회가 찾아올 수 있는 날입니다. 주변 사람들과의 소통을 통해 좋은 인연을 만날 수 있으니
-                적극적으로 나서보세요.
-              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{summaryText}</p>
+              {resultSummary?.rokIt && (
+                <div className="pt-2 space-y-1 text-xs text-muted-foreground">
+                  <p>사주 힌트: {resultSummary.rokIt.saju_hint}</p>
+                  <p>점성술 힌트: {resultSummary.rokIt.astro_hint}</p>
+                  <p>조합 힌트: {resultSummary.rokIt.combined_hint}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
           {/* Detail Section */}
-          {isDetailUnlocked ? (
+          {isDetailUnlocked && resultDetail ? (
             <Card className="border-none glass shadow-lg">
               <CardContent className="p-5 space-y-4">
                 <h3 className="font-bold text-card-foreground">상세 운세 풀이</h3>
                 <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
                   <div>
-                    <h4 className="font-medium text-card-foreground mb-2">오전 운세</h4>
-                    <p>
-                      오전에는 집중력이 높아지는 시간입니다. 중요한 업무나 결정은 이 시간대에 처리하는 것이 좋습니다.
-                    </p>
+                    <h4 className="font-medium text-card-foreground mb-2">핵심 테마</h4>
+                    <p>{resultDetail.combined?.core_theme}</p>
                   </div>
                   <div>
-                    <h4 className="font-medium text-card-foreground mb-2">오후 운세</h4>
-                    <p>오후에는 사람들과의 만남이 길할 수 있습니다. 비즈니스 미팅이나 중요한 약속을 잡아보세요.</p>
+                    <h4 className="font-medium text-card-foreground mb-2">오늘의 행동 계획</h4>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {(resultDetail.combined?.action_steps ?? []).map((t: string, i: number) => (
+                        <li key={i}>{t}</li>
+                      ))}
+                    </ul>
                   </div>
                   <div>
-                    <h4 className="font-medium text-card-foreground mb-2">행운의 색상</h4>
-                    <p>노란색, 주황색 계열의 색상이 오늘 행운을 가져다 줄 수 있습니다.</p>
+                    <h4 className="font-medium text-card-foreground mb-2">연애/관계</h4>
+                    <p>{resultDetail.sections?.love?.text}</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {(resultDetail.sections?.love?.tips ?? []).map((t: string, i: number) => (
+                        <li key={i}>{t}</li>
+                      ))}
+                    </ul>
                   </div>
                   <div>
-                    <h4 className="font-medium text-card-foreground mb-2">오늘의 조언</h4>
-                    <p>
-                      긍정적인 마음가짐으로 하루를 시작하세요. 작은 것에도 감사하는 마음을 가지면 더 큰 행운이 찾아올
-                      것입니다.
-                    </p>
+                    <h4 className="font-medium text-card-foreground mb-2">커리어/성과</h4>
+                    <p>{resultDetail.sections?.career?.text}</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {(resultDetail.sections?.career?.tips ?? []).map((t: string, i: number) => (
+                        <li key={i}>{t}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-card-foreground mb-2">재물/소비</h4>
+                    <p>{resultDetail.sections?.money?.text}</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {(resultDetail.sections?.money?.tips ?? []).map((t: string, i: number) => (
+                        <li key={i}>{t}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-card-foreground mb-2">건강/컨디션</h4>
+                    <p>{resultDetail.sections?.health?.text}</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {(resultDetail.sections?.health?.tips ?? []).map((t: string, i: number) => (
+                        <li key={i}>{t}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium text-card-foreground mb-2">행운 키트</h4>
+                    <p>색: {(resultDetail.lucky?.colors ?? []).join(", ")}</p>
+                    <p>숫자: {(resultDetail.lucky?.numbers ?? []).join(", ")}</p>
+                    <p>시간대: {(resultDetail.lucky?.times ?? []).join(", ")}</p>
+                    <p>피하면 좋은 것: {(resultDetail.lucky?.avoid ?? []).join(", ")}</p>
                   </div>
                 </div>
               </CardContent>
@@ -169,40 +240,22 @@ export default function DailyFortuneResultScreen({
                 <div className="glass rounded-xl p-4 space-y-2">
                   <div className="flex items-center gap-2 text-sm text-foreground">
                     <Sparkles className="h-4 w-4 text-amber-500" />
-                    <span>오전/오후 운세</span>
+                    <span>핵심 테마 & 오늘의 행동 계획</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-foreground">
                     <Sparkles className="h-4 w-4 text-amber-500" />
-                    <span>행운의 색상 & 숫자</span>
+                    <span>연애/커리어/재물/건강 섹션</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-foreground">
                     <Sparkles className="h-4 w-4 text-amber-500" />
-                    <span>오늘의 조언</span>
+                    <span>행운 키트 (색/숫자/시간대)</span>
                   </div>
                 </div>
 
                 <div className="pt-2">
                   {coins >= 1 ? (
                     <Button
-                      onClick={async () => {
-                        try {
-                          const supabase = (await import("@/lib/supabaseClient")).supabase
-                          const { data: s } = await supabase.auth.getSession()
-                          const token = s.session?.access_token
-                          if (!token) throw new Error("세션 오류")
-                          await fetch("/api/readings/generate-detail", {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                              Authorization: `Bearer ${token}`,
-                            },
-                            body: JSON.stringify({ reading_id: resultId }),
-                          })
-                          onUnlockDetail(resultId)
-                        } catch (e) {
-                          console.error(e)
-                        }
-                      }}
+                      onClick={() => onUnlockDetail(resultId)}
                       className="w-full h-14 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold text-base shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] animate-pulse-glow relative overflow-hidden"
                     >
                       <span className="animate-shimmer absolute inset-0 rounded-2xl" />
