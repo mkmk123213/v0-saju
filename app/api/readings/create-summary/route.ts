@@ -24,7 +24,6 @@ export async function POST(req: Request) {
   if (userErr || !user_id) return NextResponse.json({ error: "invalid_token" }, { status: 401 });
 
   const body = await req.json();
-  // type: "daily" | "yearly" | "saju" (프론트에서 기존 타입을 유지하면 list/view 로직이 단순해집니다)
   const { profile_id, type = "daily", target_date = null, target_year = null } = body ?? {};
   if (!profile_id) return NextResponse.json({ error: "missing_profile_id" }, { status: 400 });
 

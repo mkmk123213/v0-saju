@@ -371,17 +371,20 @@ export default function Home() {
 
   const handleSajuSubmit = async (input: SajuInput) => {
     try {
+      const { data: s } = await supabase.auth.getSession()
+      console.log("hasSession?", !!s.session)
+
       const { data: u } = await supabase.auth.getUser()
       const uid = u.user?.id
       if (!uid) throw new Error("로그인이 필요해요")
 
       setSajuInput(input)
       const profileId = await upsertProfileFromInput(input)
-
-      // 🔮 AI 요약 생성 API 호출 (사주+점성술 요약)
+      // 🔮 AI 요약 생성 API 호출 (사주+점성술)
       const created = await apiCreateSummary({
         profile_id: profileId,
         type: "saju",
+        target_date: null,
         target_year: defaultYear,
       })
 
@@ -413,22 +416,17 @@ export default function Home() {
 
   const handleUnlockDetail = async (resultId: string) => {
     try {
-      // 🔒 언락 + 상세 생성은 서버 API에서 처리 (rpc + AI)
-      await apiGenerateDetail({ reading_id: resultId })
-
-      await refreshAll()
-
-      const updated = savedResults.find((r) => r.id === resultId)
-      if (updated) setSelectedResult(updated)
-
+      await apiGenerateDetail({ reading_id: resultId });
+      await refreshAll();
+      const updated = savedResults.find((r) => r.id === resultId);
+      if (updated) setSelectedResult(updated);
     } catch (e: any) {
-      // unlock_failed(402) 등: 엽전 부족/결제 필요
-      if (e?.status === 402 || e?.message === "unlock_failed") {
-        handleOpenCoinPurchase()
-        return
+      if (e?.status === 402) {
+        handleOpenCoinPurchase();
+        return;
       }
-      console.error(e)
-      alert("상세 생성에 실패했어요. 잠시 후 다시 시도해주세요.")
+      console.error(e);
+      alert("상세 생성에 실패했어요. 잠시 후 다시 시도해주세요.");
     }
   }
 
@@ -447,11 +445,18 @@ export default function Home() {
 
   const handleDailyFortuneSubmit = async (input: SajuInput) => {
     try {
+      const { data: u } = await supabase.auth.getUser()
+      const uid = u.user?.id
+      if (!uid) throw new Error("로그인이 필요해요")
+
       setSajuInput(input)
       const profileId = await upsertProfileFromInput(input)
       const today = new Date().toISOString().slice(0, 10)
-
-      const created = await apiCreateSummary({ profile_id: profileId, type: "daily", target_date: today })
+      const created = await apiCreateSummary({
+        profile_id: profileId,
+        type: "daily",
+        target_date: today,
+      })
 
       await refreshReadings()
 
@@ -467,7 +472,7 @@ export default function Home() {
       setCurrentScreen("daily-fortune-result")
     } catch (e: any) {
       console.error(e)
-      alert(e?.message ?? "오늘의 운세 생성 중 오류가 발생했어요")
+      alert(e?.message ?? "오늘의 운세 저장 중 오류가 발생했어요")
     }
   }
 
@@ -498,13 +503,19 @@ export default function Home() {
 
   const handleYearlyFortuneSubmit = async (input: SajuInput) => {
     try {
+      const { data: u } = await supabase.auth.getUser()
+      const uid = u.user?.id
+      if (!uid) throw new Error("로그인이 필요해요")
+
       setSajuInput(input)
       const profileId = await upsertProfileFromInput(input)
-
-      const created = await apiCreateSummary({ profile_id: profileId, type: "yearly", target_date: null, target_year: defaultYear })
-
+      const created = await apiCreateSummary({
+        profile_id: profileId,
+        type: "yearly",
+        target_date: null,
+        target_year: defaultYear,
+      })
       await refreshReadings()
-
       setSelectedYearlyResult({
         id: created.reading_id,
         sajuInput: input,
@@ -517,7 +528,7 @@ export default function Home() {
       setCurrentScreen("yearly-fortune-result")
     } catch (e: any) {
       console.error(e)
-      alert(e?.message ?? "연간 운세 생성 중 오류가 발생했어요")
+      alert(e?.message ?? "연간 운세 저장 중 오류가 발생했어요")
     }
   }
 
@@ -576,6 +587,8 @@ export default function Home() {
           isDetailUnlocked={selectedResult?.isDetailUnlocked || false}
           coins={coins}
           resultId={selectedResult?.id || ""}
+          resultSummary={selectedResult?.resultSummary}
+          resultDetail={selectedResult?.resultDetail}
           onUnlockDetail={handleUnlockDetail}
           onOpenCoinPurchase={handleOpenCoinPurchase}
           onBack={handleBackToResultList}

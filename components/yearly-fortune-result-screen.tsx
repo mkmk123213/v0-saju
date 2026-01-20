@@ -47,10 +47,14 @@ export default function YearlyFortuneResultScreen({
     health: scoreToBars(resultSummary?.scores?.health),
   }
 
+  const title = resultSummary?.title ?? `${sajuInput.name}님의 ${year}년 운세`
+  const subtitle = resultSummary?.subtitle ?? `기준일: ${formatDate(new Date().toISOString().slice(0, 10))}`
+
   const summaryText =
     (typeof resultSummary?.summary_text === "string" && resultSummary.summary_text) ||
     (typeof resultSummary?.text === "string" && resultSummary.text) ||
     `${year}년 운세 요약을 불러오지 못했어요. 다시 시도해주세요.`
+
 
   return (
     <div className="flex min-h-screen flex-col starfield">
@@ -133,7 +137,7 @@ export default function YearlyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= bars.health ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= bars.overall ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
@@ -151,13 +155,6 @@ export default function YearlyFortuneResultScreen({
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{summaryText}</p>
-              {resultSummary?.rokIt && (
-                <div className="pt-2 space-y-1 text-xs text-muted-foreground">
-                  <p>사주 힌트: {resultSummary.rokIt.saju_hint}</p>
-                  <p>점성술 힌트: {resultSummary.rokIt.astro_hint}</p>
-                  <p>조합 힌트: {resultSummary.rokIt.combined_hint}</p>
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -169,86 +166,24 @@ export default function YearlyFortuneResultScreen({
                   <Sparkles className="h-5 w-5 text-sky-400" />
                   <h3 className="font-bold text-card-foreground">상세 운세 풀이</h3>
                 </div>
-
                 <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
                   <div>
-                    <h4 className="font-medium text-card-foreground mb-2">올해의 핵심 테마</h4>
-                    <p>{resultDetail.combined?.core_theme}</p>
+                    <h4 className="font-medium text-card-foreground mb-2">1분기 (1-3월)</h4>
+                    <p>
+                      새해의 시작과 함께 새로운 계획을 세우기 좋은 시기입니다. 건강 관리에 신경 쓰고 무리하지 마세요.
+                    </p>
                   </div>
-
                   <div>
-                    <h4 className="font-medium text-card-foreground mb-2">강점</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {(resultDetail.combined?.strengths ?? []).map((t: string, i: number) => (
-                        <li key={i}>{t}</li>
-                      ))}
-                    </ul>
+                    <h4 className="font-medium text-card-foreground mb-2">2분기 (4-6월)</h4>
+                    <p>재물운이 상승하는 시기입니다. 투자나 새로운 사업 기회가 찾아올 수 있으니 신중하게 판단하세요.</p>
                   </div>
-
                   <div>
-                    <h4 className="font-medium text-card-foreground mb-2">주의 포인트</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {(resultDetail.combined?.cautions ?? []).map((t: string, i: number) => (
-                        <li key={i}>{t}</li>
-                      ))}
-                    </ul>
+                    <h4 className="font-medium text-card-foreground mb-2">3분기 (7-9월)</h4>
+                    <p>인간관계가 활발해지는 시기입니다. 좋은 인연을 만날 수 있으니 적극적으로 나서보세요.</p>
                   </div>
-
                   <div>
-                    <h4 className="font-medium text-card-foreground mb-2">올해의 실행 계획</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {(resultDetail.combined?.action_steps ?? []).map((t: string, i: number) => (
-                        <li key={i}>{t}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium text-card-foreground mb-2">연애/관계</h4>
-                    <p>{resultDetail.sections?.love?.text}</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {(resultDetail.sections?.love?.tips ?? []).map((t: string, i: number) => (
-                        <li key={i}>{t}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium text-card-foreground mb-2">커리어/성과</h4>
-                    <p>{resultDetail.sections?.career?.text}</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {(resultDetail.sections?.career?.tips ?? []).map((t: string, i: number) => (
-                        <li key={i}>{t}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium text-card-foreground mb-2">재물/소비</h4>
-                    <p>{resultDetail.sections?.money?.text}</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {(resultDetail.sections?.money?.tips ?? []).map((t: string, i: number) => (
-                        <li key={i}>{t}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium text-card-foreground mb-2">건강/컨디션</h4>
-                    <p>{resultDetail.sections?.health?.text}</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {(resultDetail.sections?.health?.tips ?? []).map((t: string, i: number) => (
-                        <li key={i}>{t}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium text-card-foreground mb-2">행운 키트</h4>
-                    <p>색: {(resultDetail.lucky?.colors ?? []).join(", ")}</p>
-                    <p>숫자: {(resultDetail.lucky?.numbers ?? []).join(", ")}</p>
-                    <p>시간대: {(resultDetail.lucky?.times ?? []).join(", ")}</p>
-                    <p>피하면 좋은 것: {(resultDetail.lucky?.avoid ?? []).join(", ")}</p>
+                    <h4 className="font-medium text-card-foreground mb-2">4분기 (10-12월)</h4>
+                    <p>한 해를 마무리하며 성과를 정리하는 시기입니다. 다음 해를 위한 준비도 함께 시작해보세요.</p>
                   </div>
                 </div>
               </CardContent>
@@ -270,15 +205,15 @@ export default function YearlyFortuneResultScreen({
                 <div className="glass rounded-xl p-4 space-y-2">
                   <div className="flex items-center gap-2 text-sm text-foreground">
                     <Sparkles className="h-4 w-4 text-sky-400" />
-                    <span>올해의 핵심 테마 & 실행 계획</span>
+                    <span>분기별 상세 운세</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-foreground">
                     <Sparkles className="h-4 w-4 text-sky-400" />
-                    <span>연애/커리어/재물/건강 종합</span>
+                    <span>월별 행운의 날</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-foreground">
                     <Sparkles className="h-4 w-4 text-sky-400" />
-                    <span>행운 키트 (색/숫자/시간대)</span>
+                    <span>주의해야 할 시기</span>
                   </div>
                 </div>
 

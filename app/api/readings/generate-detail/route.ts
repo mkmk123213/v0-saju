@@ -53,12 +53,10 @@ export async function POST(req: Request) {
     const { error } = await supabaseUser.rpc("rpc_unlock_detail", args);
     return error;
   };
-
   let unlockErr = await tryUnlock({ reading_id });
   if (unlockErr && /p_reading_id|parameter|unknown/i.test(unlockErr.message)) {
     unlockErr = await tryUnlock({ p_reading_id: reading_id });
   }
-
   if (unlockErr) {
     return NextResponse.json({ error: "unlock_failed", detail: unlockErr.message }, { status: 402 });
   }
