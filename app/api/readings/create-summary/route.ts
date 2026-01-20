@@ -4,18 +4,17 @@ import { createClient } from "@supabase/supabase-js";
 
 function getOpenAI() {
   const key = process.env.OPENAI_API_KEY;
-  if (!key) {
-    // Don't crash the build by throwing at module-eval time.
-    // We'll return a clear 500 error at request time instead.
-    throw new Error("OPENAI_API_KEY_MISSING");
-  }
+  if (!key) throw new Error("OPENAI_API_KEY_MISSING");
   return new OpenAI({ apiKey: key });
 }
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url) throw new Error("SUPABASE_URL_MISSING");
+  if (!serviceKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY_MISSING");
+  return createClient(url, serviceKey);
+}
 
 function getBearerToken(req: Request) {
   const h = req.headers.get("authorization") || "";
@@ -28,12 +27,29 @@ export async function POST(req: Request) {
     const token = getBearerToken(req);
     if (!token) return NextResponse.json({ error: "missing_token" }, { status: 401 });
 
+    let supabaseAdmin;
+    try {
+      supabaseAdmin = getSupabaseAdmin();
+    } catch (e: any) {
+      const code = e?.message ?? "SUPABASE_ENV_MISSING";
+      return NextResponse.json(
+        {
+          error: code,
+          hint:
+            code === "SUPABASE_SERVICE_ROLE_KEY_MISSING"
+              ? "Vercel Environment Variables에 SUPABASE_SERVICE_ROLE_KEY를 추가하세요."
+              : "Vercel Environment Variables에 NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY를 확인하세요.",
+        },
+        { status: 500 }
+      );
+    }
+
     const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
     const user_id = userData?.user?.id;
     if (userErr || !user_id) return NextResponse.json({ error: "invalid_token" }, { status: 401 });
 
     const body = await req.json();
-    // type: "daily" | "yearly" | "saju" (프론트에서 기존 타입을 유지하면 list/view 로직이 단순해집니다)
+    // type: "daily" | "yearly" | "saju"
     const { profile_id, type = "daily", target_date = null, target_year = null } = body ?? {};
     if (!profile_id) return NextResponse.json({ error: "missing_profile_id" }, { status: 400 });
 

@@ -8,10 +8,13 @@ function getOpenAI() {
   return new OpenAI({ apiKey: key });
 }
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url) throw new Error("SUPABASE_URL_MISSING");
+  if (!serviceKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY_MISSING");
+  return createClient(url, serviceKey);
+}
 
 function getBearerToken(req: Request) {
   const h = req.headers.get("authorization") || "";
@@ -23,6 +26,23 @@ export async function POST(req: Request) {
   try {
     const token = getBearerToken(req);
     if (!token) return NextResponse.json({ error: "missing_token" }, { status: 401 });
+
+    let supabaseAdmin;
+    try {
+      supabaseAdmin = getSupabaseAdmin();
+    } catch (e: any) {
+      const code = e?.message ?? "SUPABASE_ENV_MISSING";
+      return NextResponse.json(
+        {
+          error: code,
+          hint:
+            code === "SUPABASE_SERVICE_ROLE_KEY_MISSING"
+              ? "Vercel Environment Variables에 SUPABASE_SERVICE_ROLE_KEY를 추가하세요."
+              : "Vercel Environment Variables에 NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY를 확인하세요.",
+        },
+        { status: 500 }
+      );
+    }
 
     const { data: userData } = await supabaseAdmin.auth.getUser(token);
     const user_id = userData?.user?.id;
@@ -45,11 +65,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ reading_id, result_detail: reading.result_detail, cached: true });
     }
 
-    const supabaseUser = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { global: { headers: { Authorization: `Bearer ${token}` } } }
-    );
+    const anonUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!anonUrl || !anonKey) {
+      return NextResponse.json(
+        { error: "SUPABASE_ANON_ENV_MISSING", hint: "NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY 확인" },
+        { status: 500 }
+      );
+    }
+
+    const supabaseUser = createClient(anonUrl, anonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
 
     // rpc 파라미터명이 프로젝트마다 (reading_id / p_reading_id) 다를 수 있어 안전하게 처리
     const tryUnlock = async (args: Record<string, any>) => {
