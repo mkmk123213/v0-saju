@@ -427,7 +427,7 @@ export default function Home() {
   }
 
   // -----------------------------
-  // Daily fortune flow
+  // Daily fortune flow (AI API integrated)
   // -----------------------------
   const handleStartDailyFortune = () => {
     setSelectedDailyResult(null)
@@ -449,34 +449,39 @@ export default function Home() {
       const profileId = await upsertProfileFromInput(input)
       const today = new Date().toISOString().slice(0, 10)
 
-      const readingId = crypto.randomUUID()
-      const createdAt = new Date().toISOString()
+      // 🔮 AI 요약 생성 API 호출
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) throw new Error("세션 오류")
 
-      const { error } = await supabase.from("readings").insert({
-        id: readingId,
-        user_id: uid,
-        profile_id: profileId,
-        type: "daily",
-        target_date: today,
-        input_snapshot: { ...input, relationship: input.relationship ?? "self" },
-        result_summary: { text: "요약 생성 예정" },
-        result_detail: null,
+      const res = await fetch("/api/readings/create-summary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          profile_id: profileId,
+          type: "daily_saju_astrology",
+          target_date: today,
+        }),
       })
-      if (error) throw error
+      if (!res.ok) throw new Error("요약 생성 실패")
+      const created = await res.json()
 
       await refreshReadings()
 
       setSelectedDailyResult({
-        id: readingId,
+        id: created.reading_id,
         sajuInput: input,
-        createdAt,
+        createdAt: new Date().toISOString(),
         date: today,
         isDetailUnlocked: false,
       })
       setCurrentScreen("daily-fortune-result")
     } catch (e: any) {
       console.error(e)
-      alert(e?.message ?? "오늘의 운세 저장 중 오류가 발생했어요")
+      alert(e?.message ?? "오늘의 운세 생성 중 오류가 발생했어요")
     }
   }
 
