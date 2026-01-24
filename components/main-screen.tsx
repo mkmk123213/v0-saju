@@ -85,7 +85,7 @@ export default function MainScreen({
               </p>
             </div>
             <h2 className="text-xl font-bold text-foreground leading-tight">
-              당신의 <span className="gradient-text">운명</span>을 확인해보세요 🔥
+              당신의 <span className="gradient-text"> TEST! 운명</span>을 확인해보세요 🔥
             </h2>
           </div>
 
