@@ -25,8 +25,6 @@ export default function YearlyFortuneListScreen({
     return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`
   }
 
-}
-
   const formatBirthDate = (dateStr?: string) => {
     if (!dateStr) return "-"
     // birthDate는 보통 YYYY-MM-DD 형태라서 Date 파싱 대신 안전하게 split
@@ -38,8 +36,6 @@ export default function YearlyFortuneListScreen({
     if (Number.isNaN(d.getTime())) return String(dateStr)
     return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`
   }
-
-}
 
   return (
     <div className="flex min-h-screen flex-col starfield">
