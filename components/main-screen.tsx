@@ -45,7 +45,7 @@ export default function MainScreen({
             <Moon className="h-4 w-4 text-primary/80" />
             <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-accent/60 animate-twinkle" />
           </div>
-          <h1 className="text-lg font-bold gradient-text">너의 운명은</h1>
+          <h1 className="text-lg font-bold gradient-text">너의 운명은1 </h1>
         </div>
         <div className="flex items-center gap-2">
           {/* Dark/Light Mode Toggle Button */}
