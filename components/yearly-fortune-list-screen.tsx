@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowLeft, Plus, Star, ChevronRight, User } from "lucide-react"
 import type { YearlyFortuneResult } from "@/app/page"
+import { getSunSignFromBirthDate } from "@/lib/astro"
+import { getZodiacAnimal } from "@/lib/saju-lite"
 
 interface YearlyFortuneListScreenProps {
   results: YearlyFortuneResult[]
@@ -26,7 +28,7 @@ export default function YearlyFortuneListScreen({
   }
 
   const formatBirthDate = (dateStr?: string) => {
-    if (!dateStr) return "-"
+    if (!dateStr) return "생년월일 없음"
     // birthDate는 보통 YYYY-MM-DD 형태라서 Date 파싱 대신 안전하게 split
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
       const [y, mo, da] = dateStr.split("-")
@@ -87,15 +89,36 @@ export default function YearlyFortuneListScreen({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-card-foreground truncate">{result.sajuInput.name}</p>
+                          <p className="font-medium text-card-foreground truncate">{result.sajuInput.name?.trim() ? result.sajuInput.name : "이름 없음"}</p>
                           <span className="shrink-0 rounded-full bg-gradient-to-r from-sky-400 to-cyan-500 px-2 py-0.5 text-xs font-medium text-white">
                             {result.year}년
                           </span>
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {formatBirthDate(result.sajuInput.birthDate)} ·{" "}
-                          {result.sajuInput.gender === "male" ? "남성" : "여성"} · {formatDate(result.createdAt)} 조회
+                          {result.sajuInput.gender === "male" ? "남성" : result.sajuInput.gender === "female" ? "여성" : "미지정"} · {formatDate(result.createdAt)} 조회
                         </p>
+                        {(() => {
+                          const zodiac = result.result_summary?.profile_badges?.zodiac_animal ?? getZodiacAnimal(result.sajuInput.birthDate) ?? null
+                          const sun = result.result_summary?.profile_badges?.sun_sign ?? getSunSignFromBirthDate(result.sajuInput.birthDate) ?? null
+                          return (
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              {zodiac && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                                  <Star className="h-3 w-3 text-primary" />
+                                  {zodiac}
+                                </span>
+                              )}
+                              {sun && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                                  <Sparkles className="h-3 w-3 text-primary" />
+                                  {sun}
+                                </span>
+                              )}
+                            </div>
+                          )
+                        })()}
+
                       </div>
                       <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
                     </CardContent>

@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowLeft, Sun, Lock, Coins, Sparkles, TrendingUp, Heart, Activity, Zap, Star, Clock, Palette, Ban, Shield, MapPin, Hash, Utensils, Briefcase, Target, Users, Moon } from "lucide-react"
 import type { SajuInput } from "@/app/page"
+import { getSunSignFromBirthDate } from "@/lib/astro"
+import { getZodiacAnimal } from "@/lib/saju-lite"
 
 interface DailyFortuneResultScreenProps {
   sajuInput: SajuInput
@@ -47,6 +49,7 @@ export default function DailyFortuneResultScreen({
 
   const scores = resultSummary?.scores ?? {}
   const sections = resultSummary?.sections
+  const sectionEvidence = resultSummary?.section_evidence ?? {}
   const spine = resultSummary?.spine_chill
   const keys = resultSummary?.today_keys
   const keyItems = keys
@@ -70,6 +73,27 @@ export default function DailyFortuneResultScreen({
     "건강운": { icon: Activity, gradient: "from-cyan-400 to-teal-500" },
   }
 
+
+  const displayName = sajuInput?.name?.trim() ? sajuInput.name.trim() : "이름 없음"
+
+  const displayBirthDate = (() => {
+    const bd = sajuInput?.birthDate?.trim()
+    if (!bd) return "생년월일 없음"
+    if (/^\d{4}-\d{2}-\d{2}$/.test(bd)) {
+      const [y, mo, da] = bd.split("-")
+      return `${y}.${mo}.${da}`
+    }
+    return bd
+  })()
+
+  const displayGender =
+    sajuInput?.gender === "male" ? "남성" : sajuInput?.gender === "female" ? "여성" : "미지정"
+
+  const zodiacAnimal = resultSummary?.profile_badges?.zodiac_animal ?? getZodiacAnimal(sajuInput?.birthDate ?? "") ?? null
+  const sunSign = resultSummary?.profile_badges?.sun_sign ?? getSunSignFromBirthDate(sajuInput?.birthDate ?? "") ?? null
+  const todayKeywords: string[] = Array.isArray(resultSummary?.today_keywords) ? resultSummary.today_keywords.slice(0, 3) : []
+  const todayOneLiner: string | null = typeof resultSummary?.today_one_liner === "string" ? resultSummary.today_one_liner : null
+  const sajuChart = resultSummary?.saju_chart?.pillars ? resultSummary.saju_chart : null
   return (
     <div className="flex min-h-screen flex-col starfield">
       {/* Cosmic background */}
@@ -133,7 +157,7 @@ export default function DailyFortuneResultScreen({
                       <div className="absolute -inset-1 bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 rounded-2xl blur-sm opacity-60" />
                       <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg">
                         <span className="text-2xl font-bold text-white">
-                          {sajuInput.name ? sajuInput.name.charAt(0) : "?"}
+                          {displayName ? displayName.charAt(0) : "?"}
                         </span>
                       </div>
                     </div>
@@ -141,15 +165,27 @@ export default function DailyFortuneResultScreen({
                     {/* Name and details */}
                     <div className="flex-1 min-w-0">
                       <h2 className="text-xl font-bold text-card-foreground truncate">
-                        {sajuInput.name || "-"}
+                        {displayName}
                       </h2>
                       <div className="flex flex-wrap items-center gap-2 mt-1.5">
                         <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                          {sajuInput.birthDate || "-"}
+                          {displayBirthDate}
                         </span>
                         <span className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
-                          {sajuInput.gender === "male" ? "남성" : "여성"}
+                          {displayGender}
                         </span>
+                        {zodiacAnimal && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                            <Star className="h-3 w-3 text-amber-500" />
+                            {zodiacAnimal}
+                          </span>
+                        )}
+                        {sunSign && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                            <Sparkles className="h-3 w-3 text-amber-500" />
+                            {sunSign}
+                          </span>
+                        )}
                         {sajuInput.birthTime && sajuInput.birthTime !== "unknown" && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                             <Clock className="h-3 w-3" />
@@ -159,6 +195,27 @@ export default function DailyFortuneResultScreen({
                       </div>
                     </div>
                   </div>
+
+                  {todayKeywords.length > 0 && (
+                    <div className="mt-3 flex flex-wrap justify-center gap-2">
+                      {todayKeywords.map((k) => (
+                        <span
+                          key={k}
+                          className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-400/15 to-orange-500/15 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300"
+                        >
+                          {k}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {todayOneLiner && (
+                    <div className="mt-3 rounded-2xl bg-gradient-to-r from-amber-400/10 to-orange-500/10 px-4 py-3 text-center">
+                      <p className="text-sm font-medium leading-relaxed text-foreground/90">
+                        {todayOneLiner}
+                      </p>
+                    </div>
+                  )}
 
                   {/* Decorative divider */}
                   <div className="mt-4 flex items-center gap-3">
@@ -170,6 +227,70 @@ export default function DailyFortuneResultScreen({
               </CardContent>
             </div>
           </Card>
+
+          {sajuChart && (
+            <Card className="border-none glass shadow-sm">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Moon className="h-4 w-4 text-amber-500" />
+                    <h3 className="text-sm font-semibold text-card-foreground">사주 정보</h3>
+                  </div>
+                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    연·월·일·시
+                  </span>
+                </div>
+
+                {(() => {
+                  const p = sajuChart.pillars
+                  const cols = [
+                    { label: "연주", v: p.year },
+                    { label: "월주", v: p.month },
+                    { label: "일주", v: p.day },
+                    { label: "시주", v: p.hour },
+                  ] as const
+
+                  return (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        {cols.map((c) => (
+                          <div key={c.label} className="space-y-1">
+                            <div className="text-[11px] font-medium text-muted-foreground">{c.label}</div>
+                            <div className="rounded-xl overflow-hidden border border-border/60">
+                              <div className="bg-gradient-to-b from-amber-400/15 to-orange-500/10 px-2 py-2">
+                                <div className="text-lg font-bold text-card-foreground">
+                                  {c.v ? c.v.stem_hanja : "—"}
+                                </div>
+                                <div className="text-[11px] text-muted-foreground">
+                                  {c.v ? `${c.v.stem_yinyang}${c.v.stem_element}` : "정보 없음"}
+                                </div>
+                              </div>
+                              <div className="bg-muted/40 px-2 py-2">
+                                <div className="text-lg font-bold text-card-foreground">
+                                  {c.v ? c.v.branch_hanja : "—"}
+                                </div>
+                                <div className="text-[11px] text-muted-foreground">
+                                  {c.v ? `${c.v.branch_animal} · ${c.v.branch_element}` : "정보 없음"}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {Array.isArray(sajuChart.notes) && sajuChart.notes.length > 0 && (
+                        <div className="rounded-xl bg-muted/40 px-3 py-2">
+                          <p className="text-[11px] leading-relaxed text-muted-foreground">
+                            {sajuChart.notes[0]}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Loading */}
           {isLoading && (
@@ -235,6 +356,36 @@ export default function DailyFortuneResultScreen({
                           <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
                             {text ?? ""}
                           </p>
+                          {Array.isArray((() => {
+                            const t = title as string
+                            const k =
+                              t === "총운" ? "overall" :
+                              t === "금전운" ? "money" :
+                              t === "애정운" ? "love" :
+                              t === "건강운" ? "health" : null
+                            // @ts-ignore
+                            return k ? sectionEvidence?.[k] : null
+                          })()) && (
+                            <ul className="mt-2 space-y-1 text-xs text-muted-foreground/90">
+                              {((() => {
+                                const t = title as string
+                                const k =
+                                  t === "총운" ? "overall" :
+                                  t === "금전운" ? "money" :
+                                  t === "애정운" ? "love" :
+                                  t === "건강운" ? "health" : null
+                                // @ts-ignore
+                                const ev = k ? sectionEvidence?.[k] : []
+                                return Array.isArray(ev) ? ev.slice(0, 2) : []
+                              })()).map((e: any, idx: number) => (
+                                <li key={idx} className="flex gap-2 leading-relaxed">
+                                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500/60 shrink-0" />
+                                  <span className="whitespace-pre-line">{String(e)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+
                         </div>
                       </div>
                     </CardContent>

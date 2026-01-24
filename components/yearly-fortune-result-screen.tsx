@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowLeft, Star, Lock, Coins, Sparkles } from "lucide-react"
 import type { SajuInput } from "@/app/page"
+import { getSunSignFromBirthDate } from "@/lib/astro"
+import { getZodiacAnimal } from "@/lib/saju-lite"
 
 interface YearlyFortuneResultScreenProps {
   sajuInput: SajuInput
@@ -40,6 +42,9 @@ export default function YearlyFortuneResultScreen({
     return Math.min(5, Math.max(0, Math.ceil(s / 20)))
   }
 
+
+  const zodiacAnimal = getZodiacAnimal(sajuInput?.birthDate ?? "")
+  const sunSign = getSunSignFromBirthDate(sajuInput?.birthDate ?? "")
   return (
     <div className="flex min-h-screen flex-col starfield">
       {/* Cosmic background */}
@@ -77,12 +82,28 @@ export default function YearlyFortuneResultScreen({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-bold">{sajuInput.name}님</h2>
+                    <h2 className="text-xl font-bold">{(sajuInput.name?.trim() ? sajuInput.name : "이름 없음")}님</h2>
                     <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium">{year}년 운세</span>
                   </div>
                   <p className="text-sm text-white/80">
-                    {formatDate(sajuInput.birthDate)} · {sajuInput.gender === "male" ? "남성" : "여성"}
+                    {formatDate(sajuInput.birthDate)} · {sajuInput.gender === "male" ? "남성" : sajuInput.gender === "female" ? "여성" : "미지정"}
                   </p>
+                  {(zodiacAnimal || sunSign) && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {zodiacAnimal && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white/90">
+                          <Sparkles className="h-3 w-3" />
+                          {zodiacAnimal}
+                        </span>
+                      )}
+                      {sunSign && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white/90">
+                          <Sparkles className="h-3 w-3" />
+                          {sunSign}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>

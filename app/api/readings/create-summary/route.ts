@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { buildAstroSummary } from "@/lib/astro";
 import { buildSajuLiteSummary } from "@/lib/saju-lite";
+import { buildSajuChart } from "@/lib/saju-chart";
 
 export const runtime = "nodejs";
 
@@ -109,6 +110,7 @@ export async function POST(req: Request) {
 
     const astro_summary = buildAstroSummary(profile.birth_date);
     const saju_summary = buildSajuLiteSummary(profile.birth_date, profile.birth_time_code);
+    const sajuChart = buildSajuChart(profile.birth_date, profile.birth_time_code);
 
     const system = `너는 "사주(동양) + 서양 점성술(별자리)"을 결합해
 짧고 단정한 한국어 운세를 쓰는 전문가야.
@@ -149,11 +151,32 @@ ${target_date}
 
 [출력(JSON 고정 스키마)]
 {
+  "profile_badges": {
+    "zodiac_animal": "띠(예: 말띠)",
+    "sun_sign": "별자리(예: 사자자리)"
+  },
+  "today_keywords": ["#키워드1", "#키워드2", "#키워드3"],
+  "today_one_liner": "today_keywords의 분위기를 합쳐서 만든 오늘 요약 1문장(감성적이되 과장 금지)",
+  "saju_chart": {
+    "pillars": {
+      "year": { "stem_hanja": "", "stem_kor": "", "stem_element": "목|화|토|금|수", "stem_yinyang": "양|음", "branch_hanja": "", "branch_kor": "", "branch_animal": "", "branch_element": "목|화|토|금|수", "branch_yinyang": "양|음", "ganji_hanja": "", "ganji_kor": "" },
+      "month": { "stem_hanja": "", "stem_kor": "", "stem_element": "목|화|토|금|수", "stem_yinyang": "양|음", "branch_hanja": "", "branch_kor": "", "branch_animal": "", "branch_element": "목|화|토|금|수", "branch_yinyang": "양|음", "ganji_hanja": "", "ganji_kor": "" },
+      "day": { "stem_hanja": "", "stem_kor": "", "stem_element": "목|화|토|금|수", "stem_yinyang": "양|음", "branch_hanja": "", "branch_kor": "", "branch_animal": "", "branch_element": "목|화|토|금|수", "branch_yinyang": "양|음", "ganji_hanja": "", "ganji_kor": "" },
+      "hour": null
+    },
+    "notes": []
+  },
   "sections": {
     "overall": "총운(2~3문장, 짧게)",
     "money": "금전운(2~3문장, 짧게)",
     "love": "애정운(2~3문장, 짧게)",
     "health": "건강운(2~3문장, 짧게)"
+  },
+  "section_evidence": {
+    "overall": ["근거 1(짧게)", "근거 2(짧게)"],
+    "money": ["근거 1(짧게)", "근거 2(짧게)"],
+    "love": ["근거 1(짧게)", "근거 2(짧게)"],
+    "health": ["근거 1(짧게)", "근거 2(짧게)"]
   },
   "spine_chill": {
     "prediction": "오늘 실제로 벌어질 가능성이 높은 관찰 1문장(20~45자)",
@@ -163,8 +186,8 @@ ${target_date}
   "saju_brief": "사주 요약 2~3문장(짧게)",
   "astro_brief": "별자리 요약 2~3문장(짧게)",
   "evidence": {
-    "saju": ["근거 1(짧게)", "근거 2(짧게)"],
-    "astro": ["근거 1(짧게)", "근거 2(짧게)"],
+    "saju": ["사주 근거 1(짧게)", "사주 근거 2(짧게)"],
+    "astro": ["별자리 근거 1(짧게)", "별자리 근거 2(짧게)"],
     "today": ["오늘 흐름 근거 1(짧게)"]
   },
   "today_keys": {
@@ -182,7 +205,20 @@ ${target_date}
 }
 
 세부 규칙:
+- profile_badges는 서버 제공 요약에서 가져와: 띠(말띠 등), 태양궁(사자자리 등).
+- today_keywords는 '한눈에 꽂히는' 3개 해시태그:
+  - 형식: '#' + 공백 없는 한국어(2~9자), 총 3개
+  - 중복/유사어 금지, 각각 역할 분리(주의/기회/태도)
+  - 예: #말조심이보약 #아이디어폭발 #내적성장데이
+- today_one_liner는 today_keywords 3개를 모두 참고해서, 오늘 하루를 요약하는 시적인 1문장으로 써.
+  - 예시 느낌: "안개 낀 아침을 지나 오후의 무지개를 기다리는 당신에게 건네는 따뜻한 주파수"
+  - 키워드 문자열(#...)을 문장에 그대로 박지 말고, 의미/분위기로 녹여.
+  - 과장/예언/공포 조장 금지. 25~60자.
+- saju_chart는 반드시 위 구조를 유지해 출력해(값은 서버에서 최종 보정된다).
 - sections 4개는 각각 2~3문장만. 짧고 단정하게.
+- section_evidence는 각 섹션당 2개씩:
+  - 반드시 '사주 요약(연주/오행/띠/리듬/집중)' 또는 '별자리 요약(강점/주의 키워드)' 중 최소 1개 요소를 포함해.
+  - "왜 그렇게 말하는지"가 보이게 원인→현상 형태로.
 - spine_chill은 반드시 포함:
   - prediction: 오늘 실제로 겪을 법한 구체 상황 1개(연락/일정/지출/실수/만남 중 하나).
   - time_window: 오전/점심/오후/저녁 중 하나로 고정.
@@ -259,6 +295,14 @@ target_year: ${target_year ?? "없음"}
       result_summary = typeof content === "string" ? JSON.parse(content) : content;
     } catch {
       result_summary = { raw: content };
+    }
+
+    if (type === "daily") {
+      // 서버 계산 사주 표(연/월/일/시) 주입
+      if (sajuChart) {
+        result_summary = result_summary ?? {};
+        result_summary.saju_chart = sajuChart;
+      }
     }
 
     const reading_id = crypto.randomUUID();

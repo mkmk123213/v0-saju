@@ -31,7 +31,7 @@ export default function ResultScreen({
   onBack,
 }: ResultScreenProps) {
   const formatDate = (dateStr?: string) => {
-    if (!dateStr) return "-"
+    if (!dateStr) return "생년월일 없음"
     // birthDate는 보통 YYYY-MM-DD 형태라서 안전하게 split
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
       const [y, mo, da] = dateStr.split("-")
@@ -42,6 +42,9 @@ export default function ResultScreen({
     return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
   }
 
+
+  const zodiacAnimal = getZodiacAnimal(sajuInput?.birthDate ?? "")
+  const sunSign = getSunSignFromBirthDate(sajuInput?.birthDate ?? "")
   return (
     <div className="flex min-h-screen flex-col relative overflow-hidden starfield">
       {/* Cosmic background decoration */}
@@ -91,7 +94,7 @@ export default function ResultScreen({
                   <User className="h-5 w-5 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-xl font-bold text-white">{sajuInput.name || "이름 없음"}</p>
+                  <p className="truncate text-xl font-bold text-white">{sajuInput.name?.trim() ? sajuInput.name : "이름 없음"}</p>
                   <p className="mt-0.5 text-xs text-white/80">선택한 프로필의 사주 결과</p>
                 </div>
               </div>
@@ -122,6 +125,22 @@ export default function ResultScreen({
                   </div>
                   <p className="mt-1 text-sm font-semibold text-foreground">{sajuInput.calendarType === "solar" ? "양력" : "음력"}</p>
                 </div>
+              { (zodiacAnimal || sunSign) && (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {zodiacAnimal && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                      <Stars className="h-3.5 w-3.5 text-primary" />
+                      {zodiacAnimal}
+                    </span>
+                  )}
+                  {sunSign && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                      {sunSign}
+                    </span>
+                  )}
+                </div>
+              )}
               </div>
             </CardContent>
           </Card>
@@ -129,7 +148,7 @@ export default function ResultScreen({
           {/* Four Pillars */}
           <Card className="border-none glass shadow-lg overflow-hidden">
             <div className="gradient-cosmic px-5 py-3">
-              <h3 className="font-bold text-white text-center">사주팔자</h3>
+              <div className="flex items-center justify-center gap-2"><h3 className="font-bold text-white text-center">사주팔자</h3><span className="rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold text-white/90">예시</span></div>
             </div>
             <CardContent className="p-5">
               <div className="grid grid-cols-4 gap-2 text-center">
