@@ -81,11 +81,11 @@ export default function MainScreen({
             <div className="flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-primary/60 animate-twinkle" />
               <p className="text-xs text-muted-foreground font-medium">
-                {userName ? `${userName}님 환영합니다` : "환영합니다"}
+                {userName ? `${userName}님 환영합니다 TEST! ` : "환영합니다"}
               </p>
             </div>
             <h2 className="text-xl font-bold text-foreground leading-tight">
-              당신의 <span className="gradient-text"> TEST! 운명</span>을 확인해보세요 🔥
+              당신의 <span className="gradient-text"> 운명</span>을 확인해보세요 🔥
             </h2>
           </div>
 
