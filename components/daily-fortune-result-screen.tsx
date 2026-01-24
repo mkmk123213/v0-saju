@@ -122,53 +122,22 @@ export default function DailyFortuneResultScreen({
               </div>
 
               <div className="relative p-5">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
-                      <Sun className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold">{sajuInput.name}</h2>
-                      <p className="text-sm text-white/80">
-                        {sajuInput.birthDate} · {sajuInput.gender === "male" ? "남" : "여"}
-                        {sajuInput.birthTime && sajuInput.birthTime !== "unknown" ? ` · ${sajuInput.birthTime}` : ""}
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
+                    <Sun className="h-6 w-6 text-white" />
                   </div>
-                  <div className="text-right glass rounded-xl px-3 py-2 bg-white/10">
-                    <p className="text-[10px] text-white/70 font-medium">보유 엽전</p>
-                    <div className="flex items-center gap-1 justify-end">
-                      <Coins className="h-3.5 w-3.5 text-yellow-200" />
-                      <p className="text-lg font-bold">{coins}</p>
-                    </div>
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold">{sajuInput.name}</h2>
+                    <p className="text-sm text-white/80">
+                      {sajuInput.birthDate} · {sajuInput.gender === "male" ? "남" : "여"}
+                      {sajuInput.birthTime && sajuInput.birthTime !== "unknown" ? ` · ${sajuInput.birthTime}` : ""}
+                    </p>
                   </div>
                 </div>
 
-                {/* Score pills - Enhanced */}
-                <div className="mt-5 grid grid-cols-4 gap-2">
-                  {[
-                    ["총운", scores.overall, Star],
-                    ["금전", scores.money, Coins],
-                    ["애정", scores.love, Heart],
-                    ["건강", scores.health, Activity],
-                  ].map(([label, score, Icon]) => {
-                    const pills = scoreToPills(score as number)
-                    const IconComponent = Icon as React.ElementType
-                    return (
-                      <div key={label as string} className="rounded-2xl bg-white/15 backdrop-blur-sm p-3 text-center">
-                        <IconComponent className="h-4 w-4 mx-auto text-white/90 mb-1" />
-                        <div className="text-[11px] text-white/80 font-medium">{label as string}</div>
-                        <div className="mt-1.5 flex justify-center gap-1">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <span
-                              key={i}
-                              className={`h-2 w-2 rounded-full transition-all ${i < pills ? "bg-white shadow-sm shadow-white/50" : "bg-white/25"}`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  })}
+                {/* Date display */}
+                <div className="mt-4 rounded-2xl bg-white/15 backdrop-blur-sm p-4 text-center">
+                  <p className="text-white/70 text-sm">{date}의 운세</p>
                 </div>
               </div>
             </CardContent>
@@ -201,14 +170,16 @@ export default function DailyFortuneResultScreen({
           {sections ? (
             <div className="space-y-3">
               {[
-                ["총운", sections.overall],
-                ["금전운", sections.money],
-                ["애정운", sections.love],
-                ["건강운", sections.health],
-              ].map(([title, text]) => {
+                ["총운", sections.overall, scores.overall],
+                ["금전운", sections.money, scores.money],
+                ["애정운", sections.love, scores.love],
+                ["건강운", sections.health, scores.health],
+              ].map(([title, text, score]) => {
                 const config = sectionIcons[title as keyof typeof sectionIcons]
                 const IconComponent = config?.icon || Star
                 const gradient = config?.gradient || "from-amber-400 to-orange-500"
+                const pills = scoreToPills(score as number)
+                const scoreNum = typeof score === "number" ? score : 0
                 return (
                   <Card key={title as string} className="border-none glass shadow-md card-mystical overflow-hidden">
                     <CardContent className="p-0">
@@ -217,9 +188,21 @@ export default function DailyFortuneResultScreen({
                           <IconComponent className="h-5 w-5 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
+                          <div className="flex items-center justify-between mb-2">
                             <h3 className="font-bold text-card-foreground">{title as string}</h3>
-                            <div className={`h-1 flex-1 rounded-full bg-gradient-to-r ${gradient} opacity-30`} />
+                            <div className="flex items-center gap-2">
+                              <div className="flex gap-1">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <span
+                                    key={i}
+                                    className={`h-2 w-2 rounded-full transition-all ${i < pills ? `bg-gradient-to-br ${gradient}` : "bg-muted"}`}
+                                  />
+                                ))}
+                              </div>
+                              <span className={`text-xs font-bold bg-gradient-to-r ${gradient} bg-clip-text text-transparent`}>
+                                {scoreNum}점
+                              </span>
+                            </div>
                           </div>
                           <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
                             {text ?? ""}
