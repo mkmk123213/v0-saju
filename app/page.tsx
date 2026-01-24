@@ -128,6 +128,7 @@ export default function Home() {
   // API 중복 호출 방지
   const [isCreatingSummary, setIsCreatingSummary] = useState(false)
   const [isGeneratingDetail, setIsGeneratingDetail] = useState(false)
+  const [isCreatingDaily, setIsCreatingDaily] = useState(false)
 
   const now = useMemo(() => new Date(), [])
   const defaultYear = useMemo(() => now.getFullYear(), [now])
@@ -376,6 +377,7 @@ export default function Home() {
   const handleSajuSubmit = async (input: SajuInput) => {
     if (isCreatingSummary) return
     setIsCreatingSummary(true)
+    setIsCreatingDaily(true)
     try {
       const { data: u } = await supabase.auth.getUser()
       const uid = u.user?.id
@@ -411,6 +413,7 @@ export default function Home() {
       }
     } finally {
       setIsCreatingSummary(false)
+      setIsCreatingDaily(false)
     }
   }
 
@@ -462,6 +465,7 @@ export default function Home() {
   const handleDailyFortuneSubmit = async (input: SajuInput) => {
     if (isCreatingSummary) return
     setIsCreatingSummary(true)
+    setIsCreatingDaily(true)
     try {
       const { data: u } = await supabase.auth.getUser()
       const uid = u.user?.id
@@ -498,6 +502,7 @@ export default function Home() {
       }
     } finally {
       setIsCreatingSummary(false)
+      setIsCreatingDaily(false)
     }
   }
 
@@ -530,6 +535,7 @@ export default function Home() {
   const handleYearlyFortuneSubmit = async (input: SajuInput) => {
     if (isCreatingSummary) return
     setIsCreatingSummary(true)
+    setIsCreatingDaily(true)
     try {
       const { data: u } = await supabase.auth.getUser()
       const uid = u.user?.id
@@ -565,6 +571,7 @@ export default function Home() {
       }
     } finally {
       setIsCreatingSummary(false)
+      setIsCreatingDaily(false)
     }
   }
 
@@ -652,6 +659,7 @@ export default function Home() {
           savedProfiles={savedProfiles}
           onSubmit={handleDailyFortuneSubmit}
           onBack={() => setCurrentScreen("daily-fortune-list")}
+          isLoading={isCreatingDaily}
         />
       )}
 

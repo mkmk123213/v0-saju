@@ -10,13 +10,9 @@ function env(name: string): string | undefined {
   return typeof v === "string" ? v.trim() : undefined;
 }
 
-function getServiceRoleKey() {
-  return env("SUPABASE_SERVICE_ROLE_KEY");
-}
-
 function getSupabaseAdmin() {
   const url = env("NEXT_PUBLIC_SUPABASE_URL") || env("SUPABASE_URL");
-  const key = getServiceRoleKey();
+  const key = env("SUPABASE_SERVICE_ROLE_KEY");
   if (!url) throw new Error("SUPABASE_URL_MISSING");
   if (!key) throw new Error("SUPABASE_SERVICE_ROLE_KEY_MISSING");
   return createClient(url, key, { auth: { persistSession: false } });
@@ -32,7 +28,7 @@ async function sleep(ms: number) {
 
 /**
  * Retry on transient errors (429 rate limit, 5xx).
- * NOTE: Do NOT retry on insufficient_quota.
+ * Do NOT retry on insufficient_quota.
  */
 async function fetchWithRetry(fetcher: () => Promise<Response>, retries = 3) {
   let lastRes: Response | null = null;
@@ -46,13 +42,10 @@ async function fetchWithRetry(fetcher: () => Promise<Response>, retries = 3) {
     const status = res.status;
     const text = await res.clone().text();
 
-    // insufficient_quota는 재시도해도 해결 안 됨
-    if (status === 429 && text.includes("insufficient_quota")) {
-      return res;
-    }
+    if (status === 429 && text.includes("insufficient_quota")) return res;
 
     if (status === 429 || status >= 500) {
-      await sleep(500 * Math.pow(2, i)); // 0.5s, 1s, 2s
+      await sleep(500 * Math.pow(2, i));
       continue;
     }
 
@@ -88,20 +81,7 @@ export async function POST(req: Request) {
 
     if (pErr || !profile) return NextResponse.json({ error: "profile_not_found" }, { status: 404 });
 
-    const input_snapshot = {
-      profile: {
-        name: profile.name,
-        birth_date: profile.birth_date,
-        birth_time_code: profile.birth_time_code,
-        gender: profile.gender,
-        relationship: profile.relationship,
-        calendar_type: profile.calendar_type,
-        timezone: "Asia/Seoul",
-      },
-      reading: { type, target_date, target_year },
-    };
-
-    // ✅ 캐시(완전 동일 결과): 동일 프로필/타입/날짜(또는 연도)로 이미 생성된 요약이 있으면 OpenAI를 호출하지 않고 그대로 반환
+    // ✅ Cache: 동일 프로필/타입/날짜(또는 연도)로 이미 생성된 요약이 있으면 OpenAI 호출 없이 반환
     const cacheBase = supabaseAdmin
       .from("readings")
       .select("id,result_summary,created_at")
@@ -112,44 +92,45 @@ export async function POST(req: Request) {
     const isDaily = type === "daily";
     const isYearlyLike = type === "yearly" || type === "saju";
 
-    const cachedRes =
+    const cached =
       isDaily && target_date
         ? await cacheBase.eq("target_date", target_date).order("created_at", { ascending: false }).limit(1).maybeSingle()
         : isYearlyLike && target_year
           ? await cacheBase.eq("target_year", target_year).order("created_at", { ascending: false }).limit(1).maybeSingle()
           : await cacheBase.order("created_at", { ascending: false }).limit(1).maybeSingle();
 
-    // 🔥 핵심: 캐시 히트 시에도 프론트 계약( reading_id / result_summary )을 100% 맞춰서 반환
-    if (cachedRes?.data?.id && cachedRes.data.result_summary) {
+    if (cached?.data?.id && cached.data.result_summary) {
       return NextResponse.json({
-        reading_id: cachedRes.data.id,
-        result_summary: cachedRes.data.result_summary,
+        reading_id: cached.data.id,
+        result_summary: cached.data.result_summary,
+        cached: true,
       });
     }
 
-    // ✅ 서버에서 계산/요약(짧게)해 프롬프트에 주입
     const astro_summary = buildAstroSummary(profile.birth_date);
     const saju_summary = buildSajuLiteSummary(profile.birth_date, profile.birth_time_code);
 
     const system = `너는 "사주(동양) + 서양 점성술(별자리)"을 결합해
-짧고 단정한 한국어 운세를 쓰는 전문가다.
+짧고 단정한 한국어 운세를 쓰는 전문가야.
+
+말투:
+- 무조건 반말체, 친근하고 스윗하게. 존댓말 금지.
 
 목표:
-- 읽는 사람이 "소름"이라고 느낄 만큼 구체적이고 정확해 보이게 쓴다.
+- 읽는 사람이 "소름"이라고 느낄 만큼 구체적이고 정확해 보이게 써.
 - 공포 조장/단정적 불행 예언/의학·법률 단정은 금지.
-- 오늘 하루에 초점을 맞춘 실천 조언을 준다.
+- 오늘 하루에 초점을 맞춘 실천 조언을 줘.
 
 재현성 규칙(매우 중요):
-- 입력이 완전히 같으면 결과 문장/표현/선택을 최대한 동일하게 유지한다.
+- 입력이 완전히 같으면 결과 문장/표현/선택을 최대한 동일하게 유지해.
 - 동의어 바꿔치기/말투 변주/랜덤 예시 변경 금지.
-- JSON 키 순서와 필드 구조를 절대 바꾸지 마라.
-- JSON만 출력(설명문/마크다운/코드블록 금지).
-`;
+- JSON 키 순서와 필드 구조를 절대 바꾸지 마.
+- JSON만 출력(설명문/마크다운/코드블록 금지).`;
 
-    let userPrompt: string;
+    let userPrompt = "";
 
     if (type === "daily") {
-      userPrompt = `아래 입력으로 "오늘의 운세"를 작성해라.
+      userPrompt = `아래 입력으로 "오늘의 운세"를 작성해.
 
 [프로필]
 이름: ${profile.name}
@@ -168,60 +149,67 @@ ${target_date}
 
 [출력(JSON 고정 스키마)]
 {
-  "daily_summary": "5~7문장. 단정한 톤. 소름 포인트 1개 포함(일상에서 바로 확인 가능한 관찰).",
-  "saju_brief": "2~3문장.",
-  "astro_brief": "2~3문장.",
+  "sections": {
+    "overall": "총운(2~3문장, 짧게)",
+    "money": "금전운(2~3문장, 짧게)",
+    "love": "애정운(2~3문장, 짧게)",
+    "health": "건강운(2~3문장, 짧게)"
+  },
+  "spine_chill": {
+    "prediction": "오늘 실제로 벌어질 가능성이 높은 관찰 1문장(20~45자)",
+    "time_window": "오전|점심|오후|저녁 중 하나",
+    "verification": "사용자가 오늘 확인할 체크포인트 1개"
+  },
+  "saju_brief": "사주 요약 2~3문장(짧게)",
+  "astro_brief": "별자리 요약 2~3문장(짧게)",
   "evidence": {
     "saju": ["근거 1(짧게)", "근거 2(짧게)"],
     "astro": ["근거 1(짧게)", "근거 2(짧게)"],
-    "today": ["오늘 날짜/요일/흐름 기반 근거 1(짧게)"]
+    "today": ["오늘 흐름 근거 1(짧게)"]
   },
   "today_keys": {
-    "color": { "value": "오늘의 색깔", "why": "한 줄 근거" },
-    "taboo": { "value": "오늘의 금기", "why": "한 줄 근거" },
-    "talisman": { "value": "오늘의 부적", "why": "한 줄 근거" },
-    "lucky_spot": { "value": "럭키 스팟", "why": "한 줄 근거" },
-    "number": { "value": "오늘의 숫자", "why": "한 줄 근거" },
-    "food": { "value": "오늘의 음식", "why": "한 줄 근거" },
-    "item": { "value": "오늘의 소지품", "why": "한 줄 근거" },
-    "action": { "value": "오늘의 실천", "why": "한 줄 근거" },
-    "helper": { "value": "오늘의 귀인(사람유형)", "why": "한 줄 근거" }
+    "color": { "value": "색(짧게)", "why": "키워드 1개 포함" },
+    "taboo": { "value": "금기(짧게)", "why": "키워드 1개 포함" },
+    "talisman": { "value": "부적(짧게)", "why": "키워드 1개 포함" },
+    "lucky_spot": { "value": "스팟(짧게)", "why": "키워드 1개 포함" },
+    "number": { "value": "숫자", "why": "키워드 1개 포함" },
+    "food": { "value": "음식(짧게)", "why": "키워드 1개 포함" },
+    "item": { "value": "소지품(짧게)", "why": "키워드 1개 포함" },
+    "action": { "value": "실천(짧게)", "why": "키워드 1개 포함" },
+    "helper": { "value": "귀인(사람유형,짧게)", "why": "키워드 1개 포함" }
   },
-  "scores": { "overall": 0, "love": 0, "money": 0, "health": 0 }
+  "scores": { "overall": 0, "money": 0, "love": 0, "health": 0 }
 }
 
 세부 규칙:
+- sections 4개는 각각 2~3문장만. 짧고 단정하게.
+- spine_chill은 반드시 포함:
+  - prediction: 오늘 실제로 겪을 법한 구체 상황 1개(연락/일정/지출/실수/만남 중 하나).
+  - time_window: 오전/점심/오후/저녁 중 하나로 고정.
+  - verification: 사용자가 오늘 "맞았다/아니다" 판단 가능한 체크포인트 1개.
+- 흔한 문장("긍정적으로 생각해"류) 금지. 더 구체적으로.
+- today_keys.value는 1~8단어로 짧게. why는 1문장.
+- today_keys.why는 사주/별자리 키워드(예: 꾸준함/도전/과신/리듬/집중 등) 중 최소 1개 포함.
+- 금기: 오늘 하루 "하지 말아야 할 구체 행동"으로.
+- 실천: 5~15분 안에 가능한 행동으로.
+- 귀인: 사람유형 + 등장 장면(짧게)로.
 - 점수는 0~100 정수.
-- 전부 한국어.
-- 흔한 문장(“긍정적으로 생각하세요” 류) 금지.
-- 근거는 짧고 명확하게.
-- 귀인은 "직군/관계/분위기"로 제시(예: '말이 짧은 선배', '침착한 동료', '늦은 시간에 연락오는 친구').
-- 금기는 오늘 하루에 적용 가능한 행동으로.
-- 부적은 과장 주술 대신 '상징물/패턴/짧은 문구'로.
-- JSON 외 텍스트 출력 금지.
-`;
+- JSON 외 텍스트 출력 금지.`;
     } else {
-      // 기존 타입(예: yearly/saju)도 동작은 유지. (너가 지금은 daily 먼저 잡는 중이라 최소 변경)
-      userPrompt = `아래 입력으로 운세 요약을 작성해라. JSON만 출력.
-이름: ${profile.name}
-생년월일: ${profile.birth_date}
-출생시간: ${profile.birth_time_code ?? "모름"}
+      userPrompt = `다음 입력으로 운세 요약을 JSON으로 생성해줘.
 타입: ${type}
 target_date: ${target_date ?? "없음"}
 target_year: ${target_year ?? "없음"}
 
 출력(JSON):
 {
-  "summary_text": "5~7문장 요약",
+  "summary_text": "5~7문장 요약(반말체)",
   "scores": { "overall": 0, "love": 0, "money": 0, "health": 0 }
-}
-`;
+}`;
     }
 
     const openaiKey = getOpenAIKey();
-    if (!openaiKey) {
-      return NextResponse.json({ error: "OPENAI_API_KEY_MISSING" }, { status: 500 });
-    }
+    if (!openaiKey) return NextResponse.json({ error: "OPENAI_API_KEY_MISSING" }, { status: 500 });
 
     const openaiRes = await fetchWithRetry(() =>
       fetch("https://api.openai.com/v1/chat/completions", {
@@ -249,13 +237,11 @@ target_year: ${target_year ?? "없음"}
     if (!openaiRes.ok) {
       const errText = await openaiRes.text();
 
-      // quota 에러 친절 처리
       if (openaiRes.status === 429 && errText.includes("insufficient_quota")) {
         return NextResponse.json(
           {
             error: "OPENAI_INSUFFICIENT_QUOTA",
-            message:
-              "OpenAI API 크레딧/결제 한도가 부족해요. OpenAI 콘솔에서 Billing/Usage 한도를 확인해주세요.",
+            message: "OpenAI API 크레딧/결제 한도가 부족해. OpenAI 콘솔에서 Billing/Usage를 확인해줘.",
             detail: errText,
           },
           { status: 402 }
@@ -272,42 +258,47 @@ target_year: ${target_year ?? "없음"}
     try {
       result_summary = typeof content === "string" ? JSON.parse(content) : content;
     } catch {
-      // JSON 강제인데도 실패하면 그대로 저장
       result_summary = { raw: content };
     }
 
-    // readings INSERT (SELECT 권한 이슈 피하려면 service role로 가능)
     const reading_id = crypto.randomUUID();
-
-    const insertPayload: any = {
-      id: reading_id,
-      user_id,
-      profile_id,
-      type,
-      target_date,
-      target_year,
-      input_snapshot,
-      result_summary,
+    const input_snapshot = {
+      profile: {
+        name: profile.name,
+        birth_date: profile.birth_date,
+        birth_time_code: profile.birth_time_code,
+        gender: profile.gender,
+        relationship: profile.relationship,
+        calendar_type: profile.calendar_type,
+        timezone: "Asia/Seoul",
+      },
+      reading: { type, target_date, target_year },
+      server_summaries: { saju_summary, astro_summary },
     };
 
     const { data: saved, error: insErr } = await supabaseAdmin
       .from("readings")
-      .insert(insertPayload)
+      .insert({
+        id: reading_id,
+        user_id,
+        profile_id,
+        type,
+        target_date,
+        target_year,
+        input_snapshot,
+        result_summary,
+      })
       .select("id,result_summary")
       .single();
 
-    if (insErr) {
-      // insert 실패 시에도 프론트 계약은 유지
-      return NextResponse.json(
-        { error: "DB_INSERT_FAILED", detail: String(insErr?.message ?? insErr) },
-        { status: 500 }
-      );
+    if (insErr || !saved) {
+      return NextResponse.json({ error: "DB_INSERT_FAILED", detail: String(insErr?.message ?? insErr) }, { status: 500 });
     }
 
-    // ✅ 항상 동일한 응답 형태
     return NextResponse.json({
       reading_id: saved.id,
       result_summary: saved.result_summary,
+      cached: false,
     });
   } catch (e: any) {
     return NextResponse.json({ error: "UNEXPECTED", detail: String(e?.message ?? e) }, { status: 500 });

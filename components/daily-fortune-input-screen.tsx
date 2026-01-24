@@ -14,6 +14,7 @@ interface DailyFortuneInputScreenProps {
   savedProfiles: SavedProfile[]
   onSubmit: (input: SajuInput) => void
   onBack: () => void
+  isLoading?: boolean
 }
 
 const relationshipOptions: { value: Relationship; label: string }[] = [
@@ -263,7 +264,7 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
         <div className="mx-auto max-w-sm">
           <Button
             onClick={handleSubmit}
-            disabled={!isValid}
+            disabled={!isValid || !!isLoading}
             className="h-14 w-full rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white text-base font-medium shadow-lg disabled:opacity-50"
           >
             결과 보기

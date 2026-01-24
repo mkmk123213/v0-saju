@@ -13,6 +13,7 @@ interface DailyFortuneResultScreenProps {
   resultId: string
   resultSummary?: any
   resultDetail?: any | null
+  isLoading?: boolean
   onUnlockDetail: (resultId: string) => void
   onOpenCoinPurchase: () => void
   onBack: () => void
@@ -26,19 +27,33 @@ export default function DailyFortuneResultScreen({
   resultId,
   resultSummary,
   resultDetail,
+  isLoading,
   onUnlockDetail,
   onOpenCoinPurchase,
   onBack,
 }: DailyFortuneResultScreenProps) {
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr)
-    return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`
-  }
-
   const scoreToPills = (score?: number) => {
     const s = typeof score === "number" ? Math.max(0, Math.min(100, score)) : 0
     return Math.min(5, Math.max(0, Math.ceil(s / 20)))
   }
+
+  const scores = resultSummary?.scores ?? {}
+  const sections = resultSummary?.sections
+  const spine = resultSummary?.spine_chill
+  const keys = resultSummary?.today_keys
+  const keyItems = keys
+    ? ([
+        ["색깔", keys.color],
+        ["금기", keys.taboo],
+        ["부적", keys.talisman],
+        ["스팟", keys.lucky_spot],
+        ["숫자", keys.number],
+        ["음식", keys.food],
+        ["소지품", keys.item],
+        ["실천", keys.action],
+        ["귀인", keys.helper],
+      ] as const)
+    : ([] as const)
 
   return (
     <div className="flex min-h-screen flex-col starfield">
@@ -69,191 +84,166 @@ export default function DailyFortuneResultScreen({
           <Card className="border-none bg-gradient-to-br from-amber-400 to-orange-500 shadow-xl overflow-hidden">
             <CardContent className="p-5 text-white relative">
               <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
+                <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/10 blur-[40px]" />
+                <div className="absolute bottom-0 left-0 w-40 h-40 rounded-full bg-white/5 blur-[50px]" />
               </div>
-              <div className="flex items-center gap-4 relative">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-lg">
-                  <Sun className="h-8 w-8" />
+
+              <div className="relative">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-bold">{sajuInput.name}</h2>
+                    <p className="text-sm text-white/80">
+                      {sajuInput.birthDate} · {sajuInput.gender === "male" ? "남" : "여"}
+                      {sajuInput.birthTime && sajuInput.birthTime !== "unknown" ? ` · ${sajuInput.birthTime}` : ""}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-white/80">보유 엽전</p>
+                    <p className="text-lg font-bold">{coins}닢</p>
+                  </div>
                 </div>
+
+                {/* Score pills */}
+                <div className="mt-4 grid grid-cols-4 gap-2">
+                  {[
+                    ["총운", scores.overall],
+                    ["금전", scores.money],
+                    ["애정", scores.love],
+                    ["건강", scores.health],
+                  ].map(([label, score]) => {
+                    const pills = scoreToPills(score as number)
+                    return (
+                      <div key={label} className="rounded-xl bg-white/10 p-2 text-center">
+                        <div className="text-[11px] text-white/80">{label}</div>
+                        <div className="mt-1 flex justify-center gap-0.5">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <span
+                              key={i}
+                              className={`h-1.5 w-1.5 rounded-full ${i < pills ? "bg-white" : "bg-white/25"}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Loading */}
+          {isLoading && (
+            <div className="rounded-2xl border p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
                 <div>
-                  <h2 className="text-xl font-bold">{sajuInput.name}님의 오늘의 운세</h2>
-                  <p className="text-sm text-white/80">
-                    {formatDate(sajuInput.birthDate)} · {sajuInput.gender === "male" ? "남성" : "여성"}
-                  </p>
+                  <div className="text-sm font-medium">오늘 운세 뽑는 중이야…</div>
+                  <div className="text-xs text-muted-foreground">조금만! 소름 포인트까지 같이 정리 중 👀</div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          )}
 
-          {/* Free Fortune Summary */}
-          <Card className="border-none glass shadow-lg">
-            <CardContent className="p-5 space-y-4">
-              <h3 className="font-bold text-card-foreground">오늘의 운세 요약</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">총운</span>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <div
-                        key={i}
-                        className={`h-2 w-6 rounded-full ${i <= scoreToPills(resultSummary?.scores?.overall) ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
-                      />
-                    ))}
+          {/* Sections */}
+          {sections ? (
+            <div className="grid gap-3">
+              {[
+                ["총운", sections.overall],
+                ["금전운", sections.money],
+                ["애정운", sections.love],
+                ["건강운", sections.health],
+              ].map(([title, text]) => (
+                <div key={title as string} className="rounded-2xl border p-4">
+                  <div className="text-sm font-semibold">{title as string}</div>
+                  <div className="mt-2 text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                    {text ?? ""}
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">금전운</span>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <div
-                        key={i}
-                        className={`h-2 w-6 rounded-full ${i <= scoreToPills(resultSummary?.scores?.money) ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
-                      />
-                    ))}
-                  </div>
+              ))}
+            </div>
+          ) : (
+            <Card className="border-none glass shadow-sm card-mystical">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  <h3 className="font-medium text-card-foreground">요약</h3>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">애정운</span>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <div
-                        key={i}
-                        className={`h-2 w-6 rounded-full ${i <= scoreToPills(resultSummary?.scores?.love) ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                {(resultSummary?.daily_summary ?? resultSummary?.summary_text) ?? "요약을 생성 중이에요..."}
-              </p>
-
-{resultSummary?.today_keys ? (
-  <div className="grid grid-cols-1 gap-3 pt-4">
-    {[
-      ["오늘의 색깔", resultSummary.today_keys.color],
-      ["오늘의 금기", resultSummary.today_keys.taboo],
-      ["오늘의 부적", resultSummary.today_keys.talisman],
-      ["럭키 스팟", resultSummary.today_keys.lucky_spot],
-      ["오늘의 숫자", resultSummary.today_keys.number],
-      ["오늘의 음식", resultSummary.today_keys.food],
-      ["오늘의 소지품", resultSummary.today_keys.item],
-      ["오늘의 실천", resultSummary.today_keys.action],
-      ["오늘의 귀인", resultSummary.today_keys.helper],
-    ].map(([label, obj]: any) => (
-      <div key={label} className="rounded-xl border p-3">
-        <div className="text-sm font-medium">{label}</div>
-        <div className="mt-1 text-sm font-semibold">{obj?.value ?? "-"}</div>
-        <div className="mt-1 text-xs text-muted-foreground whitespace-pre-line">{obj?.why ?? ""}</div>
-      </div>
-    ))}
-  </div>
-) : null}
-
-{resultSummary?.saju_brief ? (
-  <div className="mt-4 rounded-xl border p-3">
-    <div className="text-sm font-medium">사주 요약</div>
-    <div className="mt-1 text-xs text-muted-foreground whitespace-pre-line">{resultSummary.saju_brief}</div>
-  </div>
-) : null}
-
-{resultSummary?.astro_brief ? (
-  <div className="mt-3 rounded-xl border p-3">
-    <div className="text-sm font-medium">별자리 요약</div>
-    <div className="mt-1 text-xs text-muted-foreground whitespace-pre-line">{resultSummary.astro_brief}</div>
-  </div>
-) : null}
-
-{resultSummary?.evidence ? (
-  <div className="mt-3 rounded-xl border p-3">
-    <div className="text-sm font-medium">짧은 근거</div>
-    <div className="mt-2 text-xs text-muted-foreground space-y-2">
-      <div>
-        <div className="font-medium text-card-foreground">사주</div>
-        <ul className="list-disc pl-5">
-          {(resultSummary.evidence.saju ?? []).map((x: string, i: number) => (
-            <li key={i}>{x}</li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <div className="font-medium text-card-foreground">별자리</div>
-        <ul className="list-disc pl-5">
-          {(resultSummary.evidence.astro ?? []).map((x: string, i: number) => (
-            <li key={i}>{x}</li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <div className="font-medium text-card-foreground">오늘</div>
-        <ul className="list-disc pl-5">
-          {(resultSummary.evidence.today ?? []).map((x: string, i: number) => (
-            <li key={i}>{x}</li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  </div>
-) : null}
-            </CardContent>
-          </Card>
-
-          {/* Detail Section */}
-          {isDetailUnlocked ? (
-            <Card className="border-none glass shadow-lg">
-              <CardContent className="p-5 space-y-4">
-                <h3 className="font-bold text-card-foreground">상세 운세 풀이</h3>
-                <div className="space-y-4 text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                  <div>
-                    <h4 className="font-medium text-card-foreground mb-2">오전 운세</h4>
-                    <p>
-                      오전에는 집중력이 높아지는 시간입니다. 중요한 업무나 결정은 이 시간대에 처리하는 것이 좋습니다.
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-card-foreground mb-2">오후 운세</h4>
-                    <p>오후에는 사람들과의 만남이 길할 수 있습니다. 비즈니스 미팅이나 중요한 약속을 잡아보세요.</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-card-foreground mb-2">행운의 색상</h4>
-                    <p>노란색, 주황색 계열의 색상이 오늘 행운을 가져다 줄 수 있습니다.</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-card-foreground mb-2">오늘의 조언</h4>
-                    <p>
-                      긍정적인 마음가짐으로 하루를 시작하세요. 작은 것에도 감사하는 마음을 가지면 더 큰 행운이 찾아올
-                      것입니다.
-                    </p>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                  {resultSummary?.daily_summary ?? resultSummary?.summary_text ?? ""}
+                </p>
               </CardContent>
             </Card>
-          ) : (
-            <Card className="border-none overflow-hidden shadow-xl relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10" />
-              <CardContent className="p-5 space-y-4 relative">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
-                    <Lock className="h-5 w-5 text-white" />
+          )}
+
+          {/* Spine chill */}
+          {spine?.prediction && (
+            <div className="rounded-2xl border p-4">
+              <div className="text-sm font-semibold">오늘의 소름 포인트</div>
+              <div className="mt-2 text-sm whitespace-pre-line leading-relaxed">
+                <span className="font-medium">{spine.time_window ?? ""}</span>
+                {spine.time_window ? "에 " : ""}
+                {spine.prediction}
+              </div>
+              {spine.verification && <div className="mt-2 text-xs text-muted-foreground">체크: {spine.verification}</div>}
+            </div>
+          )}
+
+          {/* Today keys (compact grid) */}
+          {keyItems.length > 0 && (
+            <div>
+              <div className="text-sm font-semibold mb-2">오늘의 키워드</div>
+              <div className="grid grid-cols-2 gap-3">
+                {keyItems.map(([label, obj]) => (
+                  <div key={label} className="rounded-2xl border p-3">
+                    <div className="text-xs text-muted-foreground">{label}</div>
+                    <div className="mt-1 text-sm font-semibold truncate">{obj?.value ?? "-"}</div>
+                    {obj?.why && <div className="mt-1 text-[11px] text-muted-foreground truncate">{obj.why}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Evidence briefs */}
+          {(resultSummary?.saju_brief || resultSummary?.astro_brief) && (
+            <div className="rounded-2xl border p-4">
+              <div className="text-sm font-semibold">근거 요약</div>
+
+              {resultSummary?.saju_brief && (
+                <div className="mt-3">
+                  <div className="text-xs font-medium">사주</div>
+                  <div className="mt-1 text-xs text-muted-foreground whitespace-pre-line">{resultSummary.saju_brief}</div>
+                </div>
+              )}
+
+              {resultSummary?.astro_brief && (
+                <div className="mt-3">
+                  <div className="text-xs font-medium">별자리</div>
+                  <div className="mt-1 text-xs text-muted-foreground whitespace-pre-line">{resultSummary.astro_brief}</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Detail (locked/unlocked) */}
+          {!isDetailUnlocked ? (
+            <Card className="border-none glass shadow-sm card-mystical">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400/20 to-orange-500/20">
+                    <Lock className="h-5 w-5 text-amber-500" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-card-foreground text-lg">상세 운세 풀이</h3>
-                    <p className="text-xs text-muted-foreground">오늘 하루의 상세한 운세를 확인하세요</p>
+                    <h3 className="font-bold text-card-foreground">상세 운세</h3>
+                    <p className="text-xs text-muted-foreground">엽전 1닢으로 열어볼 수 있어</p>
                   </div>
                 </div>
 
-                <div className="glass rounded-xl p-4 space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-foreground">
-                    <Sparkles className="h-4 w-4 text-amber-500" />
-                    <span>오전/오후 운세</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-foreground">
-                    <Sparkles className="h-4 w-4 text-amber-500" />
-                    <span>행운의 색상 & 숫자</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-foreground">
-                    <Sparkles className="h-4 w-4 text-amber-500" />
-                    <span>오늘의 조언</span>
+                <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3 mb-4">
+                  <span className="text-sm text-muted-foreground">필요 엽전</span>
+                  <div className="flex items-center gap-1">
+                    <Coins className="h-4 w-4 text-amber-500" />
+                    <span className="font-bold text-card-foreground">1닢</span>
                   </div>
                 </div>
 
@@ -266,7 +256,7 @@ export default function DailyFortuneResultScreen({
                       <span className="animate-shimmer absolute inset-0 rounded-2xl" />
                       <span className="relative flex items-center justify-center gap-2">
                         <Coins className="h-5 w-5" />
-                        엽전 1닢으로 운세보기 🔥
+                        엽전 1닢으로 상세 보기 🔥
                       </span>
                     </Button>
                   ) : (
@@ -283,7 +273,19 @@ export default function DailyFortuneResultScreen({
                   )}
                 </div>
 
-                <p className="text-center text-xs text-muted-foreground">1개의 엽전으로 상세 운세를 확인하세요</p>
+                <p className="text-center text-xs text-muted-foreground mt-3">1개의 엽전으로 상세 운세를 확인할 수 있어</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-none glass shadow-sm card-mystical">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  <h3 className="font-medium text-card-foreground">상세 운세</h3>
+                </div>
+                <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                  {resultDetail?.detail_text ?? resultDetail?.detail ?? ""}
+                </p>
               </CardContent>
             </Card>
           )}

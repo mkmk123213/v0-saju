@@ -18,15 +18,28 @@ export default function DailyFortuneListScreen({
   onViewResult,
   onBack,
 }: DailyFortuneListScreenProps) {
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return ""
+    const d = new Date(dateStr)
+    if (Number.isNaN(d.getTime())) return String(dateStr)
+    return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`
   }
 
-  const formatBirthDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`
+}
+
+  const formatBirthDate = (dateStr?: string) => {
+    if (!dateStr) return "-"
+    // birthDate는 보통 YYYY-MM-DD 형태라서 Date 파싱 대신 안전하게 split
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const [y, mo, da] = dateStr.split("-")
+      return `${y}.${mo}.${da}`
+    }
+    const d = new Date(dateStr)
+    if (Number.isNaN(d.getTime())) return String(dateStr)
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`
   }
+
+}
 
   return (
     <div className="flex min-h-screen flex-col starfield">
