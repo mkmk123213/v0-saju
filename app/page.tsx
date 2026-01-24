@@ -233,8 +233,25 @@ export default function Home() {
   })
 
   const refreshReadings = async () => {
-    // savedProfiles에 있는 값으로 reading snapshot의 누락 필드를 보정(이전 데이터 호환)
-    const profileMap = new Map(savedProfiles.map((p) => [p.id, p]))
+    // 먼저 profiles를 가져와서 profileMap을 구성
+    const { data: profilesData, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id,relationship,name,birth_date,birth_time,gender,calendar_type")
+    if (profilesError) throw profilesError
+
+    const profileList: SavedProfile[] =
+      (profilesData ?? []).map((p: any) => ({
+        id: String(p.id),
+        relationship: (p.relationship ?? "self") as Relationship,
+        name: String(p.name ?? ""),
+        birthDate: String(p.birth_date ?? ""),
+        birthTime: String(p.birth_time ?? ""),
+        gender: (p.gender === "female" ? "female" : "male") as "male" | "female",
+        calendarType: (p.calendar_type === "lunar" ? "lunar" : "solar") as "solar" | "lunar",
+      })) ?? []
+
+    const profileMap = new Map(profileList.map((p) => [p.id, p]))
+
     const { data, error } = await supabase
       .from("readings_public_view")
       .select("*")

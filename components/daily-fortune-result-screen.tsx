@@ -101,46 +101,74 @@ export default function DailyFortuneResultScreen({
       {/* Result Content */}
       <div className="flex-1 px-5 pb-8 relative z-10">
         <div className="mx-auto max-w-sm space-y-5">
-          {/* User Info Card */}
-          <Card className="border-none bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 shadow-2xl overflow-hidden">
-            <CardContent className="p-0 text-white relative">
-              {/* Decorative elements */}
-              <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/10 blur-[50px]" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-white/5 blur-[60px]" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-yellow-300/10 blur-[40px]" />
-                {/* Constellation pattern */}
-                <svg className="absolute top-2 right-2 w-20 h-20 opacity-20" viewBox="0 0 80 80">
-                  <circle cx="20" cy="15" r="2" fill="white" />
-                  <circle cx="60" cy="25" r="1.5" fill="white" />
-                  <circle cx="40" cy="50" r="2" fill="white" />
-                  <circle cx="15" cy="60" r="1.5" fill="white" />
-                  <line x1="20" y1="15" x2="60" y2="25" stroke="white" strokeWidth="0.5" opacity="0.5" />
-                  <line x1="60" y1="25" x2="40" y2="50" stroke="white" strokeWidth="0.5" opacity="0.5" />
-                  <line x1="40" y1="50" x2="15" y2="60" stroke="white" strokeWidth="0.5" opacity="0.5" />
-                </svg>
-              </div>
-
-              <div className="relative p-5">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
-                    <Sun className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-xl font-bold">{sajuInput.name}</h2>
-                    <p className="text-sm text-white/80">
-                      {sajuInput.birthDate} · {sajuInput.gender === "male" ? "남" : "여"}
-                      {sajuInput.birthTime && sajuInput.birthTime !== "unknown" ? ` · ${sajuInput.birthTime}` : ""}
-                    </p>
-                  </div>
+          {/* User Info Card - Premium Design */}
+          <Card className="border-none overflow-hidden shadow-2xl">
+            {/* Gradient border effect */}
+            <div className="bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 p-[2px] rounded-[var(--radius)]">
+              <CardContent className="p-0 bg-card rounded-[calc(var(--radius)-2px)] relative overflow-hidden">
+                {/* Decorative background elements */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br from-amber-500/10 to-orange-500/5 blur-[40px]" />
+                  <div className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full bg-gradient-to-br from-rose-500/10 to-pink-500/5 blur-[50px]" />
+                  {/* Subtle grid pattern */}
+                  <div className="absolute inset-0 opacity-[0.03]" style={{
+                    backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
+                    backgroundSize: '24px 24px'
+                  }} />
                 </div>
 
-                {/* Date display */}
-                <div className="mt-4 rounded-2xl bg-white/15 backdrop-blur-sm p-4 text-center">
-                  <p className="text-white/70 text-sm">{date}의 운세</p>
+                <div className="relative p-5">
+                  {/* Top section with date badge */}
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-1.5 shadow-lg">
+                      <Sun className="h-4 w-4 text-white" />
+                      <span className="text-sm font-bold text-white">{date}의 운세</span>
+                    </div>
+                  </div>
+
+                  {/* Profile info */}
+                  <div className="flex items-center gap-4">
+                    {/* Avatar with gradient ring */}
+                    <div className="relative">
+                      <div className="absolute -inset-1 bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 rounded-2xl blur-sm opacity-60" />
+                      <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg">
+                        <span className="text-2xl font-bold text-white">
+                          {sajuInput.name ? sajuInput.name.charAt(0) : "?"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Name and details */}
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-xl font-bold text-card-foreground truncate">
+                        {sajuInput.name || "-"}
+                      </h2>
+                      <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                          {sajuInput.birthDate || "-"}
+                        </span>
+                        <span className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+                          {sajuInput.gender === "male" ? "남성" : "여성"}
+                        </span>
+                        {sajuInput.birthTime && sajuInput.birthTime !== "unknown" && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {sajuInput.birthTime}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Decorative divider */}
+                  <div className="mt-4 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+                  </div>
                 </div>
-              </div>
-            </CardContent>
+              </CardContent>
+            </div>
           </Card>
 
           {/* Loading */}
