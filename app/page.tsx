@@ -1,6 +1,7 @@
 "use client"
 
 import { supabase } from "@/lib/supabaseClient"
+import { apiCreateSummary, apiGenerateDetail } from "@/lib/api/readings"
 import { useEffect, useMemo, useState } from "react"
 
 import LoginScreen from "@/components/login-screen"
@@ -66,6 +67,8 @@ export interface SajuResult {
   createdAt: string
   year: number
   isDetailUnlocked: boolean
+  result_summary?: any
+  result_detail?: any | null
 }
 
 export interface DailyFortuneResult {
@@ -74,6 +77,8 @@ export interface DailyFortuneResult {
   createdAt: string
   date: string
   isDetailUnlocked: boolean
+  result_summary?: any
+  result_detail?: any | null
 }
 
 export interface YearlyFortuneResult {
@@ -82,6 +87,8 @@ export interface YearlyFortuneResult {
   createdAt: string
   year: number
   isDetailUnlocked: boolean
+  result_summary?: any
+  result_detail?: any | null
 }
 
 type ReadingPublicRow = {
@@ -243,6 +250,8 @@ export default function Home() {
           createdAt: r.created_at,
           year: r.target_year ?? defaultYear,
           isDetailUnlocked: isUnlocked,
+          result_summary: r.result_summary,
+          result_detail: r.result_detail,
         })
       } else if (r.type === "daily") {
         daily.push({
@@ -251,6 +260,8 @@ export default function Home() {
           createdAt: r.created_at,
           date: r.target_date ?? new Date(r.created_at).toISOString().slice(0, 10),
           isDetailUnlocked: isUnlocked,
+          result_summary: r.result_summary,
+          result_detail: r.result_detail,
         })
       } else if (r.type === "yearly") {
         yearly.push({
@@ -259,6 +270,8 @@ export default function Home() {
           createdAt: r.created_at,
           year: r.target_year ?? defaultYear,
           isDetailUnlocked: isUnlocked,
+          result_summary: r.result_summary,
+          result_detail: r.result_detail,
         })
       }
     }
@@ -358,9 +371,6 @@ export default function Home() {
 
   const handleSajuSubmit = async (input: SajuInput) => {
     try {
-      const { data: s } = await supabase.auth.getSession()
-      console.log("hasSession?", !!s.session)
-
       const { data: u } = await supabase.auth.getUser()
       const uid = u.user?.id
       if (!uid) throw new Error("로그인이 필요해요")
@@ -368,37 +378,30 @@ export default function Home() {
       setSajuInput(input)
       const profileId = await upsertProfileFromInput(input)
 
-      // ✅ SELECT 권한 없이도 동작하게: id를 미리 만들고 반환을 받지 않음
-      const readingId = crypto.randomUUID()
-      const createdAt = new Date().toISOString()
-
-      const { error } = await supabase.from("readings").insert({
-        id: readingId,
-        user_id: uid,
+      const { reading_id, result_summary } = await apiCreateSummary({
         profile_id: profileId,
         type: "saju",
         target_year: defaultYear,
-        input_snapshot: { ...input, relationship: input.relationship ?? "self" },
-        result_summary: { text: "요약 생성 예정" },
-        result_detail: null,
       })
-      if (error) throw error
 
       await refreshReadings()
 
       setSelectedResult({
-        id: readingId,
+        id: reading_id,
         sajuInput: input,
-        createdAt,
+        createdAt: new Date().toISOString(),
         year: defaultYear,
         isDetailUnlocked: false,
+        result_summary,
+        result_detail: null,
       })
       setCurrentScreen("result")
     } catch (e: any) {
       console.error(e)
-      alert(e?.message ?? "사주 저장 중 오류가 발생했어요")
+      alert(e?.message ?? "사주 생성 중 오류가 발생했어요")
     }
   }
+
 
   const handleViewResult = (result: SajuResult) => {
     setSelectedResult(result)
@@ -410,21 +413,19 @@ export default function Home() {
 
   const handleUnlockDetail = async (resultId: string) => {
     try {
-      const { data, error } = await supabase.rpc("rpc_unlock_detail", { p_reading_id: resultId })
-      if (error) throw error
-
+      await apiGenerateDetail({ reading_id: resultId })
       await refreshAll()
 
       const updated = savedResults.find((r) => r.id === resultId)
       if (updated) setSelectedResult(updated)
-
-      if (data?.status === "insufficient_coins") {
+    } catch (e: any) {
+      console.error(e)
+      if (e?.status === 402) {
         handleOpenCoinPurchase()
       }
-    } catch (e) {
-      console.error(e)
     }
   }
+
 
   // -----------------------------
   // Daily fortune flow
@@ -449,36 +450,30 @@ export default function Home() {
       const profileId = await upsertProfileFromInput(input)
       const today = new Date().toISOString().slice(0, 10)
 
-      const readingId = crypto.randomUUID()
-      const createdAt = new Date().toISOString()
-
-      const { error } = await supabase.from("readings").insert({
-        id: readingId,
-        user_id: uid,
+      const { reading_id, result_summary } = await apiCreateSummary({
         profile_id: profileId,
         type: "daily",
         target_date: today,
-        input_snapshot: { ...input, relationship: input.relationship ?? "self" },
-        result_summary: { text: "요약 생성 예정" },
-        result_detail: null,
       })
-      if (error) throw error
 
       await refreshReadings()
 
       setSelectedDailyResult({
-        id: readingId,
+        id: reading_id,
         sajuInput: input,
-        createdAt,
+        createdAt: new Date().toISOString(),
         date: today,
         isDetailUnlocked: false,
+        result_summary,
+        result_detail: null,
       })
       setCurrentScreen("daily-fortune-result")
     } catch (e: any) {
       console.error(e)
-      alert(e?.message ?? "오늘의 운세 저장 중 오류가 발생했어요")
+      alert(e?.message ?? "오늘의 운세 생성 중 오류가 발생했어요")
     }
   }
+
 
   const handleViewDailyResult = (result: DailyFortuneResult) => {
     setSelectedDailyResult(result)
@@ -514,36 +509,30 @@ export default function Home() {
       setSajuInput(input)
       const profileId = await upsertProfileFromInput(input)
 
-      const readingId = crypto.randomUUID()
-      const createdAt = new Date().toISOString()
-
-      const { error } = await supabase.from("readings").insert({
-        id: readingId,
-        user_id: uid,
+      const { reading_id, result_summary } = await apiCreateSummary({
         profile_id: profileId,
         type: "yearly",
         target_year: defaultYear,
-        input_snapshot: { ...input, relationship: input.relationship ?? "self" },
-        result_summary: { text: "요약 생성 예정" },
-        result_detail: null,
       })
-      if (error) throw error
 
       await refreshReadings()
 
       setSelectedYearlyResult({
-        id: readingId,
+        id: reading_id,
         sajuInput: input,
-        createdAt,
+        createdAt: new Date().toISOString(),
         year: defaultYear,
         isDetailUnlocked: false,
+        result_summary,
+        result_detail: null,
       })
       setCurrentScreen("yearly-fortune-result")
     } catch (e: any) {
       console.error(e)
-      alert(e?.message ?? "연간 운세 저장 중 오류가 발생했어요")
+      alert(e?.message ?? "연간 운세 생성 중 오류가 발생했어요")
     }
   }
+
 
   const handleViewYearlyResult = (result: YearlyFortuneResult) => {
     setSelectedYearlyResult(result)
@@ -600,6 +589,8 @@ export default function Home() {
           isDetailUnlocked={selectedResult?.isDetailUnlocked || false}
           coins={coins}
           resultId={selectedResult?.id || ""}
+          resultSummary={selectedResult?.result_summary}
+          resultDetail={selectedResult?.result_detail}
           onUnlockDetail={handleUnlockDetail}
           onOpenCoinPurchase={handleOpenCoinPurchase}
           onBack={handleBackToResultList}
@@ -636,6 +627,8 @@ export default function Home() {
           isDetailUnlocked={selectedDailyResult?.isDetailUnlocked || false}
           coins={coins}
           resultId={selectedDailyResult?.id || ""}
+          resultSummary={selectedDailyResult?.result_summary}
+          resultDetail={selectedDailyResult?.result_detail}
           onUnlockDetail={handleUnlockDailyDetail}
           onOpenCoinPurchase={handleOpenCoinPurchase}
           onBack={() => setCurrentScreen("daily-fortune-list")}
@@ -667,6 +660,8 @@ export default function Home() {
           isDetailUnlocked={selectedYearlyResult?.isDetailUnlocked || false}
           coins={coins}
           resultId={selectedYearlyResult?.id || ""}
+          resultSummary={selectedYearlyResult?.result_summary}
+          resultDetail={selectedYearlyResult?.result_detail}
           onUnlockDetail={handleUnlockYearlyDetail}
           onOpenCoinPurchase={handleOpenCoinPurchase}
           onBack={() => setCurrentScreen("yearly-fortune-list")}

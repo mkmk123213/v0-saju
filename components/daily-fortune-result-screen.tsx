@@ -11,6 +11,8 @@ interface DailyFortuneResultScreenProps {
   isDetailUnlocked: boolean
   coins: number
   resultId: string
+  resultSummary?: any
+  resultDetail?: any | null
   onUnlockDetail: (resultId: string) => void
   onOpenCoinPurchase: () => void
   onBack: () => void
@@ -29,6 +31,11 @@ export default function DailyFortuneResultScreen({
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr)
     return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`
+  }
+
+  const scoreToPills = (score?: number) => {
+    const s = typeof score === "number" ? Math.max(0, Math.min(100, score)) : 0
+    return Math.min(5, Math.max(0, Math.ceil(s / 20)))
   }
 
   return (
@@ -87,7 +94,7 @@ export default function DailyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= 4 ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= scoreToPills(resultSummary?.scores?.overall) ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
@@ -98,7 +105,7 @@ export default function DailyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= 3 ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= scoreToPills(resultSummary?.scores?.money) ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
@@ -109,15 +116,14 @@ export default function DailyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= 5 ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= scoreToPills(resultSummary?.scores?.love) ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                오늘은 새로운 기회가 찾아올 수 있는 날입니다. 주변 사람들과의 소통을 통해 좋은 인연을 만날 수 있으니
-                적극적으로 나서보세요.
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                {resultSummary?.summary_text ?? "요약을 생성 중이에요..."}
               </p>
             </CardContent>
           </Card>
@@ -127,7 +133,7 @@ export default function DailyFortuneResultScreen({
             <Card className="border-none glass shadow-lg">
               <CardContent className="p-5 space-y-4">
                 <h3 className="font-bold text-card-foreground">상세 운세 풀이</h3>
-                <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
+                <div className="space-y-4 text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
                   <div>
                     <h4 className="font-medium text-card-foreground mb-2">오전 운세</h4>
                     <p>

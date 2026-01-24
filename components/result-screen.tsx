@@ -11,6 +11,8 @@ interface ResultScreenProps {
   isDetailUnlocked: boolean
   coins: number
   resultId: string
+  resultSummary?: any
+  resultDetail?: any | null
   onUnlockDetail: (resultId: string) => void
   onOpenCoinPurchase: () => void
   onBack: () => void
@@ -22,6 +24,8 @@ export default function ResultScreen({
   isDetailUnlocked,
   coins,
   resultId,
+  resultSummary,
+  resultDetail,
   onUnlockDetail,
   onOpenCoinPurchase,
   onBack,
@@ -125,10 +129,7 @@ export default function ResultScreen({
           <Card className="border-none glass shadow-lg">
             <CardContent className="p-5 space-y-3">
               <h3 className="font-bold text-foreground">운세 요약</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                목(木)의 기운이 강하여 창의력과 성장의 에너지가 넘치는 사주입니다. 새로운 시작과 도전에 유리하며, 봄의
-                기운처럼 생명력이 가득합니다. 다만 화(火)의 기운이 부족하여 표현력을 기르는 것이 필요합니다.
-              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{resultSummary?.summary_text ?? "요약을 생성 중이에요..."}</p>
             </CardContent>
           </Card>
 
@@ -140,33 +141,29 @@ export default function ResultScreen({
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <h4 className="text-sm font-bold text-foreground">성격과 적성</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      온화하고 인내심이 강한 성격을 지녔습니다. 예술적 감각이 뛰어나며 창작 활동에서 두각을 나타낼 수
-                      있습니다. 다른 사람을 돕는 일에 보람을 느끼며, 교육이나 상담 분야에서 능력을 발휘할 수 있습니다.
+                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                      {(resultDetail?.combined?.strengths?.length ? resultDetail.combined.strengths.join(" · ") : resultDetail?.combined?.core_theme) ?? "상세 풀이를 불러왔어요. 아래 내용을 확인해보세요."}
                     </p>
                   </div>
 
                   <div className="space-y-2">
                     <h4 className="text-sm font-bold text-foreground">재물운</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      꾸준한 노력으로 안정적인 재물을 모을 수 있는 운입니다. 투기성 투자보다는 장기적인 저축과 안정적인
-                      투자가 적합합니다. 중년 이후 재물운이 크게 상승할 것으로 보입니다.
+                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                      {resultDetail?.sections?.money?.text ?? "재물운 상세를 불러오지 못했어요."}
                     </p>
                   </div>
 
                   <div className="space-y-2">
                     <h4 className="text-sm font-bold text-foreground">건강운</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      전반적으로 건강한 체질이나, 간과 담의 기능에 주의가 필요합니다. 규칙적인 운동과 충분한 휴식이 건강
-                      유지의 핵심입니다. 봄철 컨디션 관리에 특히 신경 쓰시기 바랍니다.
+                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                      {resultDetail?.sections?.health?.text ?? "건강운 상세를 불러오지 못했어요."}
                     </p>
                   </div>
 
                   <div className="space-y-2">
                     <h4 className="text-sm font-bold text-foreground">{year}년 운세</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      새로운 기회가 찾아오는 해입니다. 상반기에는 준비 기간으로 삼고, 하반기에 적극적으로 행동하면 좋은
-                      결과를 얻을 수 있습니다. 인간관계에서 귀인을 만날 수 있으니 새로운 만남에 열린 자세를 가지세요.
+                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                      {resultDetail?.sections?.career?.text ?? "올해 운세 상세를 불러오지 못했어요."}
                     </p>
                   </div>
                 </div>

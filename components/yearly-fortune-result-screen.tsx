@@ -11,6 +11,8 @@ interface YearlyFortuneResultScreenProps {
   isDetailUnlocked: boolean
   coins: number
   resultId: string
+  resultSummary?: any
+  resultDetail?: any | null
   onUnlockDetail: (resultId: string) => void
   onOpenCoinPurchase: () => void
   onBack: () => void
@@ -29,6 +31,11 @@ export default function YearlyFortuneResultScreen({
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
     return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
+  }
+
+  const scoreToPills = (score?: number) => {
+    const s = typeof score === "number" ? Math.max(0, Math.min(100, score)) : 0
+    return Math.min(5, Math.max(0, Math.ceil(s / 20)))
   }
 
   return (
@@ -90,7 +97,7 @@ export default function YearlyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= 4 ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= scoreToPills(resultSummary?.scores?.overall) ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
@@ -101,7 +108,7 @@ export default function YearlyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= 3 ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= scoreToPills(resultSummary?.scores?.money) ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
@@ -112,7 +119,7 @@ export default function YearlyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= 4 ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= scoreToPills(resultSummary?.scores?.health) ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
@@ -123,15 +130,14 @@ export default function YearlyFortuneResultScreen({
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className={`h-2 w-6 rounded-full ${i <= 5 ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
+                        className={`h-2 w-6 rounded-full ${i <= scoreToPills(resultSummary?.scores?.love) ? "bg-gradient-to-r from-sky-400 to-cyan-500" : "bg-muted"}`}
                       />
                     ))}
                   </div>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {year}년은 새로운 도전과 성장의 해입니다. 상반기에는 안정을 추구하고, 하반기에는 적극적으로 기회를
-                잡아보세요.
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                {resultSummary?.summary_text ?? "요약을 생성 중이에요..."}
               </p>
             </CardContent>
           </Card>
@@ -144,25 +150,40 @@ export default function YearlyFortuneResultScreen({
                   <Sparkles className="h-5 w-5 text-sky-400" />
                   <h3 className="font-bold text-card-foreground">상세 운세 풀이</h3>
                 </div>
-                <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
-                  <div>
-                    <h4 className="font-medium text-card-foreground mb-2">1분기 (1-3월)</h4>
-                    <p>
-                      새해의 시작과 함께 새로운 계획을 세우기 좋은 시기입니다. 건강 관리에 신경 쓰고 무리하지 마세요.
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-card-foreground mb-2">2분기 (4-6월)</h4>
-                    <p>재물운이 상승하는 시기입니다. 투자나 새로운 사업 기회가 찾아올 수 있으니 신중하게 판단하세요.</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-card-foreground mb-2">3분기 (7-9월)</h4>
-                    <p>인간관계가 활발해지는 시기입니다. 좋은 인연을 만날 수 있으니 적극적으로 나서보세요.</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-card-foreground mb-2">4분기 (10-12월)</h4>
-                    <p>한 해를 마무리하며 성과를 정리하는 시기입니다. 다음 해를 위한 준비도 함께 시작해보세요.</p>
-                  </div>
+                <div className="space-y-4 text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {resultDetail?.combined?.core_theme && (
+                    <div>
+                      <h4 className="font-medium text-card-foreground mb-2">올해의 핵심 테마</h4>
+                      <p>{resultDetail.combined.core_theme}</p>
+                    </div>
+                  )}
+                  {resultDetail?.sections?.career?.text && (
+                    <div>
+                      <h4 className="font-medium text-card-foreground mb-2">일/커리어</h4>
+                      <p>{resultDetail.sections.career.text}</p>
+                    </div>
+                  )}
+                  {resultDetail?.sections?.money?.text && (
+                    <div>
+                      <h4 className="font-medium text-card-foreground mb-2">재물운</h4>
+                      <p>{resultDetail.sections.money.text}</p>
+                    </div>
+                  )}
+                  {resultDetail?.sections?.love?.text && (
+                    <div>
+                      <h4 className="font-medium text-card-foreground mb-2">애정운</h4>
+                      <p>{resultDetail.sections.love.text}</p>
+                    </div>
+                  )}
+                  {resultDetail?.sections?.health?.text && (
+                    <div>
+                      <h4 className="font-medium text-card-foreground mb-2">건강운</h4>
+                      <p>{resultDetail.sections.health.text}</p>
+                    </div>
+                  )}
+                  {resultDetail && (
+                    <pre className="text-xs whitespace-pre-wrap">{JSON.stringify(resultDetail, null, 2)}</pre>
+                  )}
                 </div>
               </CardContent>
             </Card>
