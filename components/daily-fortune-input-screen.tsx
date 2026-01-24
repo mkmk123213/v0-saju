@@ -27,7 +27,7 @@ const relationshipOptions: { value: Relationship; label: string }[] = [
   { value: "acquaintance", label: "지인" },
 ]
 
-export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBack }: DailyFortuneInputScreenProps) {
+export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBack, isLoading = false }: DailyFortuneInputScreenProps) {
   const [relationship, setRelationship] = useState<Relationship>("self")
   const [name, setName] = useState("")
   const [birthDate, setBirthDate] = useState("")
