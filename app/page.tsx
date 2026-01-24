@@ -233,6 +233,8 @@ export default function Home() {
   })
 
   const refreshReadings = async () => {
+    // savedProfiles에 있는 값으로 reading snapshot의 누락 필드를 보정(이전 데이터 호환)
+    const profileMap = new Map(savedProfiles.map((p) => [p.id, p]))
     const { data, error } = await supabase
       .from("readings_public_view")
       .select("*")
@@ -246,7 +248,20 @@ export default function Home() {
     const yearly: YearlyFortuneResult[] = []
 
     for (const r of rows) {
-      const input = readingToSajuInput(r.input_snapshot)
+      const inputRaw = readingToSajuInput(r.input_snapshot)
+
+      // input_snapshot에 이름/생년월일이 비어있는 과거 데이터가 있을 수 있어 profile로 보정
+      const prof = r.profile_id ? profileMap.get(r.profile_id) : undefined
+      const input = {
+        ...inputRaw,
+        name: inputRaw.name || prof?.name || "",
+        birthDate: inputRaw.birthDate || prof?.birthDate || "",
+        birthTime: inputRaw.birthTime || prof?.birthTime || "unknown",
+        gender: (inputRaw.gender ?? prof?.gender ?? "male") as "male" | "female",
+        calendarType: (inputRaw.calendarType ?? prof?.calendarType ?? "solar") as "solar" | "lunar",
+        relationship: (inputRaw.relationship ?? prof?.relationship ?? "self") as Relationship,
+      } as SajuInput
+
       const isUnlocked = r.result_detail != null
 
       if (r.type === "saju") {
