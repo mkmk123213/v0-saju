@@ -24,6 +24,8 @@ export default function YearlyFortuneResultScreen({
   isDetailUnlocked,
   coins,
   resultId,
+  resultSummary,
+  resultDetail,
   onUnlockDetail,
   onOpenCoinPurchase,
   onBack,

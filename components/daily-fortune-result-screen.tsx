@@ -24,6 +24,8 @@ export default function DailyFortuneResultScreen({
   isDetailUnlocked,
   coins,
   resultId,
+  resultSummary,
+  resultDetail,
   onUnlockDetail,
   onOpenCoinPurchase,
   onBack,
