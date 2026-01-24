@@ -125,6 +125,10 @@ export default function Home() {
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [userName, setUserName] = useState<string>("")
 
+  // API 중복 호출 방지
+  const [isCreatingSummary, setIsCreatingSummary] = useState(false)
+  const [isGeneratingDetail, setIsGeneratingDetail] = useState(false)
+
   const now = useMemo(() => new Date(), [])
   const defaultYear = useMemo(() => now.getFullYear(), [now])
 
@@ -370,6 +374,8 @@ export default function Home() {
   }
 
   const handleSajuSubmit = async (input: SajuInput) => {
+    if (isCreatingSummary) return
+    setIsCreatingSummary(true)
     try {
       const { data: u } = await supabase.auth.getUser()
       const uid = u.user?.id
@@ -398,7 +404,13 @@ export default function Home() {
       setCurrentScreen("result")
     } catch (e: any) {
       console.error(e)
-      alert(e?.message ?? "사주 생성 중 오류가 발생했어요")
+      if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
+        alert(e?.detail?.message ?? "OpenAI API 결제/한도가 부족해요. Billing/Usage를 확인해주세요.")
+      } else {
+        alert(e?.message ?? "사주 생성 중 오류가 발생했어요")
+      }
+    } finally {
+      setIsCreatingSummary(false)
     }
   }
 
@@ -412,6 +424,8 @@ export default function Home() {
   const handleBackToResultList = () => setCurrentScreen("result-list")
 
   const handleUnlockDetail = async (resultId: string) => {
+    if (isGeneratingDetail) return
+    setIsGeneratingDetail(true)
     try {
       await apiGenerateDetail({ reading_id: resultId })
       await refreshAll()
@@ -420,9 +434,14 @@ export default function Home() {
       if (updated) setSelectedResult(updated)
     } catch (e: any) {
       console.error(e)
-      if (e?.status === 402) {
+      if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
+        alert(e?.detail?.message ?? "OpenAI API 결제/한도가 부족해요. Billing/Usage를 확인해주세요.")
+      } else if (e?.status === 402) {
+        // 잠금해제 실패(대부분 코인 부족)
         handleOpenCoinPurchase()
       }
+    } finally {
+      setIsGeneratingDetail(false)
     }
   }
 
@@ -441,6 +460,8 @@ export default function Home() {
   }
 
   const handleDailyFortuneSubmit = async (input: SajuInput) => {
+    if (isCreatingSummary) return
+    setIsCreatingSummary(true)
     try {
       const { data: u } = await supabase.auth.getUser()
       const uid = u.user?.id
@@ -470,7 +491,13 @@ export default function Home() {
       setCurrentScreen("daily-fortune-result")
     } catch (e: any) {
       console.error(e)
-      alert(e?.message ?? "오늘의 운세 생성 중 오류가 발생했어요")
+      if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
+        alert(e?.detail?.message ?? "OpenAI API 결제/한도가 부족해요. Billing/Usage를 확인해주세요.")
+      } else {
+        alert(e?.message ?? "오늘의 운세 생성 중 오류가 발생했어요")
+      }
+    } finally {
+      setIsCreatingSummary(false)
     }
   }
 
@@ -501,6 +528,8 @@ export default function Home() {
   }
 
   const handleYearlyFortuneSubmit = async (input: SajuInput) => {
+    if (isCreatingSummary) return
+    setIsCreatingSummary(true)
     try {
       const { data: u } = await supabase.auth.getUser()
       const uid = u.user?.id
@@ -529,7 +558,13 @@ export default function Home() {
       setCurrentScreen("yearly-fortune-result")
     } catch (e: any) {
       console.error(e)
-      alert(e?.message ?? "연간 운세 생성 중 오류가 발생했어요")
+      if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
+        alert(e?.detail?.message ?? "OpenAI API 결제/한도가 부족해요. Billing/Usage를 확인해주세요.")
+      } else {
+        alert(e?.message ?? "연간 운세 생성 중 오류가 발생했어요")
+      }
+    } finally {
+      setIsCreatingSummary(false)
     }
   }
 

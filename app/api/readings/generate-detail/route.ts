@@ -24,33 +24,69 @@ function getOpenAIKey() {
   return env("OPENAI_API_KEY") || env("OPENAI_API_KEY");
 }
 
+async function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * Retry on transient errors (429 rate limit, 5xx).
+ * NOTE: Do NOT retry on insufficient_quota.
+ */
+async function fetchWithRetry(fetcher: () => Promise<Response>, retries = 3) {
+  let lastRes: Response | null = null;
+  for (let i = 0; i < retries; i++) {
+    const res = await fetcher();
+    if (res.ok) return res;
+    lastRes = res;
+    const t = await res.clone().text().catch(() => "");
+    if (res.status === 429 && t.includes("insufficient_quota")) return res;
+    if (res.status === 429 || res.status >= 500) {
+      await sleep(500 * Math.pow(2, i));
+      continue;
+    }
+    return res;
+  }
+  return lastRes ?? (await fetcher());
+}
+
 async function openaiDetailJson(prompt: string) {
   const apiKey = getOpenAIKey();
   if (!apiKey) throw new Error("OPENAI_API_KEY_MISSING");
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      temperature: 0.8,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            "You generate detailed Korean fortune content. Output ONLY valid JSON with keys: combined{core_theme,strengths[],cautions[],action_steps[]}, sections{love{ text, tips[] }, career{ text, tips[] }, money{ text, tips[] }, health{ text, tips[] }}, lucky{colors[],numbers[],times[],avoid[]} . Keep arrays short.",
+  const res = await fetchWithRetry(
+    () =>
+      fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
         },
-        { role: "user", content: prompt },
-      ],
-    }),
-  });
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          temperature: 0.8,
+          max_tokens: 1200,
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: "system",
+              content:
+                "You generate detailed Korean fortune content. Output ONLY valid JSON with keys: combined{core_theme,strengths[],cautions[],action_steps[]}, sections{love{ text, tips[] }, career{ text, tips[] }, money{ text, tips[] }, health{ text, tips[] }}, lucky{colors[],numbers[],times[],avoid[]} . Keep arrays short.",
+            },
+            { role: "user", content: prompt },
+          ],
+        }),
+      }),
+    3
+  );
 
   if (!res.ok) {
     const t = await res.text().catch(() => "");
+    if (res.status === 429 && t.includes("insufficient_quota")) {
+      const e: any = new Error("OPENAI_INSUFFICIENT_QUOTA");
+      e.status = 402;
+      e.detail = t;
+      throw e;
+    }
     const e: any = new Error("OPENAI_CALL_FAILED");
     e.status = res.status;
     e.detail = t;
@@ -134,6 +170,17 @@ export async function POST(req: Request) {
   } catch (e: any) {
     const msg = e?.message ?? "unknown";
     const status = typeof e?.status === "number" ? e.status : 500;
+    if (msg === "OPENAI_INSUFFICIENT_QUOTA") {
+      return NextResponse.json(
+        {
+          error: "OPENAI_INSUFFICIENT_QUOTA",
+          message:
+            "OpenAI API 크레딧/결제 한도가 부족해요. OpenAI 콘솔에서 Billing/Usage 한도를 확인해주세요.",
+          detail: e?.detail ?? null,
+        },
+        { status: 402 }
+      );
+    }
     return NextResponse.json({ error: msg, detail: e?.detail ?? null }, { status });
   }
 }
