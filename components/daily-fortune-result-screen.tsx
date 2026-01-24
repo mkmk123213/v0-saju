@@ -125,8 +125,76 @@ export default function DailyFortuneResultScreen({
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                {resultSummary?.summary_text ?? "요약을 생성 중이에요..."}
+                {(resultSummary?.daily_summary ?? resultSummary?.summary_text) ?? "요약을 생성 중이에요..."}
               </p>
+
+{resultSummary?.today_keys ? (
+  <div className="grid grid-cols-1 gap-3 pt-4">
+    {[
+      ["오늘의 색깔", resultSummary.today_keys.color],
+      ["오늘의 금기", resultSummary.today_keys.taboo],
+      ["오늘의 부적", resultSummary.today_keys.talisman],
+      ["럭키 스팟", resultSummary.today_keys.lucky_spot],
+      ["오늘의 숫자", resultSummary.today_keys.number],
+      ["오늘의 음식", resultSummary.today_keys.food],
+      ["오늘의 소지품", resultSummary.today_keys.item],
+      ["오늘의 실천", resultSummary.today_keys.action],
+      ["오늘의 귀인", resultSummary.today_keys.helper],
+    ].map(([label, obj]: any) => (
+      <div key={label} className="rounded-xl border p-3">
+        <div className="text-sm font-medium">{label}</div>
+        <div className="mt-1 text-sm font-semibold">{obj?.value ?? "-"}</div>
+        <div className="mt-1 text-xs text-muted-foreground whitespace-pre-line">{obj?.why ?? ""}</div>
+      </div>
+    ))}
+  </div>
+) : null}
+
+{resultSummary?.saju_brief ? (
+  <div className="mt-4 rounded-xl border p-3">
+    <div className="text-sm font-medium">사주 요약</div>
+    <div className="mt-1 text-xs text-muted-foreground whitespace-pre-line">{resultSummary.saju_brief}</div>
+  </div>
+) : null}
+
+{resultSummary?.astro_brief ? (
+  <div className="mt-3 rounded-xl border p-3">
+    <div className="text-sm font-medium">별자리 요약</div>
+    <div className="mt-1 text-xs text-muted-foreground whitespace-pre-line">{resultSummary.astro_brief}</div>
+  </div>
+) : null}
+
+{resultSummary?.evidence ? (
+  <div className="mt-3 rounded-xl border p-3">
+    <div className="text-sm font-medium">짧은 근거</div>
+    <div className="mt-2 text-xs text-muted-foreground space-y-2">
+      <div>
+        <div className="font-medium text-card-foreground">사주</div>
+        <ul className="list-disc pl-5">
+          {(resultSummary.evidence.saju ?? []).map((x: string, i: number) => (
+            <li key={i}>{x}</li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <div className="font-medium text-card-foreground">별자리</div>
+        <ul className="list-disc pl-5">
+          {(resultSummary.evidence.astro ?? []).map((x: string, i: number) => (
+            <li key={i}>{x}</li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <div className="font-medium text-card-foreground">오늘</div>
+        <ul className="list-disc pl-5">
+          {(resultSummary.evidence.today ?? []).map((x: string, i: number) => (
+            <li key={i}>{x}</li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </div>
+) : null}
             </CardContent>
           </Card>
 
