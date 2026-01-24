@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Calendar, Clock, User, Sun } from "lucide-react"
+import { ArrowLeft, Calendar, Clock, User, Sun, Sparkles, Star } from "lucide-react"
 import type { SajuInput, SavedProfile, Relationship } from "@/app/page"
 
 interface DailyFortuneInputScreenProps {
@@ -79,6 +79,69 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
 
   return (
     <div className="flex min-h-screen flex-col starfield">
+      {/* Loading Overlay Popup */}
+      {isLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <Card className="border-none bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 shadow-2xl mx-6 max-w-sm w-full overflow-hidden">
+            <CardContent className="p-0">
+              {/* Decorative elements */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/10 blur-[40px]" />
+                <div className="absolute bottom-0 left-0 w-40 h-40 rounded-full bg-white/5 blur-[50px]" />
+                {/* Constellation pattern */}
+                <svg className="absolute top-4 right-4 w-16 h-16 opacity-20" viewBox="0 0 80 80">
+                  <circle cx="20" cy="15" r="2" fill="white" />
+                  <circle cx="60" cy="25" r="1.5" fill="white" />
+                  <circle cx="40" cy="50" r="2" fill="white" />
+                  <circle cx="15" cy="60" r="1.5" fill="white" />
+                  <line x1="20" y1="15" x2="60" y2="25" stroke="white" strokeWidth="0.5" opacity="0.5" />
+                  <line x1="60" y1="25" x2="40" y2="50" stroke="white" strokeWidth="0.5" opacity="0.5" />
+                  <line x1="40" y1="50" x2="15" y2="60" stroke="white" strokeWidth="0.5" opacity="0.5" />
+                </svg>
+              </div>
+
+              <div className="relative p-6 text-center text-white">
+                {/* Animated Icon */}
+                <div className="relative mx-auto mb-5 flex h-20 w-20 items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-white/20 animate-ping" style={{ animationDuration: '2s' }} />
+                  <div className="absolute inset-2 rounded-full bg-white/15 animate-pulse" />
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/25 backdrop-blur-sm">
+                    <Sparkles className="h-8 w-8 text-white animate-pulse" />
+                  </div>
+                  {/* Orbiting stars */}
+                  <div className="absolute inset-0 animate-spin" style={{ animationDuration: '4s' }}>
+                    <Star className="absolute -top-1 left-1/2 -translate-x-1/2 h-3 w-3 text-yellow-200" fill="currentColor" />
+                  </div>
+                  <div className="absolute inset-0 animate-spin" style={{ animationDuration: '6s', animationDirection: 'reverse' }}>
+                    <Star className="absolute top-1/2 -right-1 -translate-y-1/2 h-2 w-2 text-white/80" fill="currentColor" />
+                  </div>
+                </div>
+
+                {/* Title */}
+                <h3 className="text-lg font-bold mb-3">운세 분석 중</h3>
+
+                {/* Description */}
+                <p className="text-sm text-white/90 leading-relaxed mb-5">
+                  당신의 사주와 별자리를 꼼꼼하게 분석하여,<br />
+                  소름돋는 오늘의 운세를 확인해볼게요.
+                </p>
+
+                {/* Progress bar */}
+                <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-white rounded-full animate-pulse"
+                    style={{ 
+                      width: '70%',
+                      animation: 'loading-progress 2s ease-in-out infinite'
+                    }} 
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-0 w-64 h-64 rounded-full bg-amber-500/10 blur-[80px]" />
         <div className="absolute bottom-40 -left-20 w-48 h-48 rounded-full bg-orange-500/10 blur-[60px]" />
