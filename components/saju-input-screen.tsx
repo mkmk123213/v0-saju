@@ -55,8 +55,8 @@ export default function SajuInputScreen({ savedProfiles, onSubmit, onBack }: Saj
     setName(profile.name)
     setBirthDate(profile.birthDate)
     setBirthTime(profile.birthTime || "")
-    setGender(profile.gender)
-    setCalendarType(profile.calendarType)
+    setGender(profile.gender === "female" ? "female" : "male")
+    setCalendarType(profile.calendarType === "lunar" ? "lunar" : "solar")
   }
 
   const handleSubmit = () => {

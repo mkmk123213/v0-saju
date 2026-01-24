@@ -58,8 +58,8 @@ export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBa
     setName(profile.name)
     setBirthDate(profile.birthDate)
     setBirthTime(profile.birthTime || "")
-    setGender(profile.gender)
-    setCalendarType(profile.calendarType)
+    setGender(profile.gender === "female" ? "female" : "male")
+    setCalendarType(profile.calendarType === "lunar" ? "lunar" : "solar")
   }
 
   const handleSubmit = () => {

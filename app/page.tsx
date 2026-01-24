@@ -208,15 +208,16 @@ export default function Home() {
       .order("created_at", { ascending: false })
     if (error) throw error
 
+    // DB 값이 null/예상치 못한 값일 때도 UI가 터지지 않도록 기본값 보정
     const mapped: SavedProfile[] =
       (data ?? []).map((p: any) => ({
-        id: p.id,
+        id: String(p.id),
         relationship: (p.relationship ?? "self") as Relationship,
-        name: p.name,
-        birthDate: p.birth_date,
-        birthTime: p.birth_time ?? "",
-        gender: p.gender,
-        calendarType: p.calendar_type,
+        name: String(p.name ?? ""),
+        birthDate: String(p.birth_date ?? ""),
+        birthTime: String(p.birth_time ?? ""),
+        gender: (p.gender === "female" ? "female" : "male") as "male" | "female",
+        calendarType: (p.calendar_type === "lunar" ? "lunar" : "solar") as "solar" | "lunar",
       })) ?? []
 
     setSavedProfiles(mapped)
