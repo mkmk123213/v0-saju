@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { buildAstroSummary } from "@/lib/astro";
 import { buildSajuLiteSummary } from "@/lib/saju-lite";
-import { buildSajuChart } from "@/lib/saju-chart";
+import { buildSajuChart, buildTodayLuckChart } from "@/lib/saju-chart";
 
 export const runtime = "nodejs";
 
@@ -111,9 +111,23 @@ export async function POST(req: Request) {
     const astro_summary = buildAstroSummary(profile.birth_date);
     const saju_summary = buildSajuLiteSummary(profile.birth_date, profile.birth_time_code);
     const sajuChart = buildSajuChart(profile.birth_date, profile.birth_time_code);
+    const todayLuckChart = type === "daily" && target_date
+      ? buildTodayLuckChart(profile.birth_date, profile.birth_time_code, profile.gender, String(target_date))
+      : null;
+
+    // 프롬프트에 넣을 "간지 근거"(짧고 재현 가능한 형태)
+    const sajuCompact = sajuChart
+      ? `연주:${sajuChart.pillars.year.ganji_kor} 월주:${sajuChart.pillars.month.ganji_kor} 일주:${sajuChart.pillars.day.ganji_kor}`
+      : "";
+    const sajuCompact2 = sajuChart
+      ? `일간:${sajuChart.pillars.day.stem_kor}(${sajuChart.pillars.day.stem_element}) / 일지:${sajuChart.pillars.day.branch_kor}(${sajuChart.pillars.day.branch_element})`
+      : "";
+    const luckCompact = todayLuckChart
+      ? `대운:${todayLuckChart.pillars.daewoon?.ganji_kor ?? "-"} 연운:${todayLuckChart.pillars.year.ganji_kor} 월운:${todayLuckChart.pillars.month.ganji_kor} 일운:${todayLuckChart.pillars.day.ganji_kor}`
+      : "";
 
     const system = `너는 "사주(동양) + 서양 점성술(별자리)"을 결합해
-짧고 단정한 한국어 운세를 쓰는 전문가야.
+짧고 강렬하게, 근거가 살아있는 한국어 운세를 쓰는 전문가야.
 
 말투:
 - 무조건 반말체, 친근하고 스윗하게. 존댓말 금지.
@@ -122,6 +136,11 @@ export async function POST(req: Request) {
 - 읽는 사람이 "소름"이라고 느낄 만큼 구체적이고 정확해 보이게 써.
 - 공포 조장/단정적 불행 예언/의학·법률 단정은 금지.
 - 오늘 하루에 초점을 맞춘 실천 조언을 줘.
+
+문장 스타일(중요):
+- 예시처럼 "일주/일운" 같은 간지를 자연스럽게 끼워 넣되, 문장은 예시의 절반 길이로 더 압축해.
+- 흔한 덕담/추상적 조언 금지. ("긍정적으로" "힘내" 같은 문장 금지)
+- 각 섹션마다 "오늘 실제로 일어날 법한 장면" 1개는 꼭 넣어.
 
 재현성 규칙(매우 중요):
 - 입력이 완전히 같으면 결과 문장/표현/선택을 최대한 동일하게 유지해.
@@ -143,8 +162,15 @@ export async function POST(req: Request) {
 [사주 요약(서버 제공)]
 ${saju_summary}
 
+[사주 간지 근거(서버 계산, 그대로 사용)]
+${sajuCompact}
+${sajuCompact2}
+
 [별자리 요약(서버 제공)]
 ${astro_summary}
+
+[오늘 흐름 간지(서버 계산, 그대로 사용)]
+${luckCompact}
 
 [운세 날짜]
 ${target_date}
@@ -166,11 +192,20 @@ ${target_date}
     },
     "notes": []
   },
+  "today_luck_chart": {
+    "pillars": {
+      "daewoon": { "stem_hanja": "", "stem_kor": "", "stem_element": "목|화|토|금|수", "stem_yinyang": "양|음", "branch_hanja": "", "branch_kor": "", "branch_animal": "", "branch_element": "목|화|토|금|수", "branch_yinyang": "양|음", "ganji_hanja": "", "ganji_kor": "" },
+      "year": { "stem_hanja": "", "stem_kor": "", "stem_element": "목|화|토|금|수", "stem_yinyang": "양|음", "branch_hanja": "", "branch_kor": "", "branch_animal": "", "branch_element": "목|화|토|금|수", "branch_yinyang": "양|음", "ganji_hanja": "", "ganji_kor": "" },
+      "month": { "stem_hanja": "", "stem_kor": "", "stem_element": "목|화|토|금|수", "stem_yinyang": "양|음", "branch_hanja": "", "branch_kor": "", "branch_animal": "", "branch_element": "목|화|토|금|수", "branch_yinyang": "양|음", "ganji_hanja": "", "ganji_kor": "" },
+      "day": { "stem_hanja": "", "stem_kor": "", "stem_element": "목|화|토|금|수", "stem_yinyang": "양|음", "branch_hanja": "", "branch_kor": "", "branch_animal": "", "branch_element": "목|화|토|금|수", "branch_yinyang": "양|음", "ganji_hanja": "", "ganji_kor": "" }
+    },
+    "notes": []
+  },
   "sections": {
-    "overall": "총운(2~3문장, 짧게)",
-    "money": "금전운(2~3문장, 짧게)",
-    "love": "애정운(2~3문장, 짧게)",
-    "health": "건강운(2~3문장, 짧게)"
+    "overall": "총운(1~2문장, 예시의 절반 길이)",
+    "money": "금전운(1~2문장, 예시의 절반 길이)",
+    "love": "애정운(1~2문장, 예시의 절반 길이)",
+    "health": "건강운(1~2문장, 예시의 절반 길이)"
   },
   "section_evidence": {
     "overall": ["근거 1(짧게)", "근거 2(짧게)"],
@@ -215,7 +250,20 @@ ${target_date}
   - 키워드 문자열(#...)을 문장에 그대로 박지 말고, 의미/분위기로 녹여.
   - 과장/예언/공포 조장 금지. 25~60자.
 - saju_chart는 반드시 위 구조를 유지해 출력해(값은 서버에서 최종 보정된다).
-- sections 4개는 각각 2~3문장만. 짧고 단정하게.
+- 간지 표기 규칙(신뢰감):
+  - 천간+오행: 갑목, 을목, 병화, 정화, 무토, 기토, 경금, 신금, 임수, 계수
+  - 지지+오행: 자수, 축토, 인목, 묘목, 진토, 사화, 오화, 미토, 신금, 유금, 술토, 해수
+  - 본문에서는 위 형태로 붙여 써(예: "일주의 병화", "일운의 해수").
+- sections 4개는 각각 1~2문장만.
+  - 길이: 각 섹션 40~90자 내외(예시의 절반 수준).
+  - 반드시 2개의 간지 단서를 포함: (일간/일지 중 1개) + (일운/월운/연운/대운 중 1개).
+  - "오늘 실제로 일어날 법한 장면" 1개를 문장에 끼워 넣어.
+
+길이 규칙(매우 중요):
+- sections.overall/money/love/health는 각각 1~2문장.
+- 각 섹션은 40~90자(공백 포함) 정도로, 위 예시의 절반 길이로 압축.
+- 각 섹션 문장 안에 반드시 "간지 근거"를 최소 1개 포함(예: 일간 병화/일운 기토/일운 해수/월운/연운/대운 등).
+- 각 섹션 문장 안에 "현실 장면" 1개 포함(예: 회의/메신저/결제/약속/식사/퇴근길 등).
 - section_evidence는 각 섹션당 2개씩:
   - 반드시 '사주 요약(연주/오행/띠/리듬/집중)' 또는 '별자리 요약(강점/주의 키워드)' 중 최소 1개 요소를 포함해.
   - "왜 그렇게 말하는지"가 보이게 원인→현상 형태로.
@@ -302,6 +350,11 @@ target_year: ${target_year ?? "없음"}
       if (sajuChart) {
         result_summary = result_summary ?? {};
         result_summary.saju_chart = sajuChart;
+      }
+      // 서버 계산 오늘 흐름(대운/연운/월운/일운) 주입
+      if (todayLuckChart) {
+        result_summary = result_summary ?? {};
+        result_summary.today_luck_chart = todayLuckChart;
       }
     }
 

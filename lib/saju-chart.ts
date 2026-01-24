@@ -25,6 +25,22 @@ export type Pillar = {
   ganji_kor: string
 }
 
+export type TodayLuckChart = {
+  pillars: {
+    daewoon: Pillar | null
+    year: Pillar
+    month: Pillar
+    day: Pillar
+  }
+  labels?: {
+    daewoon?: string | null
+    year?: string | null
+    month?: string | null
+    day?: string | null
+  }
+  notes: string[]
+}
+
 const STEMS_HANJA = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"] as const
 const STEMS_KOR = ["갑","을","병","정","무","기","경","신","임","계"] as const
 const BRANCHES_HANJA = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"] as const
@@ -115,6 +131,170 @@ function getSajuYearForDate(y: number, m: number, d: number) {
   if (m < 2) return y - 1
   if (m > 2) return y
   return d < 4 ? y - 1 : y
+}
+
+function pillarIndex60FromStemBranch(
+  stemKor: (typeof STEMS_KOR)[number],
+  branchKor: (typeof BRANCHES_KOR)[number]
+): number {
+  const s = STEMS_KOR.indexOf(stemKor)
+  const b = BRANCHES_KOR.indexOf(branchKor)
+  for (let i = 0; i < 60; i++) {
+    if (i % 10 === s && i % 12 === b) return i
+  }
+  return 0
+}
+
+export function buildPillarsForDate(dateISO: string) {
+  if (!isValidISODate(dateISO)) return null
+  const y = Number(dateISO.slice(0, 4))
+  const m = Number(dateISO.slice(5, 7))
+  const d = Number(dateISO.slice(8, 10))
+  if (!y || !m || !d) return null
+
+  // Year pillar (입춘 기준)
+  const sajuYear = getSajuYearForDate(y, m, d)
+  const yearIdx60 = ((sajuYear - 1984) % 60 + 60) % 60
+  const yearStemKor = stemKorFromIndex(yearIdx60)
+  const yearBranchKor = branchKorFromIndex(yearIdx60)
+  const year = buildPillar(yearStemKor, yearBranchKor)
+
+  // Month pillar (절기 근사)
+  const monthBranchKor = getMonthBranchKor(y, m, d)
+  const monthBranchIndexFromIn = ["인", "묘", "진", "사", "오", "미", "신", "유", "술", "해", "자", "축"].indexOf(monthBranchKor)
+  const monthStemStart = getMonthStemStartForYearStem(yearStemKor)
+  const monthStemKor = nextStemKor(monthStemStart, monthBranchIndexFromIn)
+  const month = buildPillar(monthStemKor, monthBranchKor)
+
+  // Day pillar
+  const dayIdx60 = getDayIndex60(y, m, d)
+  const dayStemKor = stemKorFromIndex(dayIdx60)
+  const dayBranchKor = branchKorFromIndex(dayIdx60)
+  const day = buildPillar(dayStemKor, dayBranchKor)
+
+  return { year, month, day }
+}
+
+function dayDiffUTC(aISO: string, bISO: string) {
+  const ay = Number(aISO.slice(0, 4)); const am = Number(aISO.slice(5, 7)); const ad = Number(aISO.slice(8, 10))
+  const by = Number(bISO.slice(0, 4)); const bm = Number(bISO.slice(5, 7)); const bd = Number(bISO.slice(8, 10))
+  const a = Date.UTC(ay, am - 1, ad)
+  const b = Date.UTC(by, bm - 1, bd)
+  return Math.round((b - a) / (1000 * 60 * 60 * 24))
+}
+
+function addDaysISO(dateISO: string, days: number) {
+  const y = Number(dateISO.slice(0, 4))
+  const m = Number(dateISO.slice(5, 7))
+  const d = Number(dateISO.slice(8, 10))
+  const dt = new Date(Date.UTC(y, m - 1, d + days))
+  const yy = dt.getUTCFullYear()
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0")
+  const dd = String(dt.getUTCDate()).padStart(2, "0")
+  return `${yy}-${mm}-${dd}`
+}
+
+function approxNextSolarTermISO(dateISO: string): string {
+  // SOLAR_TERM_BOUNDARIES 기반으로 "다음" 절기 경계일(근사)을 찾는다.
+  const y = Number(dateISO.slice(0, 4))
+  const m = Number(dateISO.slice(5, 7))
+  const d = Number(dateISO.slice(8, 10))
+  const md = m * 100 + d
+
+  // 다음 boundary 후보를 같은 해에서 찾고, 없으면 다음 해 1/6
+  const candidates = SOLAR_TERM_BOUNDARIES
+    .filter((b) => !(b.m === 1))
+    .map((b) => ({ y, m: b.m, d: b.d, md: b.m * 100 + b.d }))
+    .filter((b) => b.md > md)
+    .sort((a, b) => a.md - b.md)
+
+  if (candidates.length > 0) {
+    const c = candidates[0]
+    return `${c.y}-${String(c.m).padStart(2, "0")}-${String(c.d).padStart(2, "0")}`
+  }
+  // 다음 해 1/6
+  return `${y + 1}-01-06`
+}
+
+function approxPrevSolarTermISO(dateISO: string): string {
+  const y = Number(dateISO.slice(0, 4))
+  const m = Number(dateISO.slice(5, 7))
+  const d = Number(dateISO.slice(8, 10))
+  const md = m * 100 + d
+
+  // 같은 해에서 이전 boundary 후보를 찾고, 없으면 전년도 12/7
+  const candidates = SOLAR_TERM_BOUNDARIES
+    .filter((b) => !(b.m === 1))
+    .map((b) => ({ y, m: b.m, d: b.d, md: b.m * 100 + b.d }))
+    .filter((b) => b.md <= md)
+    .sort((a, b) => b.md - a.md)
+
+  if (candidates.length > 0) {
+    const c = candidates[0]
+    return `${c.y}-${String(c.m).padStart(2, "0")}-${String(c.d).padStart(2, "0")}`
+  }
+  return `${y - 1}-12-07`
+}
+
+function calcAgeYears(birthISO: string, todayISO: string) {
+  const by = Number(birthISO.slice(0, 4))
+  const bm = Number(birthISO.slice(5, 7))
+  const bd = Number(birthISO.slice(8, 10))
+  const ty = Number(todayISO.slice(0, 4))
+  const tm = Number(todayISO.slice(5, 7))
+  const td = Number(todayISO.slice(8, 10))
+  let age = ty - by
+  if (tm < bm || (tm === bm && td < bd)) age -= 1
+  return Math.max(0, age)
+}
+
+export function buildTodayLuckChart(
+  birthDateISO: string,
+  birthTimeCode: string | null | undefined,
+  gender: "male" | "female" | null | undefined,
+  todayISO: string
+): TodayLuckChart | null {
+  if (!isValidISODate(birthDateISO) || !isValidISODate(todayISO)) return null
+
+  const todayPillars = buildPillarsForDate(todayISO)
+  const birthChart = buildSajuChart(birthDateISO, birthTimeCode)
+  if (!todayPillars || !birthChart) return null
+
+  // 방향(순행/역행) — 간이 규칙
+  const yearStemKor = birthChart.pillars.year.stem_kor as (typeof STEMS_KOR)[number]
+  const yearStemYY = STEM_YINYANG[yearStemKor]
+  const isMale = gender === "male"
+  const forward = (isMale && yearStemYY === "양") || (!isMale && yearStemYY === "음")
+  const dir = forward ? 1 : -1
+
+  // 대운 시작 나이(절기 기준) — 근사: 다음(또는 이전) 절기까지 일수/3
+  const boundary = forward ? approxNextSolarTermISO(birthDateISO) : approxPrevSolarTermISO(birthDateISO)
+  const days = Math.max(0, Math.abs(dayDiffUTC(birthDateISO, boundary)))
+  const startAge = Math.max(1, Math.min(10, Math.floor(days / 3)))
+
+  const age = calcAgeYears(birthDateISO, todayISO)
+  const step = Math.max(0, Math.floor((age - startAge) / 10))
+
+  // 월주 기준으로 10년마다 간지 1칸 이동(간이)
+  const m = birthChart.pillars.month
+  const monthIdx60 = pillarIndex60FromStemBranch(m.stem_kor as (typeof STEMS_KOR)[number], m.branch_kor as (typeof BRANCHES_KOR)[number])
+  const daewoonIdx60 = ((monthIdx60 + dir * (step + 1)) % 60 + 60) % 60
+  const daewoonStemKor = stemKorFromIndex(daewoonIdx60)
+  const daewoonBranchKor = branchKorFromIndex(daewoonIdx60)
+  const daewoon = buildPillar(daewoonStemKor, daewoonBranchKor)
+
+  return {
+    pillars: {
+      daewoon,
+      year: todayPillars.year,
+      month: todayPillars.month,
+      day: todayPillars.day,
+    },
+    notes: [
+      "연/월/일운은 오늘 날짜 기준(입춘/절기 경계는 고정 근사일)으로 계산했어.",
+      "대운은 월주를 기준으로 순행/역행·시작나이를 절기 근사로 계산한 '간이 대운'이야.",
+    ],
+  }
 }
 
 function stemKorFromIndex(i: number) {

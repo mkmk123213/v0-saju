@@ -94,6 +94,7 @@ export default function DailyFortuneResultScreen({
   const todayKeywords: string[] = Array.isArray(resultSummary?.today_keywords) ? resultSummary.today_keywords.slice(0, 3) : []
   const todayOneLiner: string | null = typeof resultSummary?.today_one_liner === "string" ? resultSummary.today_one_liner : null
   const sajuChart = resultSummary?.saju_chart?.pillars ? resultSummary.saju_chart : null
+  const todayLuckChart = resultSummary?.today_luck_chart?.pillars ? resultSummary.today_luck_chart : null
   return (
     <div className="flex min-h-screen flex-col starfield">
       {/* Cosmic background */}
@@ -283,6 +284,64 @@ export default function DailyFortuneResultScreen({
                           <p className="text-[11px] leading-relaxed text-muted-foreground">
                             {sajuChart.notes[0]}
                           </p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
+              </CardContent>
+            </Card>
+          )}
+
+          {todayLuckChart && (
+            <Card className="border-none glass shadow-sm">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    <h3 className="text-sm font-semibold text-card-foreground">오늘의 흐름</h3>
+                  </div>
+                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    대운·연운·월운·일운
+                  </span>
+                </div>
+
+                {(() => {
+                  const p = todayLuckChart.pillars
+                  const cols = [
+                    { label: "대운", v: p.daewoon },
+                    { label: "연운", v: p.year },
+                    { label: "월운", v: p.month },
+                    { label: "일운", v: p.day },
+                  ] as const
+
+                  return (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        {cols.map((c) => (
+                          <div key={c.label} className="space-y-1">
+                            <div className="text-[11px] font-medium text-muted-foreground">{c.label}</div>
+                            <div className="rounded-xl overflow-hidden border border-border/60">
+                              <div className="bg-gradient-to-b from-indigo-400/15 to-violet-500/10 px-2 py-2">
+                                <div className="text-lg font-bold text-card-foreground">{c.v ? c.v.stem_hanja : "—"}</div>
+                                <div className="text-[11px] text-muted-foreground">
+                                  {c.v ? `${c.v.stem_yinyang}${c.v.stem_element}` : "정보 없음"}
+                                </div>
+                              </div>
+                              <div className="bg-muted/40 px-2 py-2">
+                                <div className="text-lg font-bold text-card-foreground">{c.v ? c.v.branch_hanja : "—"}</div>
+                                <div className="text-[11px] text-muted-foreground">
+                                  {c.v ? `${c.v.branch_animal} · ${c.v.branch_element}` : "정보 없음"}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {Array.isArray(todayLuckChart.notes) && todayLuckChart.notes.length > 0 && (
+                        <div className="rounded-xl bg-muted/40 px-3 py-2">
+                          <p className="text-[11px] leading-relaxed text-muted-foreground">{todayLuckChart.notes[0]}</p>
                         </div>
                       )}
                     </div>
