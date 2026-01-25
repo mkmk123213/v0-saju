@@ -144,10 +144,7 @@ export async function POST(req: Request) {
           {
             error: "unlock_failed",
             message: "상세 풀이 잠금해제 처리 중 오류가 발생했어.",
-            detail:
-              "rpc_unlock_detail 함수가 API에 노출되지 않았어. Supabase SQL Editor에서 다음을 실행해줘: GRANT EXECUTE ON FUNCTION public.rpc_unlock_detail(uuid) TO authenticated; 그리고 Settings > API에서 Reload schema 눌러줘.
-원본: " +
-              msg,
+            detail: `rpc_unlock_detail 함수가 API에 노출되지 않았어. Supabase SQL Editor에서 다음을 실행해줘: GRANT EXECUTE ON FUNCTION public.rpc_unlock_detail(uuid) TO authenticated; 그리고 Settings > API에서 Reload schema 눌러줘.\n원본: ${msg}`,
           },
           { status: 500 }
         );
