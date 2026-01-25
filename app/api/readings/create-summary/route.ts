@@ -761,35 +761,14 @@ async function fetchWithRetry(fetcher: () => Promise<Response>, retries = 3) {
 
 
 async function rpcUnlockDetail(supabaseUser: any, reading_id: string) {
-  const argCandidates: Record<string, any>[] = [
-    { p_reading_id: reading_id },
-    { reading_id },
-    { readingId: reading_id },
-    { p_reading_uuid: reading_id },
-    { reading_uuid: reading_id },
-    { p_reading: reading_id },
-    { p_id: reading_id },
-    { id: reading_id },
-  ];
+  // Supabase SQL: rpc_unlock_detail(p_reading_id uuid)
+  const { error } = await supabaseUser.rpc("rpc_unlock_detail", { p_reading_id: reading_id });
+  return error ?? null;
+}
 
-  let lastError: any = null;
-
-  for (const args of argCandidates) {
-    const { error } = await supabaseUser.rpc("rpc_unlock_detail", args);
-    if (!error) return null;
-
-    lastError = error;
-
-    // If the error is NOT about signature mismatch, stop early.
-    // Signature mismatch messages often mention schema cache / function not found / parameter issues.
-    const msg = String(error.message ?? "");
-    const looksLikeSignatureMismatch =
-      /schema cache|could not find the function|function public\.rpc_unlock_detail|parameter|unknown/i.test(msg);
-
-    if (!looksLikeSignatureMismatch) break;
-  }
-
-  return lastError;
+function isSchemaCacheNotFound(err: any) {
+  const msg = String(err?.message ?? "");
+  return /schema cache|could not find the function|function public\.rpc_unlock_detail/i.test(msg);
 }
 
 export async function POST(req: Request) {
@@ -1128,6 +1107,20 @@ target_year: ${target_year ?? "없음"}
       // 결제 실패면 생성한 reading은 정리(목록에 빈 카드 남지 않게)
       await supabaseAdmin.from("readings").delete().eq("id", reading_id);
       const msg = String(unlockErr.message ?? "");
+
+      // ⚠️ Supabase PostgREST schema cache에 함수가 안 보일 때(보통 EXECUTE 권한 문제)
+      if (isSchemaCacheNotFound(unlockErr)) {
+        return NextResponse.json(
+          {
+            error: "unlock_failed",
+            message: "결과 잠금해제 처리 중 오류가 발생했어.",
+            detail:
+              "rpc_unlock_detail 함수가 API에 노출되지 않았어. Supabase SQL Editor에서 다음을 실행해줘: GRANT EXECUTE ON FUNCTION public.rpc_unlock_detail(uuid) TO authenticated; 그리고 Settings > API에서 Reload schema 눌러줘.\n원본: " + msg,
+          },
+          { status: 500 }
+        );
+      }
+
 
       // ✅ 코인 부족이 아닌 다른 오류를 'coin_required'로 뭉개지 않도록 분기
       const looksLikeCoinShortage = /coin|엽전|insufficient|not enough|balance|잔액/i.test(msg);
