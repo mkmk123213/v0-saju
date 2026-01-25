@@ -327,20 +327,24 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
       <div className="sticky bottom-0 border-t border-border glass px-6 py-4 relative z-10">
         <div className="mx-auto max-w-sm space-y-3">
           {/* Coin Info */}
-          <div className="flex items-center justify-between rounded-xl bg-amber-50 dark:bg-amber-900/20 px-4 py-3 border border-amber-200 dark:border-amber-500/30">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-800/50">
-                <span className="text-lg">🪙</span>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 flex items-center gap-3 rounded-xl bg-secondary/80 px-4 py-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-md">
+                <span className="text-base">&#x1FAA8;</span>
               </div>
               <div>
-                <p className="text-xs text-amber-600 dark:text-amber-400">필요 엽전</p>
-                <p className="text-sm font-bold text-amber-700 dark:text-amber-300">1개</p>
+                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">필요</p>
+                <p className="text-base font-bold text-foreground">1개</p>
               </div>
             </div>
-            <div className="h-8 w-px bg-amber-200 dark:bg-amber-500/30" />
-            <div className="text-right">
-              <p className="text-xs text-amber-600 dark:text-amber-400">보유 엽전</p>
-              <p className="text-sm font-bold text-amber-700 dark:text-amber-300">{coins}개</p>
+            <div className="flex-1 flex items-center gap-3 rounded-xl bg-secondary/80 px-4 py-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 shadow-md">
+                <span className="text-base">&#x1FAA8;</span>
+              </div>
+              <div>
+                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">보유</p>
+                <p className="text-base font-bold text-foreground">{coins}개</p>
+              </div>
             </div>
           </div>
           
