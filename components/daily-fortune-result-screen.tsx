@@ -309,34 +309,84 @@ export default function DailyFortuneResultScreen({
                 {(() => {
                   const p = todayLuckChart.pillars
                   const cols = [
-                    { label: "대운", v: p.daewoon },
-                    { label: "연운", v: p.year },
-                    { label: "월운", v: p.month },
-                    { label: "일운", v: p.day },
+                    { key: "daewoon", label: "대운", v: p.daewoon, shinsal: todayLuckChart.labels?.daewoon },
+                    { key: "year", label: "연운", v: p.year, shinsal: todayLuckChart.labels?.year },
+                    { key: "month", label: "월운", v: p.month, shinsal: todayLuckChart.labels?.month },
+                    { key: "day", label: "일운", v: p.day, shinsal: todayLuckChart.labels?.day },
                   ] as const
+
+                  const stemBg = (el?: string) => {
+                    switch (el) {
+                      case "목": return "bg-emerald-500/15"
+                      case "화": return "bg-rose-500/20"
+                      case "토": return "bg-amber-400/35"
+                      case "금": return "bg-slate-400/25"
+                      case "수": return "bg-sky-500/20"
+                      default: return "bg-muted/30"
+                    }
+                  }
+
+                  const branchBg = (el?: string) => {
+                    switch (el) {
+                      case "목": return "bg-emerald-500/10"
+                      case "화": return "bg-rose-500/10"
+                      case "토": return "bg-amber-400/20"
+                      case "금": return "bg-slate-400/15"
+                      case "수": return "bg-sky-500/12"
+                      default: return "bg-muted/20"
+                    }
+                  }
 
                   return (
                     <div className="space-y-3">
-                      <div className="grid grid-cols-4 gap-2 text-center">
-                        {cols.map((c) => (
-                          <div key={c.label} className="space-y-1">
-                            <div className="text-[11px] font-medium text-muted-foreground">{c.label}</div>
-                            <div className="rounded-xl overflow-hidden border border-border/60">
-                              <div className="bg-gradient-to-b from-indigo-400/15 to-violet-500/10 px-2 py-2">
-                                <div className="text-lg font-bold text-card-foreground">{c.v ? c.v.stem_hanja : "—"}</div>
-                                <div className="text-[11px] text-muted-foreground">
-                                  {c.v ? `${c.v.stem_yinyang}${c.v.stem_element}` : "정보 없음"}
-                                </div>
+                      {/* chart (screenshot-like) */}
+                      <div className="overflow-hidden rounded-xl border border-border/60">
+                        <div className="grid grid-cols-4">
+                          {cols.map((c) => (
+                            <div key={c.key} className="border-r border-border/60 last:border-r-0 bg-muted/10 px-2 py-2 text-center">
+                              <div className="text-[11px] font-semibold text-muted-foreground">{c.label}</div>
+                            </div>
+                          ))}
+
+                          {cols.map((c) => (
+                            <div
+                              key={`${c.key}-stem`}
+                              className={`border-r border-border/60 last:border-r-0 px-2 py-3 text-center ${stemBg(c.v?.stem_element)}`}
+                            >
+                              <div className="text-xl font-extrabold tracking-wide text-card-foreground">
+                                {c.v ? c.v.stem_hanja : "—"}
                               </div>
-                              <div className="bg-muted/40 px-2 py-2">
-                                <div className="text-lg font-bold text-card-foreground">{c.v ? c.v.branch_hanja : "—"}</div>
-                                <div className="text-[11px] text-muted-foreground">
-                                  {c.v ? `${c.v.branch_animal} · ${c.v.branch_element}` : "정보 없음"}
-                                </div>
+                              <div className="mt-0.5 text-[11px] font-medium text-muted-foreground">
+                                {c.v ? c.v.stem_kor : ""}
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+
+                          {cols.map((c) => (
+                            <div
+                              key={`${c.key}-branch`}
+                              className={`border-r border-border/60 last:border-r-0 px-2 py-3 text-center ${branchBg(c.v?.branch_element)}`}
+                            >
+                              <div className="text-xl font-extrabold tracking-wide text-card-foreground">
+                                {c.v ? c.v.branch_hanja : "—"}
+                              </div>
+                              <div className="mt-0.5 text-[11px] font-medium text-muted-foreground">
+                                {c.v ? c.v.branch_kor : ""}
+                              </div>
+                            </div>
+                          ))}
+
+                          {cols.map((c) => (
+                            <div
+                              key={`${c.key}-shinsal`}
+                              className="border-r border-border/60 last:border-r-0 bg-background px-2 py-2 text-center"
+                            >
+                              <div className="text-[11px] font-semibold text-muted-foreground">
+                                {c.shinsal ? String(c.shinsal) : ""}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
 
                       {Array.isArray(todayLuckChart.notes) && todayLuckChart.notes.length > 0 && (
@@ -412,9 +462,16 @@ export default function DailyFortuneResultScreen({
                               </span>
                             </div>
                           </div>
-                          <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-                            {text ?? ""}
-                          </p>
+                          {(() => {
+                            const t = typeof text === "string" ? text.trim() : "";
+                            const raw = typeof resultSummary?.raw === "string" ? resultSummary.raw.trim() : "";
+                            const fallback = t || raw || "요약을 불러오는 중이야. 잠깐만 기다려줘.";
+                            return (
+                              <p className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">
+                                {fallback}
+                              </p>
+                            );
+                          })()}
                           {Array.isArray((() => {
                             const t = title as string
                             const k =
@@ -464,9 +521,16 @@ export default function DailyFortuneResultScreen({
                       <h3 className="font-bold text-card-foreground">오늘의 요약</h3>
                       <div className="h-1 flex-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 opacity-30" />
                     </div>
-                    <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-                      {resultSummary?.daily_summary ?? resultSummary?.summary_text ?? ""}
-                    </p>
+                    {(() => {
+                      const base = (resultSummary?.daily_summary ?? resultSummary?.summary_text ?? "").toString().trim();
+                      const raw = typeof resultSummary?.raw === "string" ? resultSummary.raw.trim() : "";
+                      const txt = base || raw || "요약을 불러오는 중이야. 잠깐만 기다려줘.";
+                      return (
+                        <p className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">
+                          {txt}
+                        </p>
+                      );
+                    })()}
                   </div>
                 </div>
               </CardContent>

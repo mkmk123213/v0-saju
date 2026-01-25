@@ -32,6 +32,13 @@ export type TodayLuckChart = {
     month: Pillar
     day: Pillar
   }
+  /**
+   * 십이신살(十二神殺) 라벨 (기본: 연지(띠) 기준의 간이 표기)
+   *
+   * 참고: 십이신살은 연지 기준/일지 기준 등 유파가 갈려. 현재는
+   * - “띠(연지) 기준”으로 표를 붙여 UX 신뢰감을 주는 용도
+   * - 추후 만세력/해석 고도화 시, 기준(연지/일지) 토글로 확장 가능
+   */
   labels?: {
     daewoon?: string | null
     year?: string | null
@@ -39,6 +46,41 @@ export type TodayLuckChart = {
     day?: string | null
   }
   notes: string[]
+}
+
+const TWELVE_SINSAL = [
+  "지살",
+  "년살",
+  "월살",
+  "망신살",
+  "장성살",
+  "반안살",
+  "역마살",
+  "육해살",
+  "화개살",
+  "겁살",
+  "재살",
+  "천살",
+] as const
+
+function getSinsalHeadBranchKor(baseBranchKor: (typeof BRANCHES_KOR)[number]) {
+  // 삼합 그룹별 지살 시작점
+  // 申子辰 -> 申, 亥卯未 -> 亥, 寅午戌 -> 寅, 巳酉丑 -> 巳
+  if (baseBranchKor === "신" || baseBranchKor === "자" || baseBranchKor === "진") return "신" as const
+  if (baseBranchKor === "해" || baseBranchKor === "묘" || baseBranchKor === "미") return "해" as const
+  if (baseBranchKor === "인" || baseBranchKor === "오" || baseBranchKor === "술") return "인" as const
+  return "사" as const
+}
+
+function getTwelveSinsalLabel(
+  baseBranchKor: (typeof BRANCHES_KOR)[number],
+  targetBranchKor: (typeof BRANCHES_KOR)[number]
+) {
+  const head = getSinsalHeadBranchKor(baseBranchKor)
+  const headIdx = BRANCHES_KOR.indexOf(head)
+  const tIdx = BRANCHES_KOR.indexOf(targetBranchKor)
+  const offset = ((tIdx - headIdx) % 12 + 12) % 12
+  return TWELVE_SINSAL[offset]
 }
 
 const STEMS_HANJA = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"] as const
@@ -260,6 +302,9 @@ export function buildTodayLuckChart(
   const birthChart = buildSajuChart(birthDateISO, birthTimeCode)
   if (!todayPillars || !birthChart) return null
 
+  // 십이신살(연지 기준 간이 표기)
+  const baseBranchKor = birthChart.pillars.year.branch_kor as (typeof BRANCHES_KOR)[number]
+
   // 방향(순행/역행) — 간이 규칙
   const yearStemKor = birthChart.pillars.year.stem_kor as (typeof STEMS_KOR)[number]
   const yearStemYY = STEM_YINYANG[yearStemKor]
@@ -289,6 +334,12 @@ export function buildTodayLuckChart(
       year: todayPillars.year,
       month: todayPillars.month,
       day: todayPillars.day,
+    },
+    labels: {
+      daewoon: daewoon ? getTwelveSinsalLabel(baseBranchKor, daewoon.branch_kor as any) : null,
+      year: getTwelveSinsalLabel(baseBranchKor, todayPillars.year.branch_kor as any),
+      month: getTwelveSinsalLabel(baseBranchKor, todayPillars.month.branch_kor as any),
+      day: getTwelveSinsalLabel(baseBranchKor, todayPillars.day.branch_kor as any),
     },
     notes: [
       "연/월/일운은 오늘 날짜 기준(입춘/절기 경계는 고정 근사일)으로 계산했어.",

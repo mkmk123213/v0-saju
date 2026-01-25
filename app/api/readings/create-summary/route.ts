@@ -1,10 +1,153 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { buildAstroSummary } from "@/lib/astro";
-import { buildSajuLiteSummary } from "@/lib/saju-lite";
+import { buildAstroSummary, getSunSignFromBirthDate } from "@/lib/astro";
+import { buildSajuLiteSummary, getZodiacAnimal } from "@/lib/saju-lite";
 import { buildSajuChart, buildTodayLuckChart } from "@/lib/saju-chart";
 
 export const runtime = "nodejs";
+
+function clampInt(n: any, min = 0, max = 100) {
+  const x = typeof n === "number" && Number.isFinite(n) ? Math.round(n) : 0;
+  return Math.max(min, Math.min(max, x));
+}
+
+function makeDefaultKeywords(seed: { dayStemElement?: string | null; sunSign?: string | null }) {
+  // 역할 분리(주의/기회/태도) 기본 3개
+  const byElement: Record<string, [string, string, string]> = {
+    "목": ["#새싹스타트", "#아이디어발아", "#루틴쌓기"],
+    "화": ["#말조심이보약", "#아이디어폭발", "#속도조절"],
+    "토": ["#페이스조절", "#정리정돈", "#내적성장데이"],
+    "금": ["#정리정돈", "#선긋기가능", "#선택과집중"],
+    "수": ["#감정정리", "#흐름타기", "#직감주의"],
+  };
+  const el = seed.dayStemElement ?? "토";
+  const base = byElement[el] ?? byElement["토"];
+
+  // 별자리 약간의 개성만 덧씌우기(단, 재현성/단순성 유지)
+  const sun = seed.sunSign ?? "";
+  if (sun.includes("사자")) return [base[0], "#존재감상승", base[2]];
+  if (sun.includes("처녀")) return [base[0], "#디테일점검", base[2]];
+  if (sun.includes("물고기")) return [base[0], "#감수성리듬", base[2]];
+  return base;
+}
+
+function makeOneLiner(keywords: string[]) {
+  // 키워드를 그대로 박지 않고 분위기로 녹여내는 짧은 1문장
+  // (UI에서 한눈에 보이도록 25~60자 정도)
+  const k = keywords.map((s) => s.replace(/^#/, "")).slice(0, 3);
+  const moodA = k[0] ?? "조심";
+  const moodB = k[1] ?? "기회";
+  const moodC = k[2] ?? "성장";
+  return `오늘은 ${moodA}로 균형 잡고, ${moodB}를 살려 ${moodC}로 마무리하는 날이야.`;
+}
+
+function normalizeDailyResultSummary(
+  rs: any,
+  profile: any,
+  sajuChart: any | null,
+  todayLuckChart: any | null
+) {
+  const out: any = rs && typeof rs === "object" ? rs : {};
+
+  // profile_badges
+  out.profile_badges = out.profile_badges && typeof out.profile_badges === "object" ? out.profile_badges : {};
+  out.profile_badges.zodiac_animal =
+    typeof out.profile_badges.zodiac_animal === "string" && out.profile_badges.zodiac_animal.trim()
+      ? out.profile_badges.zodiac_animal
+      : getZodiacAnimal(profile.birth_date) ?? "";
+  out.profile_badges.sun_sign =
+    typeof out.profile_badges.sun_sign === "string" && out.profile_badges.sun_sign.trim()
+      ? out.profile_badges.sun_sign
+      : getSunSignFromBirthDate(profile.birth_date) ?? "";
+
+  // today_keywords
+  const dayStemEl = sajuChart?.pillars?.day?.stem_element ?? null;
+  const sunSign = out.profile_badges.sun_sign ?? null;
+  if (!Array.isArray(out.today_keywords) || out.today_keywords.filter((x: any) => typeof x === "string" && x.trim()).length < 3) {
+    out.today_keywords = makeDefaultKeywords({ dayStemElement: dayStemEl, sunSign });
+  } else {
+    out.today_keywords = out.today_keywords.filter((x: any) => typeof x === "string").slice(0, 3);
+  }
+
+  // today_one_liner
+  if (typeof out.today_one_liner !== "string" || !out.today_one_liner.trim()) {
+    out.today_one_liner = makeOneLiner(out.today_keywords);
+  }
+
+  // saju/astro briefs(절대 비지 않게)
+  if (typeof out.saju_brief !== "string" || !out.saju_brief.trim()) {
+    const d = sajuChart?.pillars?.day
+    const t = todayLuckChart?.pillars?.day
+    out.saju_brief = d && t
+      ? `일주 ${d.ganji_kor}의 ${d.stem_element} 기운이 오늘 일운 ${t.ganji_kor}의 ${t.branch_element}와 만나, 속도 조절이 핵심이야.`
+      : "사주 흐름을 기준으로 오늘은 ‘속도 조절’이 핵심이야.";
+  }
+  if (typeof out.astro_brief !== "string" || !out.astro_brief.trim()) {
+    const sun = out.profile_badges.sun_sign || ""
+    out.astro_brief = sun ? `${sun} 성향은 오늘 ‘디테일 점검’이 운을 지켜줘.` : "별자리 흐름상 오늘은 디테일 점검이 운을 지켜줘.";
+  }
+
+  // evidence(절대 비지 않게)
+  out.evidence = out.evidence && typeof out.evidence === "object" ? out.evidence : {};
+  if (!Array.isArray(out.evidence.saju) || out.evidence.saju.length === 0) {
+    const d = sajuChart?.pillars?.day
+    const t = todayLuckChart?.pillars?.day
+    const y = todayLuckChart?.pillars?.year
+    out.evidence.saju = [
+      d ? `일주: ${d.ganji_hanja}(${d.ganji_kor}) / 일간 ${d.stem_kor}(${d.stem_element}) 중심` : "일주 정보를 기반으로 해석",
+      t ? `오늘 일운: ${t.ganji_hanja}(${t.ganji_kor}) / 일지 ${t.branch_kor}(${t.branch_element}) 영향` : "오늘 일운 흐름 반영",
+      y ? `오늘 연운: ${y.ganji_hanja}(${y.ganji_kor}) / 큰 기조(장기 흐름) 참고` : "연운(큰 기조) 참고",
+    ].filter(Boolean);
+  }
+  if (!Array.isArray(out.evidence.astro) || out.evidence.astro.length === 0) {
+    const sun = out.profile_badges.sun_sign || ""
+    const zodiac = out.profile_badges.zodiac_animal || ""
+    out.evidence.astro = [
+      sun ? `태양별자리: ${sun} (기본 성향/컨디션의 기준점)` : "태양별자리 기반",
+      zodiac ? `띠: ${zodiac} (관계/리듬의 습관 패턴 참고)` : "띠 기반",
+      "오늘의 키워드 3개는 ‘주의/기회/태도’로 분리해 한눈에 보이게 구성",
+    ].filter(Boolean);
+  }
+
+  // section_evidence(절대 비지 않게)
+  out.section_evidence = out.section_evidence && typeof out.section_evidence === "object" ? out.section_evidence : {};
+  const secFallback: Record<string, string[]> = {
+    overall: ["일간/일지의 오행 균형으로 하루 템포를 결정", "연·월·일운의 충돌/보완을 종합"],
+    money: ["재성/관성 흐름을 ‘지출 통제 vs 기회’로 해석", "충동구매 유발 신호(급한 화기운 등) 체크"],
+    love: ["일지(관계감정)와 오늘 일운의 상호작용 반영", "별자리 성향(대화 스타일)을 같이 적용"],
+    health: ["오행 과부족을 생활 루틴(수면/수분/걷기)로 번역", "오늘의 리듬 변화(수·화 충돌 등)를 컨디션 신호로 사용"],
+  };
+  (Object.keys(secFallback) as (keyof typeof secFallback)[]).forEach((k) => {
+    if (!Array.isArray(out.section_evidence[k]) || out.section_evidence[k].length === 0) out.section_evidence[k] = secFallback[k];
+    out.section_evidence[k] = out.section_evidence[k].filter((x: any) => typeof x === "string" && x.trim()).slice(0, 3);
+  });
+
+  // sections(절대 비지 않게)
+  out.sections = out.sections && typeof out.sections === "object" ? out.sections : {};
+  const fallback = {
+    overall: "오늘은 흐름이 빠르게 바뀌니, 말보다 한 템포 쉬고 움직여.",
+    money: "지출은 ‘필요’만 남기고, 결제 버튼 앞에서 10초만 멈춰.",
+    love: "오해는 번개처럼 생겨—짧게 확인하고 길게 상상은 금지.",
+    health: "몸이 예민해지기 쉬워. 따뜻한 물과 10분 산책이 답이야.",
+  };
+  (Object.keys(fallback) as (keyof typeof fallback)[]).forEach((k) => {
+    const v = out.sections?.[k];
+    if (typeof v !== "string" || !v.trim()) out.sections[k] = fallback[k];
+  });
+
+  // scores
+  out.scores = out.scores && typeof out.scores === "object" ? out.scores : {};
+  out.scores.overall = clampInt(out.scores.overall);
+  out.scores.money = clampInt(out.scores.money);
+  out.scores.love = clampInt(out.scores.love);
+  out.scores.health = clampInt(out.scores.health);
+
+  // 서버 계산 표는 최종 주입
+  if (sajuChart) out.saju_chart = sajuChart;
+  if (todayLuckChart) out.today_luck_chart = todayLuckChart;
+
+  return out;
+}
 
 function env(name: string): string | undefined {
   const v = process.env[name];
@@ -82,6 +225,12 @@ export async function POST(req: Request) {
 
     if (pErr || !profile) return NextResponse.json({ error: "profile_not_found" }, { status: 404 });
 
+    // 서버 계산(캐시 반환 시에도 UI가 깨지지 않도록 항상 준비)
+    const sajuChart = buildSajuChart(profile.birth_date, profile.birth_time_code);
+    const todayLuckChart = type === "daily" && target_date
+      ? buildTodayLuckChart(profile.birth_date, profile.birth_time_code, profile.gender, String(target_date))
+      : null;
+
     // ✅ Cache: 동일 프로필/타입/날짜(또는 연도)로 이미 생성된 요약이 있으면 OpenAI 호출 없이 반환
     const cacheBase = supabaseAdmin
       .from("readings")
@@ -101,19 +250,18 @@ export async function POST(req: Request) {
           : await cacheBase.order("created_at", { ascending: false }).limit(1).maybeSingle();
 
     if (cached?.data?.id && cached.data.result_summary) {
+      const normalized = type === "daily"
+        ? normalizeDailyResultSummary(cached.data.result_summary, profile, sajuChart, todayLuckChart)
+        : cached.data.result_summary;
       return NextResponse.json({
         reading_id: cached.data.id,
-        result_summary: cached.data.result_summary,
+        result_summary: normalized,
         cached: true,
       });
     }
 
     const astro_summary = buildAstroSummary(profile.birth_date);
     const saju_summary = buildSajuLiteSummary(profile.birth_date, profile.birth_time_code);
-    const sajuChart = buildSajuChart(profile.birth_date, profile.birth_time_code);
-    const todayLuckChart = type === "daily" && target_date
-      ? buildTodayLuckChart(profile.birth_date, profile.birth_time_code, profile.gender, String(target_date))
-      : null;
 
     // 프롬프트에 넣을 "간지 근거"(짧고 재현 가능한 형태)
     const sajuCompact = sajuChart
@@ -139,6 +287,10 @@ export async function POST(req: Request) {
 
 문장 스타일(중요):
 - 예시처럼 "일주/일운" 같은 간지를 자연스럽게 끼워 넣되, 문장은 예시의 절반 길이로 더 압축해.
+- today_one_liner: 1문장, 18~35자 정도의 은유/이미지(너무 길게 쓰지 마).
+- today_keywords: 해시태그 3개(각각 '주의/기회/태도' 역할) — 짧고 눈에 띄게.
+- sections.overall/money/love/health: 각각 2문장 이내(예시의 절반 정도 길이), 사주+별자리 근거가 보이게.
+- saju_brief/astro_brief: 각각 1~2문장(짧게), 근거 키워드(일간/일지/태양별자리)를 꼭 포함.
 - 흔한 덕담/추상적 조언 금지. ("긍정적으로" "힘내" 같은 문장 금지)
 - 각 섹션마다 "오늘 실제로 일어날 법한 장면" 1개는 꼭 넣어.
 
@@ -346,16 +498,7 @@ target_year: ${target_year ?? "없음"}
     }
 
     if (type === "daily") {
-      // 서버 계산 사주 표(연/월/일/시) 주입
-      if (sajuChart) {
-        result_summary = result_summary ?? {};
-        result_summary.saju_chart = sajuChart;
-      }
-      // 서버 계산 오늘 흐름(대운/연운/월운/일운) 주입
-      if (todayLuckChart) {
-        result_summary = result_summary ?? {};
-        result_summary.today_luck_chart = todayLuckChart;
-      }
+      result_summary = normalizeDailyResultSummary(result_summary, profile, sajuChart, todayLuckChart);
     }
 
     const reading_id = crypto.randomUUID();
