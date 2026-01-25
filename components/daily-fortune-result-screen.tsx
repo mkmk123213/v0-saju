@@ -424,7 +424,11 @@ export default function DailyFortuneResultScreen({
                                 </div>
                               </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pt-0"><div className="flex gap-1">
+                            <AccordionContent className="pt-0">
+                              <div className="rounded-2xl bg-muted/15 p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="text-3xl font-extrabold tracking-tight text-foreground">{scoreNum}</div>
+                                  <div className="flex gap-1">
                                     {Array.from({ length: 5 }).map((_, i) => (
                                       <span
                                         key={i}
