@@ -528,7 +528,10 @@ export default function Home() {
       setCurrentScreen("daily-fortune-result")
     } catch (e: any) {
       console.error(e)
-      if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
+      if (e?.status === 402 && e?.detail?.error === "coin_required") {
+        alert(e?.detail?.message ?? "결과를 보려면 엽전이 필요해요.")
+        handleOpenCoinPurchase()
+      } else if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
         alert(e?.detail?.message ?? "OpenAI API 결제/한도가 부족해요. Billing/Usage를 확인해주세요.")
       } else {
         alert(e?.message ?? "오늘의 운세 생성 중 오류가 발생했어요")
@@ -700,13 +703,7 @@ export default function Home() {
         <DailyFortuneResultScreen
           sajuInput={selectedDailyResult?.sajuInput || sajuInput!}
           date={selectedDailyResult?.date || new Date().toISOString().slice(0, 10)}
-          isDetailUnlocked={selectedDailyResult?.isDetailUnlocked || false}
-          coins={coins}
-          resultId={selectedDailyResult?.id || ""}
           resultSummary={selectedDailyResult?.result_summary}
-          resultDetail={selectedDailyResult?.result_detail}
-          onUnlockDetail={handleUnlockDailyDetail}
-          onOpenCoinPurchase={handleOpenCoinPurchase}
           onBack={() => setCurrentScreen("daily-fortune-list")}
         />
       )}

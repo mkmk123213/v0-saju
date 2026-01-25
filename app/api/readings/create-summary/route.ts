@@ -363,6 +363,81 @@ function buildAstroLongBrief(args: { sunSign: string; keywords: string[]; luckDa
   return lines.join("\n");
 }
 
+
+function buildPremiumAlgoFallback(args: {
+  seedKey: string;
+  ganjiTokens: string[];
+  sunSign: string;
+  zodiac: string;
+  todayKeywords: string[];
+}) {
+  const h = hashStr(args.seedKey);
+  const pick = <T,>(arr: T[]) => arr[h % arr.length];
+  const pick2 = <T,>(arr: T[], off: number) => arr[(h + off) % arr.length];
+  const t1 = args.ganjiTokens?.[0] || "일주";
+  const t2 = args.ganjiTokens?.[1] || args.ganjiTokens?.[2] || t1;
+
+  const sun = args.sunSign || "별자리";
+  const z = args.zodiac || "띠";
+  const k = (args.todayKeywords || []).map(asHashtagWord).filter(Boolean);
+  const k1 = k[0] || "말조심";
+  const k2 = k[1] || "아이디어";
+  const k3 = k[2] || "내적성장";
+
+  const cheatScenarios = [
+    `오늘은 ${t1} 흐름이 ‘예상 밖 과제’를 던져. 오전에 갑자기 바뀐 일정/요청이 오면 당황하지 말고, ${sun} 특유의 디테일 감각으로 체크리스트부터 세팅해.`,
+    `결제/계약/예약 같은 돈 얘기는 ${t2} 기운이 예민하게 건드려. 버튼 누르기 전 10초만 더 확인하면 ‘지출 방어’가 치트키가 돼.`,
+    `메신저/메일이 동시에 터지기 쉬운 날이야. ${t1} 리듬이 빨라서 답장 순서가 꼬이기 딱 좋아. ‘첫 문장만 저장→나중에 정리’ 루틴이 살려줘.`,
+    `이동/대기에서 변수가 생길 수 있어. ${t2} 타이밍엔 ‘10분 버퍼’가 승리 공식. 늦어질 땐 미리 한 줄만 보내도 평판이 지켜져.`,
+  ];
+
+  const mindScenarios = [
+    `${t1}과 ${t2}가 부딪히면 마음이 ‘과열→급냉’으로 튈 수 있어. 오늘은 신나도, 갑자기 현타가 와도 정상. 감정을 밀어붙이지 말고 3분만 호흡을 길게 해봐.`,
+    `${sun} 성향은 잘해내려는 마음이 큰데, 오늘은 작은 실수도 크게 보일 수 있어. ‘완벽’ 대신 ‘완료’를 목표로 잡아. 끝낸 뒤에야 마음이 가벼워져.`,
+    `오늘은 이유 없이 예민해질 수 있어. ${t2} 기운이 ‘숨은 걱정’을 끌어올리거든. 머릿속에서만 굴리지 말고, 걱정 하나를 메모로 밖에 꺼내면 바로 진정돼.`,
+    `${z} 흐름이 ‘체면’ 버튼을 눌러. 괜히 쿨한 척하다가 속이 답답해질 수 있어. 오늘은 솔직하게 “지금은 정리 중” 한 마디가 오히려 멋이야.`,
+  ];
+
+  const highlightScenes = [
+    `점심~오후에 네 말/표현이 한 번 ‘레전드’로 남을 수 있어. ${t1}이 말솜씨를 밀어주니까, 핵심만 짧게 말하면 사람들 기억에 딱 박혀.`,
+    `오늘 하이라이트는 ‘작은 도움’에서 터져. 네가 던진 한 줄 팁이 누군가를 살리고, 그 덕이 다시 너한테 기회로 돌아와.`,
+    `회의/통화에서 한 단어가 오해를 만들 뻔하지만, 네가 바로 정정하면 오히려 신뢰가 올라가. ${sun}의 진정성 모드가 빛나는 장면.`,
+    `업무/공부에서 막히던 게 저녁에 갑자기 풀릴 수 있어. ${t2} 기운이 ‘정리’에 강해서, 미뤄둔 파일/책상 정리가 트리거가 돼.`,
+  ];
+
+  const moodSetting = `오늘 너의 24시간을 우주의 흐름에 맞춰 튜닝했어. 이 타이밍만 타면 오늘은 네 거야.\n\n` +
+    `🌅 오전 (07:00 ~ 11:00) : #${k1} #빌드업\n` +
+    `${pick2([
+      "복잡한 일부터 쳐내기 좋아. 일정/문서/숫자 먼저 정리하면 하루가 편해져.",
+      "말/메신저가 꼬이기 쉬우니 ‘짧고 정확하게’만 지키면 실수 방어 성공.",
+      "컨디션 신호가 오면 바로 스트레칭. 작은 관리가 하루 기세를 바꿔."
+    ], 1)}\n\n` +
+    `☀️ 점심 & 오후 (12:00 ~ 16:00) : #${k2} #텐션업\n` +
+    `${pick2([
+      "사람 만남/미팅에 운이 붙어. 중요한 얘기는 이때 던져봐.",
+      "아이디어가 번쩍 떠오를 시간. 떠오른 건 바로 메모—오늘은 기록이 금이다.",
+      "결제/승인/결정은 ‘한 번 더 확인’만 하면 흐름이 좋아져."
+    ], 2)}\n\n` +
+    `🌇 저녁 (18:00 ~ 21:00) : #${k3} #리커버리\n` +
+    `${pick2([
+      "감정 회복 시간이야. 따뜻한 음식+가벼운 산책이면 머리가 맑아져.",
+      "정리 운이 들어와. 방/책상/파일 정리 10분이 내일 운까지 끌어올려.",
+      "사소한 칭찬 한 마디가 관계 운을 살려. ‘고마워’가 오늘의 주문."
+    ], 3)}\n\n` +
+    `🌙 밤 (22:00 ~ 01:00) : #로그아웃 #내면정리\n` +
+    `${pick2([
+      "SNS 끄고 머리 비우는 게 최고. 내일 할 일 3개만 적고 자면 운이 정렬돼.",
+      "생각이 많아지면 따뜻한 물 한 잔. 몸이 풀리면 마음도 같이 풀려.",
+      "오늘의 실수/걱정은 여기서 종료. ‘오늘은 여기까지’로 스스로를 칭찬해."
+    ], 4)}`;
+
+  const cheatkey = ensureMentions(pick(cheatScenarios), [t1, sun].filter(Boolean) as string[]);
+  const mind = ensureMentions(pick(mindScenarios), [t2, sun].filter(Boolean) as string[]);
+  const highlight = ensureMentions(pick(highlightScenes), [t1, sun].filter(Boolean) as string[]);
+
+  return { cheatkey, mind, highlight, mood_setting: moodSetting };
+}
+
 function normalizeDailyResultSummary(
   rs: any,
   profile: any,
@@ -509,6 +584,31 @@ function normalizeDailyResultSummary(
     if (!Array.isArray(out.section_evidence[k]) || out.section_evidence[k].length === 0) out.section_evidence[k] = secFallback[k];
     out.section_evidence[k] = out.section_evidence[k].filter((x: any) => typeof x === "string" && x.trim()).slice(0, 3);
   });
+  // premium_algo - (이제 결과보기 자체가 유료라서 요약에 포함)
+  out.premium_algo = out.premium_algo && typeof out.premium_algo === "object" ? out.premium_algo : {};
+  const pSeed = `${out.profile_badges?.zodiac_animal ?? ""}-${out.profile_badges?.sun_sign ?? ""}-${targetDate}-${d?.ganji_kor ?? ""}-${ld?.ganji_kor ?? ""}`;
+  const premiumFallback = buildPremiumAlgoFallback({
+    seedKey: pSeed,
+    ganjiTokens: mustDailyTokens,
+    sunSign: out.profile_badges?.sun_sign ?? "",
+    zodiac: out.profile_badges?.zodiac_animal ?? "",
+    todayKeywords: out.today_keywords ?? [],
+  });
+
+  const tooShort = (s: any) => {
+    const t = (s ?? "").toString().trim();
+    return t.length < 140 || countLines(t) < 4;
+  };
+
+  if (tooShort(out.premium_algo?.cheatkey)) out.premium_algo.cheatkey = premiumFallback.cheatkey;
+  if (tooShort(out.premium_algo?.mind)) out.premium_algo.mind = premiumFallback.mind;
+  if (tooShort(out.premium_algo?.highlight)) out.premium_algo.highlight = premiumFallback.highlight;
+
+  const mood = (out.premium_algo?.mood_setting ?? "").toString();
+  const hasAllParts = ["🌅", "☀️", "🌇", "🌙"].every((x) => mood.includes(x));
+  if (!mood || !hasAllParts || mood.length < 220) out.premium_algo.mood_setting = premiumFallback.mood_setting;
+
+
 
   // sections(절대 비지 않게)
   out.sections = out.sections && typeof out.sections === "object" ? out.sections : {};
@@ -651,6 +751,19 @@ async function fetchWithRetry(fetcher: () => Promise<Response>, retries = 3) {
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return lastRes!;
+}
+
+
+async function rpcUnlockDetail(supabaseUser: any, reading_id: string) {
+  const tryUnlock = async (args: Record<string, any>) => {
+    const { error } = await supabaseUser.rpc("rpc_unlock_detail", args);
+    return error;
+  };
+  let unlockErr = await tryUnlock({ reading_id });
+  if (unlockErr && /p_reading_id|parameter|unknown/i.test(unlockErr.message)) {
+    unlockErr = await tryUnlock({ p_reading_id: reading_id });
+  }
+  return unlockErr;
 }
 
 export async function POST(req: Request) {
@@ -855,6 +968,24 @@ ${target_date}
     "action": { "value": "실천(짧게)", "why": "키워드 1개 포함" },
     "helper": { "value": "귀인(사람유형,짧게)", "why": "키워드 1개 포함" }
   },
+  "premium_algo": {
+    "cheatkey": "🔑 오늘의 운빨 치트키(6~10문장, 아주 현실적인 상황/조언 포함)",
+    "mind": "🧠 나만 몰랐던 내 마음(6~10문장, 감정의 근거와 다루는 방법)",
+    "highlight": "🎬 미리 보는 하이라이트(6~10문장, 오늘 벌어질 법한 장면 중심)",
+    "mood_setting": "🗺️ 시간대별 무드 세팅(아래 포맷을 따라 4파트 + 해시태그 포함, 줄바꿈 유지)
+
+🌅 오전 (07:00 ~ 11:00) : #해시태그 #해시태그
+한두 문장
+
+☀️ 점심 & 오후 (12:00 ~ 16:00) : #해시태그 #해시태그
+한두 문장
+
+🌇 저녁 (18:00 ~ 21:00) : #해시태그 #해시태그
+한두 문장
+
+🌙 밤 (22:00 ~ 01:00) : #해시태그 #해시태그
+한두 문장"
+  },
   "scores": { "overall": 72, "money": 61, "love": 66, "health": 70 }
 }
 
@@ -898,6 +1029,12 @@ ${target_date}
 - 금기: 오늘 하루 "하지 말아야 할 구체 행동"으로.
 - 실천: 5~15분 안에 가능한 행동으로.
 - 귀인: 사람유형 + 등장 장면(짧게)로.
+- premium_algo.cheatkey/mind/highlight는 각각 6~10문장(줄바꿈 포함 가능)으로, 너무 일반론 금지.
+  - 반드시 사주 간지 단서 1개(위 토큰 목록에서) + 별자리 성향 1개를 자연스럽게 포함.
+  - '오늘 실제로 일어날 법한 장면' 1개 포함(예: 회의/메신저/결제/이동지연/문서실수/가족부탁/컨디션신호).
+  - 친구/지인/썸/애인 같은 특정 관계에 편중되지 않게, 업무/돈/컨디션/가족/기기/이동 등 다양한 상황을 섞어.
+- premium_algo.mood_setting은 예시 포맷을 그대로 따르고(4파트 고정), 각 파트에 해시태그 2개와 1~2문장 조언을 넣어.
+
 - 점수는 0~100 정수.
 - 단, 0점은 금지(항상 35~95 범위에서 현실적으로 부여). 4개 점수는 모두 같은 값 금지.
 - JSON 외 텍스트 출력 금지.`;
@@ -916,6 +1053,62 @@ target_year: ${target_year ?? "없음"}
 
     const openaiKey = getOpenAIKey();
     if (!openaiKey) return NextResponse.json({ error: "OPENAI_API_KEY_MISSING" }, { status: 500 });
+
+    // 🔒 결과보기는 처음부터 유료(엽전 1닢) — 요약 생성 전에 잠금 해제(결제)부터 처리
+    const reading_id = crypto.randomUUID();
+    const input_snapshot = {
+      profile: {
+        name: profile.name,
+        birth_date: profile.birth_date,
+        birth_time_code: profile.birth_time_code,
+        gender: profile.gender,
+        relationship: profile.relationship,
+        calendar_type: profile.calendar_type,
+        timezone: "Asia/Seoul",
+      },
+      reading: { type, target_date, target_year },
+      server_summaries: { saju_summary, astro_summary },
+    };
+
+    // 먼저 reading row를 만들어야 RPC가 참조 가능
+    const { error: preInsErr } = await supabaseAdmin
+      .from("readings")
+      .insert({
+        id: reading_id,
+        user_id,
+        profile_id,
+        type,
+        target_date,
+        target_year,
+        input_snapshot,
+        result_summary: null,
+      });
+
+    if (preInsErr) {
+      return NextResponse.json({ error: "DB_INSERT_FAILED", detail: String(preInsErr.message ?? preInsErr) }, { status: 500 });
+    }
+
+    // user-context client (RLS 적용) for rpc_unlock_detail
+    const url = env("NEXT_PUBLIC_SUPABASE_URL") || env("SUPABASE_URL");
+    const anonKey = env("NEXT_PUBLIC_SUPABASE_ANON_KEY") || env("SUPABASE_ANON_KEY");
+    if (!url || !anonKey) return NextResponse.json({ error: "SUPABASE_PUBLIC_ENV_MISSING" }, { status: 500 });
+    const supabaseUser = createClient(url, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
+
+    const unlockErr = await rpcUnlockDetail(supabaseUser, reading_id);
+    if (unlockErr) {
+      // 결제 실패면 생성한 reading은 정리(목록에 빈 카드 남지 않게)
+      await supabaseAdmin.from("readings").delete().eq("id", reading_id);
+      return NextResponse.json(
+        {
+          error: "coin_required",
+          message: "결과를 보려면 엽전 1닢이 필요해.",
+          required_coins: 1,
+          detail: unlockErr.message,
+        },
+        { status: 402 }
+      );
+    }
+
 
     const openaiRes = await fetchWithRetry(() =>
       fetch("https://api.openai.com/v1/chat/completions", {
@@ -971,46 +1164,24 @@ target_year: ${target_year ?? "없음"}
       result_summary = normalizeDailyResultSummary(result_summary, profile, sajuChart, todayLuckChart);
     }
 
-    const reading_id = crypto.randomUUID();
-    const input_snapshot = {
-      profile: {
-        name: profile.name,
-        birth_date: profile.birth_date,
-        birth_time_code: profile.birth_time_code,
-        gender: profile.gender,
-        relationship: profile.relationship,
-        calendar_type: profile.calendar_type,
-        timezone: "Asia/Seoul",
-      },
-      reading: { type, target_date, target_year },
-      server_summaries: { saju_summary, astro_summary },
-    };
-
-    const { data: saved, error: insErr } = await supabaseAdmin
+    // 요약 생성 완료 → reading에 저장
+    const { error: updErr } = await supabaseAdmin
       .from("readings")
-      .insert({
-        id: reading_id,
-        user_id,
-        profile_id,
-        type,
-        target_date,
-        target_year,
-        input_snapshot,
-        result_summary,
-      })
-      .select("id,result_summary")
-      .single();
+      .update({ result_summary })
+      .eq("id", reading_id)
+      .eq("user_id", user_id);
 
-    if (insErr || !saved) {
-      return NextResponse.json({ error: "DB_INSERT_FAILED", detail: String(insErr?.message ?? insErr) }, { status: 500 });
+    if (updErr) {
+      return NextResponse.json({ error: "DB_UPDATE_FAILED", detail: String(updErr.message ?? updErr) }, { status: 500 });
     }
 
     return NextResponse.json({
-      reading_id: saved.id,
-      result_summary: saved.result_summary,
+      reading_id,
+      result_summary,
       cached: false,
     });
-  } catch (e: any) {
+
+} catch (e: any) {
     return NextResponse.json({ error: "UNEXPECTED", detail: String(e?.message ?? e) }, { status: 500 });
   }
 }
