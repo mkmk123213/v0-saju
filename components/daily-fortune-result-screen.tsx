@@ -207,23 +207,27 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           <span className="rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-1 text-xs font-bold text-white shadow-lg">{date}</span>
         </div>
 
-        {/* Profile Card - Orange Theme */}
+        {/* Profile Card - Premium Warm Theme */}
         <Card className="border-none overflow-hidden shadow-xl mb-4">
-          <div className="relative px-5 py-5 bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500">
-            <div className="absolute inset-0 opacity-30">
-              <div className="absolute top-3 right-6 h-24 w-24 rounded-full bg-white/20 blur-2xl" />
-              <div className="absolute bottom-0 left-8 h-20 w-20 rounded-full bg-yellow-200/20 blur-2xl" />
+          <div className="relative px-5 py-5 bg-gradient-to-br from-amber-600 via-orange-600 to-rose-600">
+            {/* Subtle texture overlay */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+            
+            {/* Soft inner glow */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full bg-yellow-400/30 blur-2xl" />
+              <div className="absolute -bottom-6 -left-6 h-20 w-20 rounded-full bg-rose-400/20 blur-2xl" />
             </div>
 
             <div className="relative flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-lg">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20 shadow-lg">
                 <User className="h-7 w-7 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xl font-bold text-white tracking-tight">
+                <p className="truncate text-xl font-bold text-white tracking-tight drop-shadow-sm">
                   {sajuInput?.name?.trim() ? sajuInput.name : "이름 없음"}
                 </p>
-                <p className="mt-1 text-sm text-white/90 font-medium">
+                <p className="mt-1 text-sm text-white/80 font-medium">
                   {formatBirthDateShort(sajuInput?.birthDate)}
                   {formatBirthTime(sajuInput?.birthTime) && ` · ${formatBirthTime(sajuInput?.birthTime)}`}
                   {` · ${sajuInput?.gender === "male" ? "남" : "여"}`}
@@ -235,13 +239,13 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
             {(zodiacAnimal || sunSign) && (
               <div className="relative mt-4 flex flex-wrap items-center gap-2">
                 {zodiacAnimal && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/25 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 border border-white/25 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
                     <Stars className="h-3.5 w-3.5" />
                     {zodiacAnimal}
                   </span>
                 )}
                 {sunSign && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/25 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 border border-white/25 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
                     <Sparkles className="h-3.5 w-3.5" />
                     {sunSign}
                   </span>
