@@ -79,20 +79,32 @@ export default function DailyFortuneResultScreen({
   const sections = resultSummary?.sections
   const sectionEvidence = resultSummary?.section_evidence ?? {}
   const spine = resultSummary?.spine_chill
-  const keys = resultSummary?.today_keys
-  const keyItems = keys
-    ? ([
-        ["색깔", keys.color, Palette, "from-pink-400 to-rose-500"],
-        ["금기", keys.taboo, Ban, "from-red-400 to-rose-600"],
-        ["부적", keys.talisman, Shield, "from-violet-400 to-purple-500"],
-        ["스팟", keys.lucky_spot, MapPin, "from-emerald-400 to-green-500"],
-        ["숫자", keys.number, Hash, "from-blue-400 to-indigo-500"],
-        ["음식", keys.food, Utensils, "from-orange-400 to-amber-500"],
-        ["소지품", keys.item, Briefcase, "from-cyan-400 to-teal-500"],
-        ["실천", keys.action, Target, "from-fuchsia-400 to-pink-500"],
-        ["귀인", keys.helper, Users, "from-sky-400 to-blue-500"],
-      ] as const)
-    : ([] as const)
+  // NOTE: 캐시된 결과/부분 결과에서도 UI가 "비어 보이지" 않도록 기본값을 채워서 3x3 카드가 항상 렌더링되게 함
+  const keys =
+    resultSummary?.today_keys ??
+    ({
+      color: { value: "-", why: "" },
+      taboo: { value: "-", why: "" },
+      talisman: { value: "-", why: "" },
+      lucky_spot: { value: "-", why: "" },
+      number: { value: "-", why: "" },
+      food: { value: "-", why: "" },
+      item: { value: "-", why: "" },
+      action: { value: "-", why: "" },
+      helper: { value: "-", why: "" },
+    } as any)
+
+  const keyItems = [
+    ["색깔", keys.color, Palette, "from-pink-400 to-rose-500"],
+    ["금기", keys.taboo, Ban, "from-red-400 to-rose-600"],
+    ["부적", keys.talisman, Shield, "from-violet-400 to-purple-500"],
+    ["스팟", keys.lucky_spot, MapPin, "from-emerald-400 to-green-500"],
+    ["숫자", keys.number, Hash, "from-blue-400 to-indigo-500"],
+    ["음식", keys.food, Utensils, "from-orange-400 to-amber-500"],
+    ["소지품", keys.item, Briefcase, "from-cyan-400 to-teal-500"],
+    ["실천", keys.action, Target, "from-fuchsia-400 to-pink-500"],
+    ["귀인", keys.helper, Users, "from-sky-400 to-blue-500"],
+  ] as const
 
   const sectionMeta = {
     overall: { title: "오늘의 바이브 ☁️", icon: Star, gradient: "from-amber-400 to-orange-500" },
@@ -502,25 +514,21 @@ export default function DailyFortuneResultScreen({
                                 <span className="text-[11px] text-muted-foreground">한눈에 보기</span>
                               </div>
 
-                              {keyItems.length > 0 ? (
-                                <div className="grid grid-cols-3 gap-2">
-                                  {keyItems.map(([label, obj, IconComponent, gradient]) => (
-                                    <Card key={label} className="border-none glass shadow-sm card-mystical overflow-hidden">
-                                      <CardContent className="p-3 text-center">
-                                        <div
-                                          className={`mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} shadow-sm mb-2`}
-                                        >
-                                          <IconComponent className="h-4 w-4 text-white" />
-                                        </div>
-                                        <div className="text-[10px] text-muted-foreground font-medium mb-0.5">{label}</div>
-                                        <div className="text-xs font-bold text-card-foreground truncate">{obj?.value ?? "-"}</div>
-                                      </CardContent>
-                                    </Card>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-sm text-muted-foreground">오늘의 치트키를 불러오는 중이야.</p>
-                              )}
+                              <div className="grid grid-cols-3 gap-2">
+                                {keyItems.map(([label, obj, IconComponent, gradient]) => (
+                                  <Card key={label} className="border-none glass shadow-sm card-mystical overflow-hidden">
+                                    <CardContent className="p-3 text-center">
+                                      <div
+                                        className={`mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} shadow-sm`}
+                                      >
+                                        <IconComponent className="h-4 w-4 text-white" />
+                                      </div>
+                                      <div className="mb-0.5 text-[10px] font-medium text-muted-foreground">{label}</div>
+                                      <div className="truncate text-xs font-bold text-card-foreground">{obj?.value ?? "-"}</div>
+                                    </CardContent>
+                                  </Card>
+                                ))}
+                              </div>
                             </div>
                           </div>
 </AccordionContent>
