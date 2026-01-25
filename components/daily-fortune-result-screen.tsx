@@ -3,7 +3,34 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { ArrowLeft, Sun, Lock, Coins, Sparkles, TrendingUp, Heart, Activity, Zap, Star, Clock, Palette, Ban, Shield, MapPin, Hash, Utensils, Briefcase, Target, Users, Moon } from "lucide-react"
+import {
+  ArrowLeft,
+  Sun,
+  Lock,
+  Coins,
+  Sparkles,
+  TrendingUp,
+  Heart,
+  Activity,
+  Zap,
+  Star,
+  Clock,
+  Palette,
+  Ban,
+  Shield,
+  MapPin,
+  Hash,
+  Utensils,
+  Briefcase,
+  Target,
+  Users,
+  Moon,
+  KeyRound,
+  Brain,
+  Film,
+  Map,
+  Lightbulb,
+} from "lucide-react"
 import type { SajuInput } from "@/app/page"
 import { getSunSignFromBirthDate } from "@/lib/astro"
 import { getZodiacAnimal } from "@/lib/saju-lite"
@@ -357,247 +384,374 @@ export default function DailyFortuneResultScreen({
             </Card>
           )}
 
-          {/* Accordion (메인 프로필 카드 제외 전부) */}
+          {/* Sections */}
           <Card className="border-none glass shadow-lg overflow-hidden">
             <CardContent className="p-0">
-              <Accordion type="single" collapsible defaultValue="overall" className="w-full">
-                {(
-                  [
-                    { key: "overall", text: sections?.overall, score: scores.overall, meta: sectionMeta.overall },
-                    { key: "money", text: sections?.money, score: scores.money, meta: sectionMeta.money },
-                    { key: "love", text: sections?.love, score: scores.love, meta: sectionMeta.love },
-                    { key: "health", text: sections?.health, score: scores.health, meta: sectionMeta.health },
-                  ] as const
-                ).map(({ key, text, score, meta }) => {
-                  const IconComponent = meta.icon
-                  const gradient = meta.gradient
-                  const scoreNum = typeof score === "number" ? score : 0
-                  const pills = scoreToPills(scoreNum)
-
-                  const ev = (() => {
-                    // @ts-ignore
-                    const arr = sectionEvidence?.[key]
-                    return Array.isArray(arr) ? arr.slice(0, 2) : []
-                  })()
-
-                  const t = typeof text === "string" ? text.trim() : ""
-                  const raw = typeof resultSummary?.raw === "string" ? resultSummary.raw.trim() : ""
-                  const fallback = t || raw || "요약을 불러오는 중이야. 잠깐만 기다려줘."
-
-                  return (
-                    <AccordionItem key={key} value={key} className="px-4">
-                      <AccordionTrigger className="py-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${gradient} shadow-sm`}>
-                            <IconComponent className="h-4.5 w-4.5 text-white" />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-bold text-card-foreground">{meta.title}</span>
-                            <span className="text-xs text-muted-foreground">{scoreNum}점</span>
-                          </div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="pt-0">
-                        <div className="rounded-2xl bg-muted/15 p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="text-3xl font-extrabold tracking-tight text-foreground">{scoreNum}</div>
-                            <div className="flex gap-1">
-                              {Array.from({ length: 5 }).map((_, i) => (
-                                <span
-                                  key={i}
-                                  className={`h-2 w-2 rounded-full transition-all ${i < pills ? `bg-gradient-to-br ${gradient}` : "bg-muted"}`}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          <p className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">{fallback}</p>
-                          {ev.length > 0 && (
-                            <ul className="mt-3 space-y-1 text-xs text-muted-foreground/90">
-                              {ev.map((e: any, idx: number) => (
-                                <li key={idx} className="flex gap-2 leading-relaxed">
-                                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500/60 shrink-0" />
-                                  <span className="whitespace-pre-line">{String(e)}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  )
-                })}
-
-                {/* Spine chill */}
-                {spine?.prediction && (
-                  <AccordionItem value="spine" className="px-4">
-                    <AccordionTrigger className="py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-purple-500 shadow-sm">
-                          <Zap className="h-4.5 w-4.5 text-white" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-card-foreground">소름 포인트</span>
-                          <span className="text-xs text-muted-foreground">{spine.time_window ?? ""}</span>
-                        </div>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="rounded-2xl bg-gradient-to-br from-violet-500/10 to-purple-500/10 p-4">
-                        <p className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">{spine.prediction}</p>
-                        {spine.verification && (
-                          <div className="mt-3 flex items-center gap-2 rounded-lg bg-muted/40 p-2">
-                            <Target className="h-3.5 w-3.5 text-violet-500" />
-                            <span className="text-xs text-muted-foreground">{spine.verification}</span>
-                          </div>
-                        )}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-
-                {/* Today keys */}
-                {keyItems.length > 0 && (
-                  <AccordionItem value="today_keys" className="px-4">
-                    <AccordionTrigger className="py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 shadow-sm">
-                          <Star className="h-4.5 w-4.5 text-white" />
-                        </div>
-                        <span className="text-sm font-bold text-card-foreground">오늘의 키워드</span>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="grid grid-cols-3 gap-2">
-                        {keyItems.map(([label, obj, IconComponent, gradient]) => (
-                          <Card key={label} className="border-none glass shadow-sm card-mystical overflow-hidden">
-                            <CardContent className="p-3 text-center">
-                              <div
-                                className={`mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} shadow-sm mb-2`}
-                              >
-                                <IconComponent className="h-4 w-4 text-white" />
-                              </div>
-                              <div className="text-[10px] text-muted-foreground font-medium mb-0.5">{label}</div>
-                              <div className="text-xs font-bold text-card-foreground truncate">{obj?.value ?? "-"}</div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-
-                {/* Evidence briefs + today flow under it */}
-                {(resultSummary?.saju_brief || resultSummary?.astro_brief || todayLuckChart) && (
-                  <AccordionItem value="evidence" className="px-4">
-                    <AccordionTrigger className="py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 shadow-sm">
-                          <Moon className="h-4.5 w-4.5 text-white" />
-                        </div>
-                        <span className="text-sm font-bold text-card-foreground">분석 근거</span>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-3">
-                        {resultSummary?.saju_brief && (
-                          <div className="rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 p-3">
-                            <div className="flex items-center gap-2 mb-1.5">
-                              <Sparkles className="h-3.5 w-3.5 text-violet-500" />
-                              <span className="text-xs font-bold text-violet-700 dark:text-violet-300">사주 분석</span>
-                            </div>
-                            <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-                              {resultSummary.saju_brief}
-                            </p>
-                          </div>
-                        )}
-
-                        {resultSummary?.astro_brief && (
-                          <div className="rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-3">
-                            <div className="flex items-center gap-2 mb-1.5">
-                              <Star className="h-3.5 w-3.5 text-blue-500" />
-                              <span className="text-xs font-bold text-blue-700 dark:text-blue-300">별자리 분석</span>
-                            </div>
-                            <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-                              {resultSummary.astro_brief}
-                            </p>
-                          </div>
-                        )}
-
-                        {renderTodayFlow()}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-
-                {/* Premium detail */}
-                <AccordionItem value="premium" className="px-4">
-                  <AccordionTrigger className="py-4">
+              <Accordion type="single" collapsible defaultValue="summary" className="w-full">
+                {/* 갓생 운세 요약 */}
+                <AccordionItem value="summary" className="px-0">
+                  <AccordionTrigger className="px-4 py-4">
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-sm">
-                        <Lock className="h-4.5 w-4.5 text-white" />
+                        <Sparkles className="h-4.5 w-4.5 text-white" />
                       </div>
-                      <span className="text-sm font-bold text-card-foreground">프리미엄 상세 운세</span>
+                      <span className="text-sm font-extrabold text-card-foreground">갓생 운세 요약 📌</span>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent>
-                    {/* Detail (locked/unlocked) */}
-                    {!isDetailUnlocked ? (
-                      <div className="space-y-4">
-                        <div className="rounded-2xl bg-muted/15 p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="text-xs text-muted-foreground">필요 엽전</div>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <Coins className="h-5 w-5 text-amber-500" />
-                                <span className="text-xl font-bold text-card-foreground">1닢</span>
+                  <AccordionContent className="px-0 pb-2">
+                    <Accordion type="single" collapsible defaultValue="overall" className="w-full">
+                      {(
+                        [
+                          { key: "overall", text: sections?.overall, score: scores.overall, meta: sectionMeta.overall },
+                          { key: "money", text: sections?.money, score: scores.money, meta: sectionMeta.money },
+                          { key: "love", text: sections?.love, score: scores.love, meta: sectionMeta.love },
+                          { key: "health", text: sections?.health, score: scores.health, meta: sectionMeta.health },
+                        ] as const
+                      ).map(({ key, text, score, meta }) => {
+                        const IconComponent = meta.icon
+                        const gradient = meta.gradient
+                        const scoreNum = typeof score === "number" ? score : 0
+                        const pills = scoreToPills(scoreNum)
+
+                        const ev = (() => {
+                          // @ts-ignore
+                          const arr = sectionEvidence?.[key]
+                          return Array.isArray(arr) ? arr.slice(0, 2) : []
+                        })()
+
+                        const t = typeof text === "string" ? text.trim() : ""
+                        const raw = typeof resultSummary?.raw === "string" ? resultSummary.raw.trim() : ""
+                        const fallback = t || raw || "요약을 불러오는 중이야. 잠깐만 기다려줘."
+
+                        return (
+                          <AccordionItem key={key} value={key} className="px-4">
+                            <AccordionTrigger className="py-4">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${gradient} shadow-sm`}
+                                >
+                                  <IconComponent className="h-4.5 w-4.5 text-white" />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-bold text-card-foreground">{meta.title}</span>
+                                  <span className="text-xs text-muted-foreground">{scoreNum}점</span>
+                                </div>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-0">
+                              <div className="rounded-2xl bg-muted/15 p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="text-3xl font-extrabold tracking-tight text-foreground">{scoreNum}</div>
+                                  <div className="flex gap-1">
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                      <span
+                                        key={i}
+                                        className={`h-2 w-2 rounded-full transition-all ${
+                                          i < pills ? `bg-gradient-to-br ${gradient}` : "bg-muted"
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                                <p className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">{fallback}</p>
+                                {ev.length > 0 && (
+                                  <ul className="mt-3 space-y-1 text-xs text-muted-foreground/90">
+                                    {ev.map((e: any, idx: number) => (
+                                      <li key={idx} className="flex gap-2 leading-relaxed">
+                                        <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500/60 shrink-0" />
+                                        <span className="whitespace-pre-line">{String(e)}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        )
+                      })}
+
+                      {/* Spine chill */}
+                      {spine?.prediction && (
+                        <AccordionItem value="spine" className="px-4">
+                          <AccordionTrigger className="py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-purple-500 shadow-sm">
+                                <Zap className="h-4.5 w-4.5 text-white" />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-bold text-card-foreground">소름포인트 ⚡️</span>
+                                <span className="text-xs text-muted-foreground">{spine.time_window ?? ""}</span>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <div className="text-xs text-muted-foreground">보유 엽전</div>
-                              <div className="mt-0.5">
-                                <span
-                                  className={`text-xl font-bold ${
-                                    coins >= 1
-                                      ? "text-emerald-600 dark:text-emerald-400"
-                                      : "text-rose-600 dark:text-rose-400"
-                                  }`}
-                                >
-                                  {coins}닢
-                                </span>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="rounded-2xl bg-gradient-to-br from-violet-500/10 to-purple-500/10 p-4">
+                              <p className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">{spine.prediction}</p>
+                              {spine.verification && (
+                                <div className="mt-3 flex items-center gap-2 rounded-lg bg-muted/40 p-2">
+                                  <Target className="h-3.5 w-3.5 text-violet-500" />
+                                  <span className="text-xs text-muted-foreground">{spine.verification}</span>
+                                </div>
+                              )}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      )}
+
+                      {/* 오늘의 키워드 (해시태그) */}
+                      <AccordionItem value="today_keywords" className="px-4">
+                        <AccordionTrigger className="py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 shadow-sm">
+                              <KeyRound className="h-4.5 w-4.5 text-white" />
+                            </div>
+                            <span className="text-sm font-bold text-card-foreground">오늘의 키워드 🗝️</span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="rounded-2xl bg-muted/15 p-4">
+                            {todayKeywords.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {todayKeywords.map((k) => (
+                                  <span
+                                    key={k}
+                                    className="rounded-full bg-amber-400/20 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-200"
+                                  >
+                                    {k}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">오늘의 키워드를 불러오는 중이야.</p>
+                            )}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* 프리미엄 퍼스널 알고리즘 */}
+                <AccordionItem value="premium_algo" className="px-0">
+                  <AccordionTrigger className="px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 shadow-sm">
+                        <Lightbulb className="h-4.5 w-4.5 text-white" />
+                      </div>
+                      <span className="text-sm font-extrabold text-card-foreground">프리미엄 퍼스널 알고리즘 💡</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="space-y-4">
+                      <div className="rounded-2xl bg-muted/15 p-4">
+                        <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                          차원이 다른 깊이로, 동양의 사주 명리학과 서양의 점성술 데이터를 교차 분석하여 도출된, 퍼스널 알고리즘 솔루션입니다.
+                        </p>
+                      </div>
+
+                      {/* 엽전 / 열어보기 */}
+                      {!isDetailUnlocked ? (
+                        <div className="space-y-3">
+                          <div className="rounded-2xl bg-muted/15 p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="text-xs text-muted-foreground">필요 엽전</div>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <Coins className="h-5 w-5 text-amber-500" />
+                                  <span className="text-xl font-bold text-card-foreground">1닢</span>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-xs text-muted-foreground">보유 엽전</div>
+                                <div className="mt-0.5">
+                                  <span
+                                    className={`text-xl font-bold ${
+                                      coins >= 1
+                                        ? "text-emerald-600 dark:text-emerald-400"
+                                        : "text-rose-600 dark:text-rose-400"
+                                    }`}
+                                  >
+                                    {coins}닢
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
 
-                        {coins >= 1 ? (
-                          <Button
-                            onClick={() => onUnlockDetail(resultId)}
-                            className="w-full h-12 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 text-white font-bold shadow-xl hover:shadow-2xl transition-all"
-                          >
-                            <span className="relative flex items-center justify-center gap-2">
-                              <Sparkles className="h-5 w-5" />
-                              상세 운세 열어보기
-                            </span>
-                          </Button>
-                        ) : (
-                          <Button
-                            onClick={onOpenCoinPurchase}
-                            className="w-full h-12 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 text-white font-bold shadow-xl hover:shadow-2xl transition-all"
-                          >
-                            <span className="relative flex items-center justify-center gap-2">
-                              <Coins className="h-5 w-5" />
-                              엽전 충전하기
-                            </span>
-                          </Button>
-                        )}
+                          {coins >= 1 ? (
+                            <Button
+                              onClick={() => onUnlockDetail(resultId)}
+                              className="w-full h-12 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 text-white font-bold shadow-xl hover:shadow-2xl transition-all"
+                            >
+                              <span className="relative flex items-center justify-center gap-2">
+                                <Sparkles className="h-5 w-5" />
+                                열어보기
+                              </span>
+                            </Button>
+                          ) : (
+                            <Button
+                              onClick={onOpenCoinPurchase}
+                              className="w-full h-12 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 text-white font-bold shadow-xl hover:shadow-2xl transition-all"
+                            >
+                              <span className="relative flex items-center justify-center gap-2">
+                                <Coins className="h-5 w-5" />
+                                엽전 충전하기
+                              </span>
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl bg-emerald-500/10 p-4">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-emerald-500" />
+                            <span className="text-sm font-bold text-emerald-700 dark:text-emerald-300">프리미엄이 열렸어요</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Premium accordion list (locked by default) */}
+                      <div className="overflow-hidden rounded-xl border border-border/60">
+                        <Accordion type="single" collapsible className="w-full">
+                          <AccordionItem value="p_keys" disabled={!isDetailUnlocked} className="px-4">
+                            <AccordionTrigger className={`py-4 ${!isDetailUnlocked ? "pointer-events-none opacity-70" : ""}`}>
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 shadow-sm">
+                                  <KeyRound className="h-4.5 w-4.5 text-white" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-bold text-card-foreground">🔑 오늘의 운빨 치트키</span>
+                                  {!isDetailUnlocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                                </div>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="grid grid-cols-3 gap-2">
+                                {keyItems.map(([label, obj, IconComponent, gradient]) => (
+                                  <Card key={label} className="border-none glass shadow-sm card-mystical overflow-hidden">
+                                    <CardContent className="p-3 text-center">
+                                      <div
+                                        className={`mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} shadow-sm mb-2`}
+                                      >
+                                        <IconComponent className="h-4 w-4 text-white" />
+                                      </div>
+                                      <div className="text-[10px] text-muted-foreground font-medium mb-0.5">{label}</div>
+                                      <div className="text-xs font-bold text-card-foreground truncate">{obj?.value ?? "-"}</div>
+                                    </CardContent>
+                                  </Card>
+                                ))}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+
+                          <AccordionItem value="p_mind" disabled={!isDetailUnlocked} className="px-4">
+                            <AccordionTrigger className={`py-4 ${!isDetailUnlocked ? "pointer-events-none opacity-70" : ""}`}>
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-pink-400 to-rose-500 shadow-sm">
+                                  <Brain className="h-4.5 w-4.5 text-white" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-bold text-card-foreground">🧠 나만 몰랐던 내 마음</span>
+                                  {!isDetailUnlocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                                </div>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="rounded-2xl bg-muted/15 p-4">
+                                <p className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">
+                                  {resultDetail?.mind_text ?? "프리미엄 결제 후, 이 항목의 상세 분석이 제공돼요."}
+                                </p>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+
+                          <AccordionItem value="p_highlight" disabled={!isDetailUnlocked} className="px-4">
+                            <AccordionTrigger className={`py-4 ${!isDetailUnlocked ? "pointer-events-none opacity-70" : ""}`}>
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-sm">
+                                  <Film className="h-4.5 w-4.5 text-white" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-bold text-card-foreground">🎬 미리 보는 하이라이트</span>
+                                  {!isDetailUnlocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                                </div>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="rounded-2xl bg-muted/15 p-4">
+                                <p className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">
+                                  {resultDetail?.detail_text ?? resultDetail?.detail ?? "프리미엄 결제 후, 이 항목의 상세 분석이 제공돼요."}
+                                </p>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+
+                          <AccordionItem value="p_mood" disabled={!isDetailUnlocked} className="px-4">
+                            <AccordionTrigger className={`py-4 ${!isDetailUnlocked ? "pointer-events-none opacity-70" : ""}`}>
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-green-500 shadow-sm">
+                                  <Map className="h-4.5 w-4.5 text-white" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-bold text-card-foreground">🗺️ 시간대별 무드 세팅</span>
+                                  {!isDetailUnlocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                                </div>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="rounded-2xl bg-muted/15 p-4">
+                                <p className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">
+                                  {resultDetail?.mood_text ?? "프리미엄 결제 후, 이 항목의 상세 분석이 제공돼요."}
+                                </p>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+
+                          <AccordionItem value="p_evidence" disabled={!isDetailUnlocked} className="px-4">
+                            <AccordionTrigger className={`py-4 ${!isDetailUnlocked ? "pointer-events-none opacity-70" : ""}`}>
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 shadow-sm">
+                                  <Moon className="h-4.5 w-4.5 text-white" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-bold text-card-foreground">🌙 분석근거</span>
+                                  {!isDetailUnlocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                                </div>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="space-y-3">
+                                {resultSummary?.saju_brief && (
+                                  <div className="rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 p-3">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                      <Sparkles className="h-3.5 w-3.5 text-violet-500" />
+                                      <span className="text-xs font-bold text-violet-700 dark:text-violet-300">사주 분석</span>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                                      {resultSummary.saju_brief}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {resultSummary?.astro_brief && (
+                                  <div className="rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-3">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                      <Star className="h-3.5 w-3.5 text-blue-500" />
+                                      <span className="text-xs font-bold text-blue-700 dark:text-blue-300">별자리 분석</span>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                                      {resultSummary.astro_brief}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {/* 오늘의 흐름은 분석근거 하단 */}
+                                {renderTodayFlow()}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
                       </div>
-                    ) : (
-                      <div className="rounded-2xl bg-muted/15 p-4">
-                        <p className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">
-                          {resultDetail?.detail_text ?? resultDetail?.detail ?? ""}
-                        </p>
-                      </div>
-                    )}
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
