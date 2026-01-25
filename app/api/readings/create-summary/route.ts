@@ -804,6 +804,7 @@ export async function POST(req: Request) {
       : null;
 
     // ✅ Cache: 동일 프로필/타입/날짜(또는 연도)로 이미 생성된 요약이 있으면 OpenAI 호출 없이 반환
+    // ⚠️ result_summary: pre-insert placeholder({})는 truthy라서, "비어있는 객체"는 캐시로 취급하면 안 됨.
     const cacheBase = supabaseAdmin
       .from("readings")
       .select("id,result_summary,created_at")
@@ -821,7 +822,19 @@ export async function POST(req: Request) {
           ? await cacheBase.eq("target_year", target_year).order("created_at", { ascending: false }).limit(1).maybeSingle()
           : await cacheBase.order("created_at", { ascending: false }).limit(1).maybeSingle();
 
-    if (cached?.data?.id && cached.data.result_summary) {
+    const isUsableResultSummary = (v: any) => {
+      if (!v) return false;
+      if (typeof v !== "object") return true;
+      if (Array.isArray(v)) return v.length > 0;
+      try {
+        return Object.keys(v).length > 0;
+      } catch {
+        return false;
+      }
+    };
+
+    // ✅ 완성된 result_summary만 캐시로 반환(placeholder {}는 제외)
+    if (cached?.data?.id && isUsableResultSummary(cached.data.result_summary)) {
       const normalized = type === "daily"
         ? normalizeDailyResultSummary(cached.data.result_summary, profile, sajuChart, todayLuckChart, target_date ?? null)
         : cached.data.result_summary;
@@ -1060,8 +1073,68 @@ target_year: ${target_year ?? "없음"}
     const openaiKey = getOpenAIKey();
     if (!openaiKey) return NextResponse.json({ error: "OPENAI_API_KEY_MISSING" }, { status: 500 });
 
-    // 🔒 결과보기는 처음부터 유료(엽전 1닢) — 요약 생성 전에 잠금 해제(결제)부터 처리
-    const reading_id = crypto.randomUUID();
+    // 🔒 결과보기는 최초 1회만 유료(엽전 1닢)
+    // - 동일 프로필/날짜(또는 연도)로 이미 생성된 결과는 캐시에서 무료 재열람
+    // - cache miss라도, 기존 row가 있고(result_summary가 비어있어서 재생성 중) unlock 기록이 있으면 재시도는 무료
+    const REQUIRED_COINS = 1;
+
+    // user-context client (RLS 적용) for rpc_get_coin_balance / rpc_unlock_detail
+    const url = env("NEXT_PUBLIC_SUPABASE_URL") || env("SUPABASE_URL");
+    const anonKey = env("NEXT_PUBLIC_SUPABASE_ANON_KEY") || env("SUPABASE_ANON_KEY");
+    if (!url || !anonKey) return NextResponse.json({ error: "SUPABASE_PUBLIC_ENV_MISSING" }, { status: 500 });
+    const supabaseUser = createClient(url, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
+
+    // cache miss지만 기존 row가 있을 수 있음(placeholder 등). 유니크 충돌 방지를 위해 있으면 재사용.
+    const existingReadingId: string | null = cached?.data?.id ?? null;
+    const reading_id = existingReadingId ?? crypto.randomUUID();
+    const needsInsert = !existingReadingId;
+
+    // 이미 결제(잠금해제)된 reading이면 재열람/재시도는 무료
+    let alreadyUnlocked = false;
+    try {
+      const { data: uRow } = await supabaseAdmin
+        .from("unlocks")
+        .select("reading_id")
+        .eq("user_id", user_id)
+        .eq("reading_id", reading_id)
+        .limit(1)
+        .maybeSingle();
+      alreadyUnlocked = Boolean(uRow?.reading_id);
+    } catch {
+      alreadyUnlocked = false;
+    }
+
+    const shouldCharge = !alreadyUnlocked;
+
+    // ✅ 코인 검증은 서버에서 강제(클라 우회/버그 방지)
+    let balance_before: number | null = null;
+    if (shouldCharge) {
+      const { data: bal, error: balErr } = await supabaseUser.rpc("rpc_get_coin_balance");
+      if (balErr) {
+        return NextResponse.json(
+          {
+            error: "coin_balance_failed",
+            message: "엽전 잔액을 확인하는 중 오류가 발생했어.",
+            detail: String(balErr.message ?? balErr),
+          },
+          { status: 500 }
+        );
+      }
+      const n = Number(bal ?? 0);
+      balance_before = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+      if ((balance_before ?? 0) < REQUIRED_COINS) {
+        return NextResponse.json(
+          {
+            error: "coin_required",
+            message: "결과를 보려면 엽전 1닢이 필요해.",
+            required_coins: REQUIRED_COINS,
+            balance_coins: balance_before ?? 0,
+          },
+          { status: 402 }
+        );
+      }
+    }
+
     const input_snapshot = {
       profile: {
         name: profile.name,
@@ -1077,37 +1150,37 @@ target_year: ${target_year ?? "없음"}
     };
 
     // 먼저 reading row를 만들어야 RPC가 참조 가능
-    const { error: preInsErr } = await supabaseAdmin
-      .from("readings")
-      .insert({
-        id: reading_id,
-        user_id,
-        profile_id,
-        type,
-        target_date,
-        target_year,
-        input_snapshot,
-        // readings.result_summary is NOT NULL in our schema.
-        // Use an empty object as a placeholder so RPC can reference this row
-        // before the final AI-generated result_summary is written.
-        result_summary: {},
-      });
+    if (needsInsert) {
+      const { error: preInsErr } = await supabaseAdmin
+        .from("readings")
+        .insert({
+          id: reading_id,
+          user_id,
+          profile_id,
+          type,
+          target_date,
+          target_year,
+          input_snapshot,
+          // readings.result_summary is NOT NULL in our schema.
+          // Use an empty object as a placeholder so RPC can reference this row
+          // before the final AI-generated result_summary is written.
+          result_summary: {},
+        });
 
-    if (preInsErr) {
-      return NextResponse.json({ error: "DB_INSERT_FAILED", detail: String(preInsErr.message ?? preInsErr) }, { status: 500 });
+      if (preInsErr) {
+        return NextResponse.json({ error: "DB_INSERT_FAILED", detail: String(preInsErr.message ?? preInsErr) }, { status: 500 });
+      }
     }
 
-    // user-context client (RLS 적용) for rpc_unlock_detail
-    const url = env("NEXT_PUBLIC_SUPABASE_URL") || env("SUPABASE_URL");
-    const anonKey = env("NEXT_PUBLIC_SUPABASE_ANON_KEY") || env("SUPABASE_ANON_KEY");
-    if (!url || !anonKey) return NextResponse.json({ error: "SUPABASE_PUBLIC_ENV_MISSING" }, { status: 500 });
-    const supabaseUser = createClient(url, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
-
-    const unlockErr = await rpcUnlockDetail(supabaseUser, reading_id);
-    if (unlockErr) {
-      // 결제 실패면 생성한 reading은 정리(목록에 빈 카드 남지 않게)
-      await supabaseAdmin.from("readings").delete().eq("id", reading_id);
-      const msg = String(unlockErr.message ?? "");
+    // ✅ 결제/잠금해제는 최초 1회만
+    if (shouldCharge) {
+      const unlockErr = await rpcUnlockDetail(supabaseUser, reading_id);
+      if (unlockErr) {
+        // 결제 실패면 (이번 요청에서 만든 row라면) 정리(목록에 빈 카드 남지 않게)
+        if (needsInsert) {
+          await supabaseAdmin.from("readings").delete().eq("id", reading_id);
+        }
+        const msg = String(unlockErr.message ?? "");
 
       // ⚠️ Supabase PostgREST schema cache에 함수가 안 보일 때(보통 EXECUTE 권한 문제)
       if (isSchemaCacheNotFound(unlockErr)) {
@@ -1145,24 +1218,49 @@ target_year: ${target_year ?? "없음"}
         );
       }
 
-      return NextResponse.json(
-        {
-          error: "unlock_failed",
-          message: "결과 잠금해제 처리 중 오류가 발생했어.",
-          detail: msg,
-        },
-        { status: 500 }
-      );
+        return NextResponse.json(
+          {
+            error: "unlock_failed",
+            message: "결과 잠금해제 처리 중 오류가 발생했어.",
+            detail: msg,
+          },
+          { status: 500 }
+        );
+      }
+
+      // ✅ "0코인인데 진행됨" 같은 케이스 방지: 실제 차감이 반영됐는지 확인
+      if (balance_before !== null) {
+        try {
+          const { data: bal2, error: bal2Err } = await supabaseUser.rpc("rpc_get_coin_balance");
+          if (!bal2Err) {
+            const n2 = Number(bal2 ?? 0);
+            const balance_after = Number.isFinite(n2) ? Math.max(0, Math.floor(n2)) : null;
+            const expectedMax = Math.max(0, (balance_before ?? 0) - REQUIRED_COINS);
+            if (balance_after !== null && balance_after > expectedMax) {
+              // 차감이 안 됐다면 접근권한이 생기지 않도록 정리
+              try {
+                await supabaseAdmin.from("unlocks").delete().eq("user_id", user_id).eq("reading_id", reading_id);
+              } catch {}
+              if (needsInsert) {
+                await supabaseAdmin.from("readings").delete().eq("id", reading_id);
+              }
+              return NextResponse.json(
+                {
+                  error: "coin_spend_not_applied",
+                  message: "엽전 차감이 반영되지 않았어. 결제 로직(rpc_unlock_detail)을 확인해줘.",
+                  detail: `before=${balance_before}, after=${balance_after}`,
+                },
+                { status: 500 }
+              );
+            }
+          }
+        } catch {
+          // balance 재확인 실패는 치명적이지 않게 무시(이미 unlock 성공)
+        }
+      }
     }
 
-    // (선택) readings 테이블에 이번 결과에 사용한 코인을 기록해두고 싶다면
-    // coins_spent 같은 컬럼을 추가한 뒤 여기서 값을 남기면 돼.
-    // 컬럼이 아직 없다면 실패해도 흐름에 영향 없도록 무시.
-    try {
-      // @ts-expect-error - coins_spent 컬럼은 선택 적용(스키마에 없을 수 있음)
-      await supabaseAdmin.from("readings").update({ coins_spent: 1 }).eq("id", reading_id);
-    } catch {}
-
+    // (참고) coins_spent 컬럼은 사용하지 않음(원장은 coin_ledger / unlocks로 관리)
 
     const openaiRes = await fetchWithRetry(() =>
       fetch("https://api.openai.com/v1/chat/completions", {
