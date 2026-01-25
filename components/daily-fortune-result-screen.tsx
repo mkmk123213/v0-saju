@@ -289,11 +289,11 @@ export default function DailyFortuneResultScreen({
                   
                   {/* Zodiac & Sun sign badges (text only, no icons) */}
                   <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                    {zodiacAnimal && (
-                      <span className="inline-flex items-center rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
-                        {zodiacAnimal}띠
-                      </span>
-                    )}
+                                    {zodiacAnimal && (
+                                      <span className="inline-flex items-center rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
+                                        {zodiacAnimal.endsWith('띠') ? zodiacAnimal : `${zodiacAnimal}띠`}
+                                      </span>
+                                    )}
                     {sunSign && (
                       <span className="inline-flex items-center rounded-full bg-violet-500/15 px-2.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-300">
                         {sunSign}
@@ -320,19 +320,23 @@ export default function DailyFortuneResultScreen({
                 </div>
               )}
               
-              {/* Keywords */}
-              {todayKeywords.length > 0 && (
-                <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-                  {todayKeywords.map((k) => (
-                    <span
-                      key={k}
-                      className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-400/15 to-orange-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300"
-                    >
-                      {k}
-                    </span>
-                  ))}
-                </div>
-              )}
+                              {/* Keywords - hashtag badges */}
+                              {todayKeywords.length > 0 && (
+                                <div className="mt-3 flex flex-wrap justify-center gap-2">
+                                  {todayKeywords.map((k) => {
+                                    const cleanKeyword = k.replace(/^#+/, '')
+                                    return (
+                                      <span
+                                        key={k}
+                                        className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400/20 to-orange-500/20 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300 border border-amber-400/30 shadow-sm"
+                                      >
+                                        <Hash className="h-3 w-3 opacity-70" />
+                                        {cleanKeyword}
+                                      </span>
+                                    )
+                                  })}
+                                </div>
+                              )}
             </CardContent>
           </Card>
 
@@ -367,7 +371,7 @@ export default function DailyFortuneResultScreen({
               <Accordion type="single" collapsible defaultValue="summary" className="w-full">
                 {/* 갓생 운세 요약 */}
                 <AccordionItem value="summary" className="px-0 border-none">
-                  <AccordionTrigger className="px-5 py-4 hover:no-underline group">
+                  <AccordionTrigger className="px-5 py-4 hover:no-underline group bg-gradient-to-r from-amber-50/80 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20 rounded-t-xl">
                     <div className="flex items-center gap-4 w-full">
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg group-hover:shadow-xl transition-shadow">
                         <Sparkles className="h-5 w-5 text-white" />
@@ -495,14 +499,18 @@ export default function DailyFortuneResultScreen({
                             <div className="rounded-2xl bg-muted/15 p-4">
                               {todayKeywords.length > 0 ? (
                                 <div className="flex flex-wrap gap-2">
-                                  {todayKeywords.map((k) => (
-                                    <span
-                                      key={k}
-                                      className="rounded-full bg-amber-400/20 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-200"
-                                    >
-                                      {k}
-                                    </span>
-                                  ))}
+                                  {todayKeywords.map((k) => {
+                                    const cleanKeyword = k.replace(/^#+/, '')
+                                    return (
+                                      <span
+                                        key={k}
+                                        className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400/20 to-orange-500/20 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-200 border border-amber-400/30 shadow-sm"
+                                      >
+                                        <Hash className="h-3 w-3 opacity-70" />
+                                        {cleanKeyword}
+                                      </span>
+                                    )
+                                  })}
                                 </div>
                               ) : (
                                 <p className="text-sm text-muted-foreground">오늘의 키워드를 불러오는 중이야.</p>
@@ -544,7 +552,7 @@ export default function DailyFortuneResultScreen({
 
 {/* 프리미엄 퍼스널 알고리즘 */}
                 <AccordionItem value="premium_algo" className="px-0 border-none">
-                  <AccordionTrigger className="px-5 py-4 hover:no-underline group">
+                  <AccordionTrigger className="px-5 py-4 hover:no-underline group bg-gradient-to-r from-indigo-50/80 to-violet-50/60 dark:from-indigo-950/30 dark:to-violet-950/20 rounded-xl mt-2">
                     <div className="flex items-center gap-4 w-full">
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-500 shadow-lg group-hover:shadow-xl transition-shadow">
                         <Lightbulb className="h-5 w-5 text-white" />
