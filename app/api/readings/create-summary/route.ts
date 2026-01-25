@@ -79,6 +79,100 @@ function makeOneLiner(keywords: string[]) {
   return `오늘은 ${moodA}로 균형 잡고, ${moodB}를 살려 ${moodC}로 마무리하는 날이야.`;
 }
 
+function countLines(s: string) {
+  return (s.match(/\n/g) || []).length + 1;
+}
+
+function stemLabel(stemKor?: string | null, stemEl?: string | null) {
+  if (!stemKor || !stemEl) return "";
+  return `${stemKor}${stemEl}`;
+}
+
+function branchLabel(branchKor?: string | null, branchEl?: string | null) {
+  if (!branchKor || !branchEl) return "";
+  return `${branchKor}${branchEl}`;
+}
+
+function asHashtagWord(tag: string) {
+  return tag.replace(/^#/, "").trim();
+}
+
+function buildSajuLongBrief(args: {
+  day?: any;
+  month?: any;
+  luckDay?: any;
+  luckMonth?: any;
+  luckYear?: any;
+  labels?: any;
+  keywords: string[];
+}) {
+  const day = args.day;
+  const month = args.month;
+  const ld = args.luckDay;
+  const lm = args.luckMonth;
+  const ly = args.luckYear;
+  const labels = args.labels || {};
+
+  const kw = args.keywords.map(asHashtagWord);
+  const k1 = kw[0] || "조심";
+  const k2 = kw[1] || "기회";
+  const k3 = kw[2] || "성장";
+
+  const dayStem = stemLabel(day?.stem_kor, day?.stem_element);
+  const dayBr = branchLabel(day?.branch_kor, day?.branch_element);
+  const ldStem = stemLabel(ld?.stem_kor, ld?.stem_element);
+  const ldBr = branchLabel(ld?.branch_kor, ld?.branch_element);
+  const lmBr = branchLabel(lm?.branch_kor, lm?.branch_element);
+  const lyBr = branchLabel(ly?.branch_kor, ly?.branch_element);
+
+  const sinsalDay = labels?.day ? `${labels.day}` : "";
+  const sinsalMonth = labels?.month ? `${labels.month}` : "";
+  const sinsalYear = labels?.year ? `${labels.year}` : "";
+
+  const lines: string[] = [];
+  lines.push(`오늘의 중심축은 일간 ${dayStem}과 일운 ${ldStem}의 맞물림이야. 강하게 밀기보다 한 박자 조절이 운을 살려.`);
+  lines.push(`일지 ${dayBr}가 받아들이는 감정은 예민해질 수 있어. 메신저 답장은 ${k1} 모드로 짧고 정확하게.`);
+  lines.push(`월주의 기운은 생활 리듬을 정리하라고 말해. 책상·메모·일정을 ${k3} 쪽으로 ‘정돈’하면 집중력이 바로 올라와.`);
+  lines.push(`금전은 ‘작은 새는 큰 새를 부른다’ 쪽이야. 결제 전 10초 멈춤이 ${k2}를 진짜 기회로 바꿔줘.`);
+  lines.push(`관계는 일운의 ${ldBr} 흐름을 타서 오해가 빨리 생기고 빨리 풀려. 확인 질문 한 번이 감정 소설을 끊어줘.`);
+  lines.push(`컨디션은 따뜻한 물+가벼운 걷기로 균형이 잡혀. 특히 오후에 몸이 처지면 8~12분만 밖 공기 마셔.`);
+  lines.push(`오늘 신살 흐름은 ${[sinsalDay, sinsalMonth, sinsalYear].filter(Boolean).join("·") || "(신살 정보)"} 쪽이야. 체면보다 ‘실속’ 선택이 손해를 막아.`);
+  lines.push(`한 줄 처방: ${k1}로 말의 속도를 낮추고, ${k2}는 작은 실행으로 잡고, ${k3}는 루틴으로 남겨.`);
+  return lines.join("\n");
+}
+
+function buildAstroLongBrief(args: { sunSign: string; keywords: string[]; luckDay?: any; luckMonth?: any }) {
+  const sun = args.sunSign || "";
+  const kw = args.keywords.map(asHashtagWord);
+  const k1 = kw[0] || "조심";
+  const k2 = kw[1] || "기회";
+  const k3 = kw[2] || "성장";
+
+  const ld = args.luckDay;
+  const lm = args.luckMonth;
+  const ldEl = ld?.stem_element ? `${ld.stem_element}` : "";
+  const lmEl = lm?.stem_element ? `${lm.stem_element}` : "";
+
+  const trait: Record<string, { strength: string; pitfall: string; tip: string }> = {
+    "사자자리": { strength: "표현력·리더십", pitfall: "자존심 과열", tip: "칭찬은 받되 결정은 차분히" },
+    "처녀자리": { strength: "디테일·정리력", pitfall: "완벽주의", tip: "80%에서 일단 실행" },
+    "염소자리": { strength: "책임감·실리", pitfall: "자기압박", tip: "업무 경계선을 그어" },
+    "물고기자리": { strength: "공감·직감", pitfall: "감정 과몰입", tip: "사실/감정 분리" },
+  };
+  const t = trait[sun] || { strength: "균형 감각", pitfall: "우유부단", tip: "기준 1개만 정해" };
+
+  const lines: string[] = [];
+  lines.push(`${sun}의 강점은 ${t.strength}이야. 오늘은 그 장점이 ‘눈에 띄게’ 작동하지만, 속도는 ${k1}로 조절해야 돼.`);
+  lines.push(`오늘의 흐름(${ldEl} 기운)가 올라오면 말·결정이 빨라져. 회의나 채팅에선 한 번 더 확인하고 보내.`);
+  lines.push(`반대로 ${lmEl} 흐름이 받쳐주면 정리·점검에서 ${k2}가 열려. ‘수정’이 곧 성과로 연결되는 날이야.`);
+  lines.push(`사람 관계에서는 ${t.pitfall}이 스위치처럼 켜질 수 있어. 상대의 말에 의미를 덧씌우기 전에 사실부터 체크.`);
+  lines.push(`연애/썸은 긴 고백보다 짧은 안부가 더 강해. 오늘은 ‘가볍게 자주’가 매력 포인트.`);
+  lines.push(`일은 한 번에 크게 하기보다 2~3개의 작은 완료로 ${k3}를 쌓는 쪽이 맞아. 체크리스트가 최고의 마법.`);
+  lines.push(`컨디션은 눈·어깨·호흡이 신호야. 5분 스트레칭+물 한 컵만으로도 텐션이 바뀐다.`);
+  lines.push(`오늘의 팁: ${t.tip}. 그리고 ‘잘한 것 1개’를 기록하면 내일 운이 더 부드럽게 이어져.`);
+  return lines.join("\n");
+}
+
 function normalizeDailyResultSummary(
   rs: any,
   profile: any,
@@ -123,6 +217,35 @@ function normalizeDailyResultSummary(
   if (typeof out.astro_brief !== "string" || !out.astro_brief.trim()) {
     const sun = out.profile_badges.sun_sign || ""
     out.astro_brief = sun ? `${sun} 성향은 오늘 ‘디테일 점검’이 운을 지켜줘.` : "별자리 흐름상 오늘은 디테일 점검이 운을 지켜줘.";
+  }
+
+  // 모델이 짧게 쓰는 경우가 많아서(UX/신뢰감 저하),
+  // 최소 7~8줄(줄바꿈 포함) 분량으로 서버에서 보정해준다.
+  if (typeof out.saju_brief === "string") {
+    const tooShort = out.saju_brief.trim().length < 260 || countLines(out.saju_brief) < 6;
+    if (tooShort) {
+      out.saju_brief = buildSajuLongBrief({
+        day: sajuChart?.pillars?.day,
+        month: sajuChart?.pillars?.month,
+        luckDay: todayLuckChart?.pillars?.day,
+        luckMonth: todayLuckChart?.pillars?.month,
+        luckYear: todayLuckChart?.pillars?.year,
+        labels: todayLuckChart?.labels,
+        keywords: out.today_keywords ?? [],
+      });
+    }
+  }
+
+  if (typeof out.astro_brief === "string") {
+    const tooShort = out.astro_brief.trim().length < 260 || countLines(out.astro_brief) < 6;
+    if (tooShort) {
+      out.astro_brief = buildAstroLongBrief({
+        sunSign: out.profile_badges.sun_sign ?? "",
+        keywords: out.today_keywords ?? [],
+        luckDay: todayLuckChart?.pillars?.day,
+        luckMonth: todayLuckChart?.pillars?.month,
+      });
+    }
   }
 
   // evidence(절대 비지 않게)
