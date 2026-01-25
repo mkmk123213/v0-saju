@@ -390,12 +390,12 @@ export default function DailyFortuneResultScreen({
               <Accordion type="single" collapsible defaultValue="summary" className="w-full">
                 {/* 갓생 운세 요약 */}
                 <AccordionItem value="summary" className="px-0">
-                  <AccordionTrigger className="px-4 py-4">
+                  <AccordionTrigger className="px-4 py-5 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent border-b border-white/10 hover:no-underline">
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-sm">
                         <Sparkles className="h-4.5 w-4.5 text-white" />
                       </div>
-                      <span className="text-sm font-extrabold text-card-foreground">갓생 운세 요약 📌</span>
+                      <span className="text-base font-black tracking-tight text-card-foreground">갓생 운세 요약 📌</span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-0 pb-2">
@@ -509,23 +509,52 @@ export default function DailyFortuneResultScreen({
                           </div>
                         </AccordionTrigger>
                         <AccordionContent>
-                          <div className="rounded-2xl bg-muted/15 p-4">
-                            {todayKeywords.length > 0 ? (
-                              <div className="flex flex-wrap gap-2">
-                                {todayKeywords.map((k) => (
-                                  <span
-                                    key={k}
-                                    className="rounded-full bg-amber-400/20 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-200"
-                                  >
-                                    {k}
-                                  </span>
-                                ))}
+                          <div className="space-y-3">
+                            <div className="rounded-2xl bg-muted/15 p-4">
+                              {todayKeywords.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {todayKeywords.map((k) => (
+                                    <span
+                                      key={k}
+                                      className="rounded-full bg-amber-400/20 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-200"
+                                    >
+                                      {k}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">오늘의 키워드를 불러오는 중이야.</p>
+                              )}
+                            </div>
+
+                            <div className="rounded-2xl bg-muted/10 p-4">
+                              <div className="mb-3 flex items-center justify-between">
+                                <span className="text-xs font-bold text-card-foreground">오늘의 치트키 9</span>
+                                <span className="text-[11px] text-muted-foreground">한눈에 보기</span>
                               </div>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">오늘의 키워드를 불러오는 중이야.</p>
-                            )}
+
+                              {keyItems.length > 0 ? (
+                                <div className="grid grid-cols-3 gap-2">
+                                  {keyItems.map(([label, obj, IconComponent, gradient]) => (
+                                    <Card key={label} className="border-none glass shadow-sm card-mystical overflow-hidden">
+                                      <CardContent className="p-3 text-center">
+                                        <div
+                                          className={`mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} shadow-sm mb-2`}
+                                        >
+                                          <IconComponent className="h-4 w-4 text-white" />
+                                        </div>
+                                        <div className="text-[10px] text-muted-foreground font-medium mb-0.5">{label}</div>
+                                        <div className="text-xs font-bold text-card-foreground truncate">{obj?.value ?? "-"}</div>
+                                      </CardContent>
+                                    </Card>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">오늘의 치트키를 불러오는 중이야.</p>
+                              )}
+                            </div>
                           </div>
-                        </AccordionContent>
+</AccordionContent>
                       </AccordionItem>
                     </Accordion>
                   </AccordionContent>
@@ -533,12 +562,12 @@ export default function DailyFortuneResultScreen({
 
                 {/* 프리미엄 퍼스널 알고리즘 */}
                 <AccordionItem value="premium_algo" className="px-0">
-                  <AccordionTrigger className="px-4 py-4">
+                  <AccordionTrigger className="px-4 py-5 bg-gradient-to-r from-indigo-500/15 via-violet-500/10 to-transparent border-b border-white/10 hover:no-underline">
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 shadow-sm">
                         <Lightbulb className="h-4.5 w-4.5 text-white" />
                       </div>
-                      <span className="text-sm font-extrabold text-card-foreground">프리미엄 퍼스널 알고리즘 💡</span>
+                      <span className="text-base font-black tracking-tight text-card-foreground">프리미엄 퍼스널 알고리즘 💡</span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-4 pb-4">
