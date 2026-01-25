@@ -215,54 +215,40 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
               <div className="absolute bottom-0 left-8 h-20 w-20 rounded-full bg-yellow-200/20 blur-2xl" />
             </div>
 
-            <div className="relative flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Sun className="h-4 w-4 text-white/90" />
-                <span className="text-sm font-medium text-white/90">오늘의 운세 결과</span>
+            <div className="relative flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-lg">
+                <User className="h-7 w-7 text-white" />
               </div>
-              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                {date}
-              </span>
-            </div>
-
-            <div className="relative mt-4 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
-                <User className="h-6 w-6 text-white" />
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-xl font-bold text-white">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xl font-bold text-white tracking-tight">
                   {sajuInput?.name?.trim() ? sajuInput.name : "이름 없음"}
                 </p>
-                <p className="mt-0.5 text-xs text-white/80">선택한 프로필의 오늘 운세</p>
+                <p className="mt-1 text-sm text-white/90 font-medium">
+                  {formatBirthDateShort(sajuInput?.birthDate)}
+                  {formatBirthTime(sajuInput?.birthTime) && ` · ${formatBirthTime(sajuInput?.birthTime)}`}
+                  {` · ${sajuInput?.gender === "male" ? "남" : "여"}`}
+                  {` · ${sajuInput?.calendarType === "solar" ? "양력" : "음력"}`}
+                </p>
               </div>
             </div>
-          </div>
-
-          <CardContent className="p-4 bg-white dark:bg-card">
-            <p className="text-sm text-muted-foreground">
-              {formatBirthDateShort(sajuInput?.birthDate)}
-              {formatBirthTime(sajuInput?.birthTime) && ` · ${formatBirthTime(sajuInput?.birthTime)}`}
-              {` · ${sajuInput?.gender === "male" ? "남성" : "여성"}`}
-              {` · ${sajuInput?.calendarType === "solar" ? "양력" : "음력"}`}
-            </p>
 
             {(zodiacAnimal || sunSign) && (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="relative mt-4 flex flex-wrap items-center gap-2">
                 {zodiacAnimal && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">
-                    <Stars className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/25 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+                    <Stars className="h-3.5 w-3.5" />
                     {zodiacAnimal}
                   </span>
                 )}
                 {sunSign && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-900/30 px-3 py-1 text-xs font-medium text-orange-700 dark:text-orange-400">
-                    <Sparkles className="h-3.5 w-3.5 text-orange-500" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/25 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+                    <Sparkles className="h-3.5 w-3.5" />
                     {sunSign}
                   </span>
                 )}
               </div>
             )}
-          </CardContent>
+          </div>
         </Card>
 
         {/* One liner */}

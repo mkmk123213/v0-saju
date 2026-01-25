@@ -86,16 +86,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
         {/* Buttons */}
         <div className="space-y-4">
-          {/* ✅ 임시 로그인: 환경 상관없이 항상 가능 */}
-          <Button
-            onClick={doMockLogin}
-            variant="secondary"
-            className="h-12 w-full rounded-2xl text-sm font-semibold shadow-md transition-all hover:scale-[1.01] active:scale-[0.99]"
-          >
-            임시 로그인(테스트)
-          </Button>
-
-          {/* ✅ 운영 로그인: 환경 상관없이 원래 기능 그대로 */}
           <Button
             onClick={() => signInWithProvider("kakao")}
             className="h-14 w-full gap-3 rounded-2xl bg-kakao text-kakao-foreground hover:bg-kakao/90 text-base font-semibold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
