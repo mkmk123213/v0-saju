@@ -60,7 +60,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             <h1 className="text-3xl font-bold tracking-tight gradient-text">너의 운명은</h1>
             <div className="flex items-center justify-center gap-2">
               <Sparkles className="h-3.5 w-3.5 text-primary/70 animate-twinkle" />
-              <p className="text-muted-foreground text-sm">test! 사주와 별자리가 만나는 곳</p>
+              <p className="text-muted-foreground text-sm">사주와 별자리가 만나는 곳</p>
               <Sparkles className="h-3.5 w-3.5 text-accent/70 animate-twinkle" style={{ animationDelay: "1s" }} />
             </div>
           </div>
