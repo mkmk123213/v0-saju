@@ -256,107 +256,100 @@ export default function DailyFortuneResultScreen({
       {/* Result Content */}
       <div className="flex-1 px-5 pb-8 relative z-10">
         <div className="mx-auto max-w-sm space-y-5">
-          {/* User Info Card - Premium Design */}
-          <Card className="border-none overflow-hidden shadow-2xl">
-            {/* Gradient border effect */}
-            <div className="bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 p-[2px] rounded-[var(--radius)]">
-              <CardContent className="p-0 bg-card rounded-[calc(var(--radius)-2px)] relative overflow-hidden">
-                {/* Decorative background elements */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                  <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br from-amber-500/10 to-orange-500/5 blur-[40px]" />
-                  <div className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full bg-gradient-to-br from-rose-500/10 to-pink-500/5 blur-[50px]" />
-                  {/* Subtle grid pattern */}
-                  <div className="absolute inset-0 opacity-[0.03]" style={{
-                    backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
-                    backgroundSize: '24px 24px'
-                  }} />
-                </div>
-
-                <div className="relative p-5">
-                  {/* Top section with date badge */}
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-1.5 shadow-lg">
-                      <Sun className="h-4 w-4 text-white" />
-                      <span className="text-sm font-bold text-white">{date}의 운세</span>
-                    </div>
-                  </div>
-
-                  {/* Profile info */}
-                  <div className="flex items-center gap-4">
-                    {/* Avatar with gradient ring */}
-                    <div className="relative">
-                      <div className="absolute -inset-1 bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 rounded-2xl blur-sm opacity-60" />
-                      <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg">
-                        <span className="text-2xl font-bold text-white">
-                          {displayName ? displayName.charAt(0) : "?"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Name and details */}
-                    <div className="flex-1 min-w-0">
-                      <h2 className="text-xl font-bold text-card-foreground truncate">
-                        {displayName}
-                      </h2>
-                      <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                          {displayBirthDate}
-                        </span>
-                        <span className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
-                          {displayGender}
-                        </span>
-                        {zodiacAnimal && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                            <Star className="h-3 w-3 text-amber-500" />
-                            {zodiacAnimal}
-                          </span>
-                        )}
-                        {sunSign && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                            <Sparkles className="h-3 w-3 text-amber-500" />
-                            {sunSign}
-                          </span>
-                        )}
-                        {sajuInput.birthTime && sajuInput.birthTime !== "unknown" && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            {sajuInput.birthTime}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {todayKeywords.length > 0 && (
-                    <div className="mt-3 flex flex-wrap justify-center gap-2">
-                      {todayKeywords.map((k) => (
-                        <span
-                          key={k}
-                          className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-400/15 to-orange-500/15 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300"
-                        >
-                          {k}
-                        </span>
-                      ))}
+          {/* User Info Card - Clean Minimal Design */}
+          <Card className="border-none glass shadow-lg overflow-hidden">
+            <CardContent className="p-5 relative">
+              {/* Subtle background accent */}
+              <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-gradient-to-br from-amber-500/10 to-orange-500/5 blur-[50px] pointer-events-none" />
+              
+              {/* Top row: Left icons (Zodiac + Sun) | Center (Name + Info) */}
+              <div className="flex items-start gap-4 relative">
+                {/* Left: Zodiac & Sun sign icons stacked */}
+                <div className="flex flex-col gap-2 shrink-0">
+                  {zodiacAnimal && (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-md">
+                      <span className="text-base font-bold text-white">{zodiacAnimal.charAt(0)}</span>
                     </div>
                   )}
-
-                  {todayOneLiner && (
-                    <div className="mt-3 rounded-2xl bg-gradient-to-r from-amber-400/10 to-orange-500/10 px-4 py-3 text-center">
-                      <p className="text-sm font-medium leading-relaxed text-foreground/90">
-                        {todayOneLiner}
-                      </p>
+                  {sunSign && (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-indigo-500 shadow-md">
+                      <Sparkles className="h-4 w-4 text-white" />
                     </div>
                   )}
-
-                  {/* Decorative divider */}
-                  <div className="mt-4 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
-                    <Sparkles className="h-4 w-4 text-amber-500" />
-                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+                </div>
+                
+                {/* Center: Name and details */}
+                <div className="flex-1 min-w-0">
+                  {/* Name */}
+                  <h2 className="text-lg font-bold text-card-foreground truncate">
+                    {displayName}
+                  </h2>
+                  
+                  {/* Birth info row */}
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                    <span className="text-xs text-muted-foreground">{displayBirthDate}</span>
+                    <span className="text-muted-foreground/40">·</span>
+                    <span className="text-xs text-muted-foreground">{displayGender}</span>
+                    {sajuInput.birthTime && sajuInput.birthTime !== "unknown" && (
+                      <>
+                        <span className="text-muted-foreground/40">·</span>
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {sajuInput.birthTime}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Zodiac & Sun sign labels */}
+                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                    {zodiacAnimal && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                        <Star className="h-2.5 w-2.5" />
+                        {zodiacAnimal}
+                      </span>
+                    )}
+                    {sunSign && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-700 dark:text-violet-300">
+                        <Sparkles className="h-2.5 w-2.5" />
+                        {sunSign}
+                      </span>
+                    )}
                   </div>
                 </div>
-              </CardContent>
-            </div>
+                
+                {/* Date badge (top right) */}
+                <div className="shrink-0">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">
+                    <Sun className="h-3 w-3" />
+                    {date}
+                  </span>
+                </div>
+              </div>
+              
+              {/* One-liner quote */}
+              {todayOneLiner && (
+                <div className="mt-4 rounded-xl bg-muted/30 px-4 py-3">
+                  <p className="text-sm font-medium leading-relaxed text-foreground/90 text-center">
+                    {todayOneLiner}
+                  </p>
+                </div>
+              )}
+              
+              {/* Keywords */}
+              {todayKeywords.length > 0 && (
+                <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                  {todayKeywords.map((k) => (
+                    <span
+                      key={k}
+                      className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-400/15 to-orange-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300"
+                    >
+                      {k}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </CardContent>
           </Card>
 
           {/* (요청사항) 사주 표는 제거. 오늘의 흐름은 '분석 근거' 하단에서 노출 */}
@@ -389,13 +382,16 @@ export default function DailyFortuneResultScreen({
             <CardContent className="p-0">
               <Accordion type="single" collapsible defaultValue="summary" className="w-full">
                 {/* 갓생 운세 요약 */}
-                <AccordionItem value="summary" className="px-0">
-                  <AccordionTrigger className="px-4 py-5 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent border-b border-white/10 hover:no-underline">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-sm">
-                        <Sparkles className="h-4.5 w-4.5 text-white" />
+                <AccordionItem value="summary" className="px-0 border-none">
+                  <AccordionTrigger className="px-5 py-4 hover:no-underline group">
+                    <div className="flex items-center gap-4 w-full">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg group-hover:shadow-xl transition-shadow">
+                        <Sparkles className="h-5 w-5 text-white" />
                       </div>
-                      <span className="text-base font-black tracking-tight text-card-foreground">갓생 운세 요약 📌</span>
+                      <div className="flex-1 text-left">
+                        <h3 className="text-lg font-extrabold tracking-tight text-card-foreground">갓생 운세 요약</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">오늘 하루 핵심 운세 분석</p>
+                      </div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-0 pb-2">
@@ -560,14 +556,17 @@ export default function DailyFortuneResultScreen({
                   </AccordionContent>
                 </AccordionItem>
 
-                {/* 프리미엄 퍼스널 알고리즘 */}
-                <AccordionItem value="premium_algo" className="px-0">
-                  <AccordionTrigger className="px-4 py-5 bg-gradient-to-r from-indigo-500/15 via-violet-500/10 to-transparent border-b border-white/10 hover:no-underline">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 shadow-sm">
-                        <Lightbulb className="h-4.5 w-4.5 text-white" />
+{/* 프리미엄 퍼스널 알고리즘 */}
+                <AccordionItem value="premium_algo" className="px-0 border-none">
+                  <AccordionTrigger className="px-5 py-4 hover:no-underline group">
+                    <div className="flex items-center gap-4 w-full">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-500 shadow-lg group-hover:shadow-xl transition-shadow">
+                        <Lightbulb className="h-5 w-5 text-white" />
                       </div>
-                      <span className="text-base font-black tracking-tight text-card-foreground">프리미엄 퍼스널 알고리즘 💡</span>
+                      <div className="flex-1 text-left">
+                        <h3 className="text-lg font-extrabold tracking-tight text-card-foreground">프리미엄 퍼스널 알고리즘</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">동서양 교차 분석 심층 솔루션</p>
+                      </div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-4 pb-4">

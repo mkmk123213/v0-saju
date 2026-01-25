@@ -75,62 +75,72 @@ export default function DailyFortuneListScreen({
             <div className="space-y-3">
               <h2 className="text-sm font-medium text-muted-foreground">이전 결과</h2>
               <div className="space-y-3">
-                {results.map((result) => (
-                  <Card
-                    key={result.id}
-                    className="cursor-pointer border-none glass shadow-sm transition-all card-mystical"
-                    onClick={() => onViewResult(result)}
-                  >
-                    <CardContent className="flex items-center gap-4 p-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400/20 to-orange-500/20">
-                        <User className="h-5 w-5 text-amber-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-card-foreground truncate">{result.sajuInput.name?.trim() ? result.sajuInput.name : "이름 없음"}</p>
-                          <span className="shrink-0 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2 py-0.5 text-xs font-medium text-white">
-                            {result.date}
-                          </span>
+                {results.map((result) => {
+                  const zodiac = result.result_summary?.profile_badges?.zodiac_animal ?? getZodiacAnimal(result.sajuInput.birthDate) ?? null
+                  const sun = result.result_summary?.profile_badges?.sun_sign ?? getSunSignFromBirthDate(result.sajuInput.birthDate) ?? null
+                  const tags = Array.isArray(result.result_summary?.today_keywords) ? result.result_summary.today_keywords.slice(0, 3) : []
+                  
+                  return (
+                    <Card
+                      key={result.id}
+                      className="cursor-pointer border-none glass shadow-sm transition-all hover:shadow-md active:scale-[0.99]"
+                      onClick={() => onViewResult(result)}
+                    >
+                      <CardContent className="p-4">
+                        {/* Top row: Name + Date badge + Arrow */}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <p className="font-semibold text-card-foreground truncate">
+                              {result.sajuInput.name?.trim() ? result.sajuInput.name : "이름 없음"}
+                            </p>
+                            <span className="shrink-0 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                              {result.date}
+                            </span>
+                          </div>
+                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {formatBirthDate(result.sajuInput.birthDate)} ·{" "}
-                          {result.sajuInput.gender === "male" ? "남성" : result.sajuInput.gender === "female" ? "여성" : "미지정"} · {formatDate(result.createdAt)} 조회
+                        
+                        {/* Info row: Birth date, Gender, Created */}
+                        <p className="text-xs text-muted-foreground mb-3">
+                          {formatBirthDate(result.sajuInput.birthDate)} · {result.sajuInput.gender === "male" ? "남성" : result.sajuInput.gender === "female" ? "여성" : "미지정"} · {formatDate(result.createdAt)} 조회
                         </p>
-                        {(() => {
-                          const zodiac = result.result_summary?.profile_badges?.zodiac_animal ?? getZodiacAnimal(result.sajuInput.birthDate) ?? null
-                          const sun = result.result_summary?.profile_badges?.sun_sign ?? getSunSignFromBirthDate(result.sajuInput.birthDate) ?? null
-                          const tags = Array.isArray(result.result_summary?.today_keywords) ? result.result_summary.today_keywords.slice(0, 3) : []
-                          return (
-                            <div className="mt-2 flex flex-wrap items-center gap-2">
-                              {zodiac && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                                  <Star className="h-3 w-3 text-amber-500" />
-                                  {zodiac}
-                                </span>
-                              )}
-                              {sun && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                                  <Sparkles className="h-3 w-3 text-amber-500" />
-                                  {sun}
-                                </span>
-                              )}
+                        
+                        {/* Bottom row: Zodiac + Sun sign (left) | Tags (right, fixed 3 cols) */}
+                        <div className="flex items-center justify-between">
+                          {/* Left: Zodiac & Sun sign */}
+                          <div className="flex items-center gap-1.5">
+                            {zodiac && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-muted/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                <Star className="h-2.5 w-2.5 text-amber-500" />
+                                {zodiac}
+                              </span>
+                            )}
+                            {sun && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-muted/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                <Sparkles className="h-2.5 w-2.5 text-amber-500" />
+                                {sun}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Right: Tags - always show 3 in a row */}
+                          {tags.length > 0 && (
+                            <div className="flex items-center gap-1">
                               {tags.map((k: string) => (
                                 <span
                                   key={k}
-                                  className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-400/15 to-orange-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300"
+                                  className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-400/15 to-orange-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300"
                                 >
                                   {k}
                                 </span>
                               ))}
                             </div>
-                          )
-                        })()}
-
-                      </div>
-                      <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
-                    </CardContent>
-                  </Card>
-                ))}
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
               </div>
             </div>
           ) : (
