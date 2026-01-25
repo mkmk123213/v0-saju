@@ -328,24 +328,22 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
         <div className="mx-auto max-w-sm space-y-3">
           {/* Coin Info */}
           <div className="flex items-center gap-3">
-            <div className="flex-1 flex items-center gap-3 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200/50 dark:border-amber-700/30 px-4 py-3">
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-200 to-amber-400 dark:from-amber-900/40 dark:to-amber-700/40 border border-amber-300/60 dark:border-amber-600/30 shadow-sm">
-                <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.65),_transparent_60%)]" />
-                <Coins className="relative h-5 w-5 text-amber-950/80 dark:text-amber-100/80" />
+            <div className="flex-1 flex items-center gap-3 rounded-xl bg-gradient-to-br from-orange-50/80 via-amber-50/60 to-white/60 dark:from-orange-950/25 dark:via-amber-950/20 dark:to-white/5 border border-orange-200/60 dark:border-orange-900/25 px-4 py-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/70 dark:bg-white/10 border border-orange-200/60 dark:border-orange-900/30 shadow-sm">
+                <Coins className="h-5 w-5 text-orange-800/70 dark:text-orange-200/70" />
               </div>
               <div>
-                <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">필요</p>
-                <p className="text-lg font-bold text-amber-700 dark:text-amber-300">1개</p>
+                <p className="text-[11px] text-orange-700/70 dark:text-orange-300/70 font-medium">필요</p>
+                <p className="text-lg font-bold text-orange-950/80 dark:text-orange-100/85">1개</p>
               </div>
             </div>
-            <div className="flex-1 flex items-center gap-3 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 border border-emerald-200/50 dark:border-emerald-700/30 px-4 py-3">
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-200 to-emerald-400 dark:from-emerald-900/35 dark:to-emerald-700/35 border border-emerald-300/60 dark:border-emerald-600/30 shadow-sm">
-                <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.6),_transparent_60%)]" />
-                <Coins className="relative h-5 w-5 text-emerald-950/75 dark:text-emerald-100/80" />
+            <div className="flex-1 flex items-center gap-3 rounded-xl bg-gradient-to-br from-amber-50/75 via-orange-50/55 to-white/60 dark:from-amber-950/18 dark:via-orange-950/14 dark:to-white/5 border border-orange-200/50 dark:border-orange-900/20 px-4 py-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/70 dark:bg-white/10 border border-orange-200/60 dark:border-orange-900/30 shadow-sm">
+                <Coins className="h-5 w-5 text-orange-800/65 dark:text-orange-200/70" />
               </div>
               <div>
-                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">보유</p>
-                <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{coins}개</p>
+                <p className="text-[11px] text-stone-600 dark:text-stone-300 font-medium">보유</p>
+                <p className="text-lg font-bold text-stone-900/90 dark:text-stone-100">{coins}개</p>
               </div>
             </div>
           </div>

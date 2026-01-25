@@ -97,7 +97,7 @@ function TitleRow({
       </div>
       <div className="flex items-center gap-2">
         {typeof score === "number" && (
-          <div className="min-w-[52px] text-right text-2xl font-bold tabular-nums text-amber-500">{score}</div>
+          <div className="min-w-[52px] text-right text-2xl font-bold tabular-nums text-orange-500/80">{score}</div>
         )}
       </div>
     </div>
@@ -201,7 +201,7 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
             이전
           </Button>
           <div className="flex items-center gap-2">
-            <Sun className="h-5 w-5 text-amber-500" />
+            <Sun className="h-5 w-5 text-orange-500/80" />
             <div className="font-bold text-foreground">오늘의 운세</div>
           </div>
           <span className="rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-1 text-xs font-bold text-white shadow-lg">{date}</span>
@@ -209,25 +209,25 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
 
         {/* Profile Card - Premium Warm Theme */}
         <Card className="border-none overflow-hidden shadow-xl mb-4">
-          <div className="relative px-5 py-5 bg-gradient-to-br from-amber-800/70 via-orange-800/55 to-rose-800/45 dark:from-amber-950/45 dark:via-orange-950/35 dark:to-rose-950/30">
+          <div className="relative px-5 py-5 bg-gradient-to-br from-orange-50/85 via-amber-50/70 to-white dark:from-orange-950/20 dark:via-amber-950/14 dark:to-black/0">
             {/* Subtle texture overlay */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-orange-200/35 via-transparent to-transparent dark:from-orange-300/10" />
             
             {/* Soft inner glow */}
             <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full bg-amber-200/12 blur-2xl" />
-              <div className="absolute -bottom-6 -left-6 h-20 w-20 rounded-full bg-rose-200/10 blur-2xl" />
+              <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full bg-orange-200/28 blur-2xl" />
+              <div className="absolute -bottom-6 -left-6 h-20 w-20 rounded-full bg-amber-200/22 blur-2xl" />
             </div>
 
             <div className="relative flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20 shadow-lg">
-                <User className="h-7 w-7 text-white" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/70 dark:bg-white/10 backdrop-blur-sm border border-orange-200/60 dark:border-orange-900/30 shadow-sm">
+                <User className="h-7 w-7 text-orange-800/70 dark:text-orange-100/80" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xl font-bold text-white tracking-tight drop-shadow-sm">
+                <p className="truncate text-xl font-bold text-stone-900/90 dark:text-stone-100 tracking-tight">
                   {sajuInput?.name?.trim() ? sajuInput.name : "이름 없음"}
                 </p>
-                <p className="mt-1 text-sm text-white/80 font-medium">
+                <p className="mt-1 text-sm text-stone-700/70 dark:text-stone-200/70 font-medium">
                   {formatBirthDateShort(sajuInput?.birthDate)}
                   {formatBirthTime(sajuInput?.birthTime) && ` · ${formatBirthTime(sajuInput?.birthTime)}`}
                   {` · ${sajuInput?.gender === "male" ? "남" : "여"}`}
@@ -239,13 +239,13 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
             {(zodiacAnimal || sunSign) && (
               <div className="relative mt-4 flex flex-wrap items-center gap-2">
                 {zodiacAnimal && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 border border-white/25 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/70 dark:bg-white/10 border border-orange-200/60 dark:border-orange-900/30 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-stone-800 dark:text-stone-100 shadow-sm">
                     <Stars className="h-3.5 w-3.5" />
                     {zodiacAnimal}
                   </span>
                 )}
                 {sunSign && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 border border-white/25 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/70 dark:bg-white/10 border border-orange-200/60 dark:border-orange-900/30 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-stone-800 dark:text-stone-100 shadow-sm">
                     <Sparkles className="h-3.5 w-3.5" />
                     {sunSign}
                   </span>
@@ -257,9 +257,9 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
 
         {/* One liner */}
         <Card className="border-none shadow-lg overflow-hidden mb-4 bg-white dark:bg-card">
-          <div className="px-5 py-4 bg-gradient-to-r from-amber-100/80 via-orange-50/50 to-transparent dark:from-amber-900/30 dark:via-orange-900/20 dark:to-transparent">
+          <div className="px-5 py-4 bg-gradient-to-r from-orange-100/55 via-amber-50/45 to-transparent dark:from-orange-900/20 dark:via-amber-900/14 dark:to-transparent">
             <div className="flex items-center gap-2">
-              <Sun className="h-4 w-4 text-amber-500" />
+              <Sun className="h-4 w-4 text-orange-500/80" />
               <h3 className="font-bold text-foreground">오늘 한 줄</h3>
             </div>
             <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{summaryOneLiner || "오늘의 한 줄을 준비 중이야."}</p>
@@ -278,9 +278,9 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
         {/* Sections */}
         <Accordion type="single" collapsible defaultValue="overall" className="space-y-3">
           <AccordionItem value="overall" className="border-none">
-            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="오늘의 바이브" icon={<Sun className="h-5 w-5 text-amber-500" />} score={overall} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-orange-200/50 dark:border-orange-500/15">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-orange-50/60 dark:hover:bg-orange-900/15">
+                <TitleRow title="오늘의 바이브" icon={<Sun className="h-5 w-5 text-orange-500/80" />} score={overall} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <TextBlock text={vibeText} />
@@ -289,9 +289,9 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           </AccordionItem>
 
           <AccordionItem value="money" className="border-none">
-            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="머니 컨디션" icon={<Coins className="h-5 w-5 text-amber-500" />} score={money} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-orange-200/50 dark:border-orange-500/15">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-orange-50/60 dark:hover:bg-orange-900/15">
+                <TitleRow title="머니 컨디션" icon={<Coins className="h-5 w-5 text-orange-500/80" />} score={money} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <TextBlock text={moneyText} />
@@ -300,8 +300,8 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           </AccordionItem>
 
           <AccordionItem value="love" className="border-none">
-            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-orange-200/50 dark:border-orange-500/15">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-orange-50/60 dark:hover:bg-orange-900/15">
                 <TitleRow title="심쿵 시그널" icon={<Heart className="h-5 w-5 text-rose-500" />} score={love} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
@@ -311,8 +311,8 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           </AccordionItem>
 
           <AccordionItem value="health" className="border-none">
-            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-orange-200/50 dark:border-orange-500/15">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-orange-50/60 dark:hover:bg-orange-900/15">
                 <TitleRow title="에너지 수치" icon={<Zap className="h-5 w-5 text-orange-500" />} score={health} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
@@ -322,9 +322,9 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           </AccordionItem>
 
           <AccordionItem value="spine" className="border-none">
-            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="소름포인트" icon={<Eye className="h-5 w-5 text-amber-500" />} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-orange-200/50 dark:border-orange-500/15">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-orange-50/60 dark:hover:bg-orange-900/15">
+                <TitleRow title="소름포인트" icon={<Eye className="h-5 w-5 text-orange-500/80" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <TextBlock text={spineText} />
@@ -333,9 +333,9 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           </AccordionItem>
 
           <AccordionItem value="keywords" className="border-none">
-            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="오늘의 키워드" icon={<Target className="h-5 w-5 text-amber-500" />} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-orange-200/50 dark:border-orange-500/15">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-orange-50/60 dark:hover:bg-orange-900/15">
+                <TitleRow title="오늘의 키워드" icon={<Target className="h-5 w-5 text-orange-500/80" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-5">
                 <Grid9 todayKeys={resultSummary?.today_keys} />
@@ -344,9 +344,9 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           </AccordionItem>
 
           <AccordionItem value="cheat" className="border-none">
-            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="오늘의 운빨 치트키" icon={<Key className="h-5 w-5 text-amber-500" />} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-orange-200/50 dark:border-orange-500/15">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-orange-50/60 dark:hover:bg-orange-900/15">
+                <TitleRow title="오늘의 운빨 치트키" icon={<Key className="h-5 w-5 text-orange-500/80" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <TextBlock text={cheatkeyText} />
@@ -355,9 +355,9 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           </AccordionItem>
 
           <AccordionItem value="mind" className="border-none">
-            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="나만 몰랐던 내 마음" icon={<Brain className="h-5 w-5 text-amber-500" />} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-orange-200/50 dark:border-orange-500/15">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-orange-50/60 dark:hover:bg-orange-900/15">
+                <TitleRow title="나만 몰랐던 내 마음" icon={<Brain className="h-5 w-5 text-orange-500/80" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <TextBlock text={mindText} />
@@ -366,9 +366,9 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           </AccordionItem>
 
           <AccordionItem value="highlight" className="border-none">
-            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="미리 보는 하이라이트" icon={<Lightbulb className="h-5 w-5 text-amber-500" />} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-orange-200/50 dark:border-orange-500/15">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-orange-50/60 dark:hover:bg-orange-900/15">
+                <TitleRow title="미리 보는 하이라이트" icon={<Lightbulb className="h-5 w-5 text-orange-500/80" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <TextBlock text={highlightText} />
@@ -377,9 +377,9 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           </AccordionItem>
 
           <AccordionItem value="mood" className="border-none">
-            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="시간대별 무드 세팅" icon={<Clock className="h-5 w-5 text-amber-500" />} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-orange-200/50 dark:border-orange-500/15">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-orange-50/60 dark:hover:bg-orange-900/15">
+                <TitleRow title="시간대별 무드 세팅" icon={<Clock className="h-5 w-5 text-orange-500/80" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <TextBlock text={moodText} />
@@ -388,9 +388,9 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           </AccordionItem>
 
           <AccordionItem value="evidence" className="border-none">
-            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="분석근거" icon={<BookOpen className="h-5 w-5 text-amber-500" />} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-orange-200/50 dark:border-orange-500/15">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-orange-50/60 dark:hover:bg-orange-900/15">
+                <TitleRow title="분석근거" icon={<BookOpen className="h-5 w-5 text-orange-500/80" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 {/* Saju Chart Grid */}
