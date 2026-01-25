@@ -2,7 +2,7 @@
 
 import { supabase } from "@/lib/supabaseClient"
 import { apiCreateSummary, apiGenerateDetail } from "@/lib/api/readings"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import LoginScreen from "@/components/login-screen"
 import MainScreen from "@/components/main-screen"
@@ -10,6 +10,7 @@ import SajuInputScreen from "@/components/saju-input-screen"
 import ResultScreen from "@/components/result-screen"
 import ResultListScreen from "@/components/result-list-screen"
 import CoinPurchaseScreen from "@/components/coin-purchase-screen"
+import CoinRequiredDialog from "@/components/coin-required-dialog"
 
 import DailyFortuneInputScreen from "@/components/daily-fortune-input-screen"
 import DailyFortuneResultScreen from "@/components/daily-fortune-result-screen"
@@ -129,6 +130,50 @@ export default function Home() {
   const [isCreatingSummary, setIsCreatingSummary] = useState(false)
   const [isGeneratingDetail, setIsGeneratingDetail] = useState(false)
   const [isCreatingDaily, setIsCreatingDaily] = useState(false)
+
+  // -----------------------------
+  // UI: 유료(엽전) 안내 다이얼로그
+  // -----------------------------
+  const [coinDialogOpen, setCoinDialogOpen] = useState(false)
+  const [coinDialogRequired, setCoinDialogRequired] = useState(1)
+  const [coinDialogBalance, setCoinDialogBalance] = useState(0)
+  const [coinDialogMessage, setCoinDialogMessage] = useState<string>("")
+  const coinRetryRef = useRef<null | (() => void)>(null)
+
+  const safeInt = (n: any, fallback = 0) => {
+    const v = Number(n)
+    return Number.isFinite(v) ? Math.max(0, Math.floor(v)) : fallback
+  }
+
+  const openCoinDialog = async (args: { requiredCoins: number; message?: string; onRetry: () => void }) => {
+    const required = safeInt(args.requiredCoins, 1)
+    setCoinDialogRequired(required)
+    setCoinDialogMessage(String(args.message ?? "").trim())
+    coinRetryRef.current = args.onRetry
+    setCoinDialogOpen(true)
+
+    // 화면에 보이는 coins state가 stale일 수 있어서, 항상 DB에서 최신 잔액을 다시 읽어
+    try {
+      const { data, error } = await supabase.rpc("rpc_get_coin_balance")
+      if (error) throw error
+      setCoinDialogBalance(safeInt(data ?? 0, 0))
+    } catch {
+      // fallback: 현재 state
+      setCoinDialogBalance(safeInt(coins ?? 0, 0))
+    }
+  }
+
+  const closeCoinDialog = () => {
+    setCoinDialogOpen(false)
+    setCoinDialogMessage("")
+    coinRetryRef.current = null
+  }
+
+  const retryFromCoinDialog = () => {
+    const fn = coinRetryRef.current
+    closeCoinDialog()
+    fn?.()
+  }
 
   const now = useMemo(() => new Date(), [])
   const defaultYear = useMemo(() => now.getFullYear(), [now])
@@ -439,7 +484,14 @@ export default function Home() {
       setCurrentScreen("result")
     } catch (e: any) {
       console.error(e)
-      if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
+      if (e?.status === 402 && e?.detail?.error === "coin_required") {
+        // 필요 엽전/보유 엽전을 보여주고, 다시 시도할 수 있게
+        await openCoinDialog({
+          requiredCoins: e?.detail?.required_coins ?? 1,
+          message: e?.detail?.message ?? "결과를 보려면 엽전이 필요해.",
+          onRetry: () => handleSajuSubmit(input),
+        })
+      } else if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
         alert(e?.detail?.message ?? "OpenAI API 결제/한도가 부족해요. Billing/Usage를 확인해주세요.")
       } else {
         alert(e?.message ?? "사주 생성 중 오류가 발생했어요")
@@ -474,7 +526,11 @@ export default function Home() {
         alert(e?.detail?.message ?? "OpenAI API 결제/한도가 부족해요. Billing/Usage를 확인해주세요.")
       } else if (e?.status === 402) {
         // 잠금해제 실패(대부분 코인 부족)
-        handleOpenCoinPurchase()
+        await openCoinDialog({
+          requiredCoins: 9,
+          message: "상세 운명 풀이는 엽전 9닢이 필요해.",
+          onRetry: () => handleUnlockDetail(resultId),
+        })
       }
     } finally {
       setIsGeneratingDetail(false)
@@ -529,8 +585,11 @@ export default function Home() {
     } catch (e: any) {
       console.error(e)
       if (e?.status === 402 && e?.detail?.error === "coin_required") {
-        alert(e?.detail?.message ?? "결과를 보려면 엽전이 필요해요.")
-        handleOpenCoinPurchase()
+        await openCoinDialog({
+          requiredCoins: e?.detail?.required_coins ?? 1,
+          message: e?.detail?.message ?? "결과를 보려면 엽전이 필요해.",
+          onRetry: () => handleDailyFortuneSubmit(input),
+        })
       } else if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
         alert(e?.detail?.message ?? "OpenAI API 결제/한도가 부족해요. Billing/Usage를 확인해주세요.")
       } else {
@@ -600,7 +659,13 @@ export default function Home() {
       setCurrentScreen("yearly-fortune-result")
     } catch (e: any) {
       console.error(e)
-      if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
+      if (e?.status === 402 && e?.detail?.error === "coin_required") {
+        await openCoinDialog({
+          requiredCoins: e?.detail?.required_coins ?? 1,
+          message: e?.detail?.message ?? "결과를 보려면 엽전이 필요해.",
+          onRetry: () => handleYearlyFortuneSubmit(input),
+        })
+      } else if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
         alert(e?.detail?.message ?? "OpenAI API 결제/한도가 부족해요. Billing/Usage를 확인해주세요.")
       } else {
         alert(e?.message ?? "연간 운세 생성 중 오류가 발생했어요")
@@ -626,6 +691,19 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background">
+      <CoinRequiredDialog
+        open={coinDialogOpen}
+        requiredCoins={coinDialogRequired}
+        balanceCoins={coinDialogBalance}
+        message={coinDialogMessage}
+        onClose={closeCoinDialog}
+        onRetry={retryFromCoinDialog}
+        onOpenPurchase={() => {
+          closeCoinDialog()
+          handleOpenCoinPurchase()
+        }}
+      />
+
       {currentScreen === "login" && <LoginScreen onLogin={handleLogin} />}
 
       {currentScreen === "main" && (

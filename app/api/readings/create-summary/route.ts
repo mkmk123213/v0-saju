@@ -1107,14 +1107,29 @@ target_year: ${target_year ?? "없음"}
     if (unlockErr) {
       // 결제 실패면 생성한 reading은 정리(목록에 빈 카드 남지 않게)
       await supabaseAdmin.from("readings").delete().eq("id", reading_id);
+      const msg = String(unlockErr.message ?? "");
+
+      // ✅ 코인 부족이 아닌 다른 오류를 'coin_required'로 뭉개지 않도록 분기
+      const looksLikeCoinShortage = /coin|엽전|insufficient|not enough|balance|잔액/i.test(msg);
+      if (looksLikeCoinShortage) {
+        return NextResponse.json(
+          {
+            error: "coin_required",
+            message: "결과를 보려면 엽전 1닢이 필요해.",
+            required_coins: 1,
+            detail: msg,
+          },
+          { status: 402 }
+        );
+      }
+
       return NextResponse.json(
         {
-          error: "coin_required",
-          message: "결과를 보려면 엽전 1닢이 필요해.",
-          required_coins: 1,
-          detail: unlockErr.message,
+          error: "unlock_failed",
+          message: "결과 잠금해제 처리 중 오류가 발생했어.",
+          detail: msg,
         },
-        { status: 402 }
+        { status: 500 }
       );
     }
 

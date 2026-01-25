@@ -283,6 +283,15 @@ export default function ResultScreen({
                   </div>
                 </div>
 
+                <div className="flex items-center justify-between rounded-xl bg-white/70 px-4 py-3">
+                  <div className="text-sm text-muted-foreground">필요 엽전</div>
+                  <div className="font-semibold text-foreground">9닢</div>
+                </div>
+                <div className="flex items-center justify-between rounded-xl bg-white/70 px-4 py-3">
+                  <div className="text-sm text-muted-foreground">보유 엽전</div>
+                  <div className="font-semibold text-foreground">{coins}닢</div>
+                </div>
+
                 {coins >= 9 ? (
                   <Button
                     onClick={() => onUnlockDetail(resultId)}
@@ -307,7 +316,7 @@ export default function ResultScreen({
                   </Button>
                 )}
 
-                <p className="text-center text-xs text-muted-foreground">9개의 엽전으로 상세 풀이를 확인하세요</p>
+                <p className="text-center text-xs text-muted-foreground">엽전 9닢으로 상세 풀이를 확인할 수 있어</p>
               </CardContent>
             </Card>
           )}
