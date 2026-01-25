@@ -424,11 +424,7 @@ export default function DailyFortuneResultScreen({
                                 </div>
                               </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pt-0">
-                              <div className="rounded-2xl bg-muted/15 p-4">
-                                <div className="flex items-center justify-between mb-3">
-                                  <div className="text-3xl font-extrabold tracking-tight text-foreground">{scoreNum}</div>
-                                  <div className="flex gap-1">
+                            <AccordionContent className="pt-0"><div className="flex gap-1">
                                     {Array.from({ length: 5 }).map((_, i) => (
                                       <span
                                         key={i}
@@ -496,27 +492,6 @@ export default function DailyFortuneResultScreen({
                         </AccordionTrigger>
                         <AccordionContent>
                           <div className="space-y-3">
-                            <div className="rounded-2xl bg-muted/15 p-4">
-                              {todayKeywords.length > 0 ? (
-                                <div className="flex flex-wrap gap-2">
-                                  {todayKeywords.map((k) => {
-                                    const cleanKeyword = k.replace(/^#+/, '')
-                                    return (
-                                      <span
-                                        key={k}
-                                        className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400/20 to-orange-500/20 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-200 border border-amber-400/30 shadow-sm"
-                                      >
-                                        <Hash className="h-3 w-3 opacity-70" />
-                                        {cleanKeyword}
-                                      </span>
-                                    )
-                                  })}
-                                </div>
-                              ) : (
-                                <p className="text-sm text-muted-foreground">오늘의 키워드를 불러오는 중이야.</p>
-                              )}
-                            </div>
-
                             <div className="rounded-2xl bg-muted/10 p-4">
                               <div className="mb-3 flex items-center justify-between">
                                 <span className="text-xs font-bold text-card-foreground">오늘의 치트키 9</span>

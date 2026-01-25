@@ -77,6 +77,7 @@ export default function DailyFortuneListScreen({
               <div className="space-y-3">
                 {results.map((result) => {
                   const zodiac = result.result_summary?.profile_badges?.zodiac_animal ?? getZodiacAnimal(result.sajuInput.birthDate) ?? null
+                  const zodiacLabel = zodiac ? (zodiac.endsWith("띠") ? zodiac : `${zodiac}띠`) : null
                   const sun = result.result_summary?.profile_badges?.sun_sign ?? getSunSignFromBirthDate(result.sajuInput.birthDate) ?? null
                   const tags = Array.isArray(result.result_summary?.today_keywords) ? result.result_summary.today_keywords.slice(0, 3) : []
                   
@@ -109,7 +110,7 @@ export default function DailyFortuneListScreen({
                         <div className="flex items-center gap-1.5 mb-3">
                           {zodiac && (
                             <span className="inline-flex items-center rounded-full bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
-                              {zodiac}띠
+                              {zodiacLabel}
                             </span>
                           )}
                           {sun && (
@@ -122,14 +123,18 @@ export default function DailyFortuneListScreen({
                         {/* Bottom: Hashtags only */}
                         {tags.length > 0 && (
                           <div className="flex items-center gap-1.5 pt-2 border-t border-border/30">
-                            {tags.map((k: string) => (
-                              <span
-                                key={k}
-                                className="text-[11px] font-medium text-muted-foreground"
-                              >
-                                #{k}
-                              </span>
-                            ))}
+                            {tags.map((k: string) => {
+                              const clean = String(k).replace(/^#+/, "")
+                              return (
+                                <span
+                                  key={k}
+                                  className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400/20 to-orange-500/20 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-200 border border-amber-400/30 shadow-sm"
+                                >
+                                  <Sparkles className="h-3 w-3 opacity-70" />
+                                  {clean}
+                                </span>
+                              )
+                            })}
                           </div>
                         )}
                       </CardContent>
