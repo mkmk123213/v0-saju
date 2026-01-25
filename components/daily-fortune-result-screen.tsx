@@ -209,14 +209,14 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
 
         {/* Profile Card - Premium Warm Theme */}
         <Card className="border-none overflow-hidden shadow-xl mb-4">
-          <div className="relative px-5 py-5 bg-gradient-to-br from-amber-600 via-orange-600 to-rose-600">
+          <div className="relative px-5 py-5 bg-gradient-to-br from-amber-800/70 via-orange-800/55 to-rose-800/45 dark:from-amber-950/45 dark:via-orange-950/35 dark:to-rose-950/30">
             {/* Subtle texture overlay */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
             
             {/* Soft inner glow */}
             <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full bg-yellow-400/30 blur-2xl" />
-              <div className="absolute -bottom-6 -left-6 h-20 w-20 rounded-full bg-rose-400/20 blur-2xl" />
+              <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full bg-amber-200/12 blur-2xl" />
+              <div className="absolute -bottom-6 -left-6 h-20 w-20 rounded-full bg-rose-200/10 blur-2xl" />
             </div>
 
             <div className="relative flex items-center gap-4">

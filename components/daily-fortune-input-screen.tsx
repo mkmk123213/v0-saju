@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Calendar, Clock, User, Sun, Sparkles, Star } from "lucide-react"
+import { ArrowLeft, Calendar, Clock, User, Sun, Sparkles, Star, Coins } from "lucide-react"
 import type { SajuInput, SavedProfile, Relationship } from "@/app/page"
 
 interface DailyFortuneInputScreenProps {
@@ -329,11 +329,9 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
           {/* Coin Info */}
           <div className="flex items-center gap-3">
             <div className="flex-1 flex items-center gap-3 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200/50 dark:border-amber-700/30 px-4 py-3">
-              <div className="relative flex h-10 w-10 items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 shadow-lg" />
-                <div className="absolute inset-[3px] rounded-full bg-gradient-to-br from-amber-400 to-amber-600 shadow-inner" />
-                <div className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent via-white/20 to-white/40" />
-                <span className="relative text-amber-900 font-bold text-xs">葉</span>
+              <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-200 to-amber-400 dark:from-amber-900/40 dark:to-amber-700/40 border border-amber-300/60 dark:border-amber-600/30 shadow-sm">
+                <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.65),_transparent_60%)]" />
+                <Coins className="relative h-5 w-5 text-amber-950/80 dark:text-amber-100/80" />
               </div>
               <div>
                 <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">필요</p>
@@ -341,11 +339,9 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
               </div>
             </div>
             <div className="flex-1 flex items-center gap-3 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 border border-emerald-200/50 dark:border-emerald-700/30 px-4 py-3">
-              <div className="relative flex h-10 w-10 items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-300 to-emerald-500 shadow-lg" />
-                <div className="absolute inset-[3px] rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-inner" />
-                <div className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent via-white/20 to-white/40" />
-                <span className="relative text-emerald-900 font-bold text-xs">葉</span>
+              <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-200 to-emerald-400 dark:from-emerald-900/35 dark:to-emerald-700/35 border border-emerald-300/60 dark:border-emerald-600/30 shadow-sm">
+                <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.6),_transparent_60%)]" />
+                <Coins className="relative h-5 w-5 text-emerald-950/75 dark:text-emerald-100/80" />
               </div>
               <div>
                 <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">보유</p>
