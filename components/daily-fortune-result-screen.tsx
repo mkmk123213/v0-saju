@@ -262,23 +262,9 @@ export default function DailyFortuneResultScreen({
               {/* Subtle background accent */}
               <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-gradient-to-br from-amber-500/10 to-orange-500/5 blur-[50px] pointer-events-none" />
               
-              {/* Top row: Left icons (Zodiac + Sun) | Center (Name + Info) */}
-              <div className="flex items-start gap-4 relative">
-                {/* Left: Zodiac & Sun sign icons stacked */}
-                <div className="flex flex-col gap-2 shrink-0">
-                  {zodiacAnimal && (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-md">
-                      <span className="text-base font-bold text-white">{zodiacAnimal.charAt(0)}</span>
-                    </div>
-                  )}
-                  {sunSign && (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-indigo-500 shadow-md">
-                      <Sparkles className="h-4 w-4 text-white" />
-                    </div>
-                  )}
-                </div>
-                
-                {/* Center: Name and details */}
+              {/* Top row: Name + Date badge */}
+              <div className="flex items-start justify-between relative mb-3">
+                {/* Left: Name and details */}
                 <div className="flex-1 min-w-0">
                   {/* Name */}
                   <h2 className="text-lg font-bold text-card-foreground truncate">
@@ -301,17 +287,15 @@ export default function DailyFortuneResultScreen({
                     )}
                   </div>
                   
-                  {/* Zodiac & Sun sign labels */}
+                  {/* Zodiac & Sun sign badges (text only, no icons) */}
                   <div className="flex flex-wrap items-center gap-1.5 mt-2">
                     {zodiacAnimal && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
-                        <Star className="h-2.5 w-2.5" />
-                        {zodiacAnimal}
+                      <span className="inline-flex items-center rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
+                        {zodiacAnimal}띠
                       </span>
                     )}
                     {sunSign && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-700 dark:text-violet-300">
-                        <Sparkles className="h-2.5 w-2.5" />
+                      <span className="inline-flex items-center rounded-full bg-violet-500/15 px-2.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-300">
                         {sunSign}
                       </span>
                     )}
@@ -329,7 +313,7 @@ export default function DailyFortuneResultScreen({
               
               {/* One-liner quote */}
               {todayOneLiner && (
-                <div className="mt-4 rounded-xl bg-muted/30 px-4 py-3">
+                <div className="rounded-xl bg-muted/30 px-4 py-3">
                   <p className="text-sm font-medium leading-relaxed text-foreground/90 text-center">
                     {todayOneLiner}
                   </p>
@@ -389,7 +373,9 @@ export default function DailyFortuneResultScreen({
                         <Sparkles className="h-5 w-5 text-white" />
                       </div>
                       <div className="flex-1 text-left">
-                        <h3 className="text-lg font-extrabold tracking-tight text-card-foreground">갓생 운세 요약</h3>
+                        <h3 className="text-lg font-extrabold tracking-tight">
+                          <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">갓생 운세 요약</span>
+                        </h3>
                         <p className="text-xs text-muted-foreground mt-0.5">오늘 하루 핵심 운세 분석</p>
                       </div>
                     </div>
@@ -564,7 +550,9 @@ export default function DailyFortuneResultScreen({
                         <Lightbulb className="h-5 w-5 text-white" />
                       </div>
                       <div className="flex-1 text-left">
-                        <h3 className="text-lg font-extrabold tracking-tight text-card-foreground">프리미엄 퍼스널 알고리즘</h3>
+                        <h3 className="text-lg font-extrabold tracking-tight">
+                          <span className="bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-transparent">프리미엄 퍼스널 알고리즘</span>
+                        </h3>
                         <p className="text-xs text-muted-foreground mt-0.5">동서양 교차 분석 심층 솔루션</p>
                       </div>
                     </div>
