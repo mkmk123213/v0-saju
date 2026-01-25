@@ -1087,7 +1087,10 @@ target_year: ${target_year ?? "없음"}
         target_date,
         target_year,
         input_snapshot,
-        result_summary: null,
+        // readings.result_summary is NOT NULL in our schema.
+        // Use an empty object as a placeholder so RPC can reference this row
+        // before the final AI-generated result_summary is written.
+        result_summary: {},
       });
 
     if (preInsErr) {
