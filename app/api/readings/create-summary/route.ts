@@ -761,15 +761,35 @@ async function fetchWithRetry(fetcher: () => Promise<Response>, retries = 3) {
 
 
 async function rpcUnlockDetail(supabaseUser: any, reading_id: string) {
-  const tryUnlock = async (args: Record<string, any>) => {
+  const argCandidates: Record<string, any>[] = [
+    { p_reading_id: reading_id },
+    { reading_id },
+    { readingId: reading_id },
+    { p_reading_uuid: reading_id },
+    { reading_uuid: reading_id },
+    { p_reading: reading_id },
+    { p_id: reading_id },
+    { id: reading_id },
+  ];
+
+  let lastError: any = null;
+
+  for (const args of argCandidates) {
     const { error } = await supabaseUser.rpc("rpc_unlock_detail", args);
-    return error;
-  };
-  let unlockErr = await tryUnlock({ reading_id });
-  if (unlockErr && /p_reading_id|parameter|unknown/i.test(unlockErr.message)) {
-    unlockErr = await tryUnlock({ p_reading_id: reading_id });
+    if (!error) return null;
+
+    lastError = error;
+
+    // If the error is NOT about signature mismatch, stop early.
+    // Signature mismatch messages often mention schema cache / function not found / parameter issues.
+    const msg = String(error.message ?? "");
+    const looksLikeSignatureMismatch =
+      /schema cache|could not find the function|function public\.rpc_unlock_detail|parameter|unknown/i.test(msg);
+
+    if (!looksLikeSignatureMismatch) break;
   }
-  return unlockErr;
+
+  return lastError;
 }
 
 export async function POST(req: Request) {
