@@ -442,9 +442,15 @@ function normalizeDailyResultSummary(
   rs: any,
   profile: any,
   sajuChart: any | null,
-  todayLuckChart: any | null
+  todayLuckChart: any | null,
+  targetDate?: string | null
 ) {
   const out: any = rs && typeof rs === "object" ? rs : {};
+
+  // target date (used for deterministic premium fallback & consistency)
+  const td = typeof targetDate === "string" && targetDate.trim()
+    ? targetDate.trim()
+    : new Date().toISOString().slice(0, 10);
 
   // --- fixed ganji tokens (to reduce internal inconsistency) ---
   const d = sajuChart?.pillars?.day;
@@ -586,7 +592,7 @@ function normalizeDailyResultSummary(
   });
   // premium_algo - (이제 결과보기 자체가 유료라서 요약에 포함)
   out.premium_algo = out.premium_algo && typeof out.premium_algo === "object" ? out.premium_algo : {};
-  const pSeed = `${out.profile_badges?.zodiac_animal ?? ""}-${out.profile_badges?.sun_sign ?? ""}-${targetDate}-${d?.ganji_kor ?? ""}-${ld?.ganji_kor ?? ""}`;
+  const pSeed = `${out.profile_badges?.zodiac_animal ?? ""}-${out.profile_badges?.sun_sign ?? ""}-${td}-${d?.ganji_kor ?? ""}-${ld?.ganji_kor ?? ""}`;
   const premiumFallback = buildPremiumAlgoFallback({
     seedKey: pSeed,
     ganjiTokens: mustDailyTokens,
@@ -817,7 +823,7 @@ export async function POST(req: Request) {
 
     if (cached?.data?.id && cached.data.result_summary) {
       const normalized = type === "daily"
-        ? normalizeDailyResultSummary(cached.data.result_summary, profile, sajuChart, todayLuckChart)
+        ? normalizeDailyResultSummary(cached.data.result_summary, profile, sajuChart, todayLuckChart, target_date ?? null)
         : cached.data.result_summary;
       return NextResponse.json({
         reading_id: cached.data.id,
@@ -1161,7 +1167,7 @@ target_year: ${target_year ?? "없음"}
     }
 
     if (type === "daily") {
-      result_summary = normalizeDailyResultSummary(result_summary, profile, sajuChart, todayLuckChart);
+      result_summary = normalizeDailyResultSummary(result_summary, profile, sajuChart, todayLuckChart, target_date ?? null);
     }
 
     // 요약 생성 완료 → reading에 저장
