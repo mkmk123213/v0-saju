@@ -469,6 +469,7 @@ function normalizeDailyResultSummary(
   const daewoonStemTok = tokenFromStem(dw?.stem_kor, dw?.stem_element);
   const daewoonBranchTok = tokenFromBranch(dw?.branch_kor, dw?.branch_element);
   const mustDaily = [dayStemTok || dayBranchTok, luckDayStemTok || luckDayBranchTok].filter(Boolean);
+  const mustDailyTokens = mustDaily;
 
   // profile_badges
   out.profile_badges = out.profile_badges && typeof out.profile_badges === "object" ? out.profile_badges : {};
@@ -1125,11 +1126,19 @@ target_year: ${target_year ?? "없음"}
       // ✅ 코인 부족이 아닌 다른 오류를 'coin_required'로 뭉개지 않도록 분기
       const looksLikeCoinShortage = /coin|엽전|insufficient|not enough|balance|잔액/i.test(msg);
       if (looksLikeCoinShortage) {
+        // 보유 엽전도 같이 내려줘서(클라 RPC 실패해도) UI에서 바로 표시 가능하게
+        let balance_coins = 0;
+        try {
+          const { data: bal } = await supabaseUser.rpc("rpc_get_coin_balance");
+          const n = Number(bal ?? 0);
+          balance_coins = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+        } catch {}
         return NextResponse.json(
           {
             error: "coin_required",
             message: "결과를 보려면 엽전 1닢이 필요해.",
             required_coins: 1,
+            balance_coins,
             detail: msg,
           },
           { status: 402 }

@@ -145,12 +145,16 @@ export default function Home() {
     return Number.isFinite(v) ? Math.max(0, Math.floor(v)) : fallback
   }
 
-  const openCoinDialog = async (args: { requiredCoins: number; message?: string; onRetry: () => void }) => {
+  const openCoinDialog = async (args: { requiredCoins: number; balanceCoins?: number; message?: string; onRetry: () => void }) => {
     const required = safeInt(args.requiredCoins, 1)
     setCoinDialogRequired(required)
     setCoinDialogMessage(String(args.message ?? "").trim())
     coinRetryRef.current = args.onRetry
     setCoinDialogOpen(true)
+
+    if (args.balanceCoins != null) {
+      setCoinDialogBalance(safeInt(args.balanceCoins, 0))
+    }
 
     // 화면에 보이는 coins state가 stale일 수 있어서, 항상 DB에서 최신 잔액을 다시 읽어
     try {
@@ -488,9 +492,10 @@ export default function Home() {
         // 필요 엽전/보유 엽전을 보여주고, 다시 시도할 수 있게
         await openCoinDialog({
           requiredCoins: e?.detail?.required_coins ?? 1,
+          balanceCoins: e?.detail?.balance_coins,
           message: e?.detail?.message ?? "결과를 보려면 엽전이 필요해.",
           onRetry: () => handleSajuSubmit(input),
-        })
+      })
       } else if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
         alert(e?.detail?.message ?? "OpenAI API 결제/한도가 부족해요. Billing/Usage를 확인해주세요.")
       } else {
@@ -528,9 +533,10 @@ export default function Home() {
         // 잠금해제 실패(대부분 코인 부족)
         await openCoinDialog({
           requiredCoins: 9,
+          balanceCoins: e?.detail?.balance_coins,
           message: "상세 운명 풀이는 엽전 9닢이 필요해.",
           onRetry: () => handleUnlockDetail(resultId),
-        })
+      })
       }
     } finally {
       setIsGeneratingDetail(false)
@@ -587,9 +593,10 @@ export default function Home() {
       if (e?.status === 402 && e?.detail?.error === "coin_required") {
         await openCoinDialog({
           requiredCoins: e?.detail?.required_coins ?? 1,
+          balanceCoins: e?.detail?.balance_coins,
           message: e?.detail?.message ?? "결과를 보려면 엽전이 필요해.",
           onRetry: () => handleDailyFortuneSubmit(input),
-        })
+      })
       } else if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
         alert(e?.detail?.message ?? "OpenAI API 결제/한도가 부족해요. Billing/Usage를 확인해주세요.")
       } else {
@@ -662,9 +669,10 @@ export default function Home() {
       if (e?.status === 402 && e?.detail?.error === "coin_required") {
         await openCoinDialog({
           requiredCoins: e?.detail?.required_coins ?? 1,
+          balanceCoins: e?.detail?.balance_coins,
           message: e?.detail?.message ?? "결과를 보려면 엽전이 필요해.",
           onRetry: () => handleYearlyFortuneSubmit(input),
-        })
+      })
       } else if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
         alert(e?.detail?.message ?? "OpenAI API 결제/한도가 부족해요. Billing/Usage를 확인해주세요.")
       } else {

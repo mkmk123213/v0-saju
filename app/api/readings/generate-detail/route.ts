@@ -152,11 +152,18 @@ export async function POST(req: Request) {
 
       const looksLikeCoinShortage = /coin|엽전|insufficient|not enough|balance|잔액/i.test(msg);
       if (looksLikeCoinShortage) {
+        let balance_coins = 0;
+        try {
+          const { data: bal } = await supabaseUser.rpc("rpc_get_coin_balance");
+          const n = Number(bal ?? 0);
+          balance_coins = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+        } catch {}
         return NextResponse.json(
           {
             error: "coin_required",
             message: "상세 풀이를 보려면 엽전 9닢이 필요해.",
             required_coins: 9,
+            balance_coins,
             detail: msg,
           },
           { status: 402 }
