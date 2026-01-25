@@ -328,22 +328,28 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
         <div className="mx-auto max-w-sm space-y-3">
           {/* Coin Info */}
           <div className="flex items-center gap-3">
-            <div className="flex-1 flex items-center gap-3 rounded-xl bg-secondary/80 px-4 py-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-md">
-                <span className="text-base">&#x1FAA8;</span>
+            <div className="flex-1 flex items-center gap-3 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200/50 dark:border-amber-700/30 px-4 py-3">
+              <div className="relative flex h-10 w-10 items-center justify-center">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 shadow-lg" />
+                <div className="absolute inset-[3px] rounded-full bg-gradient-to-br from-amber-400 to-amber-600 shadow-inner" />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent via-white/20 to-white/40" />
+                <span className="relative text-amber-900 font-bold text-xs">葉</span>
               </div>
               <div>
-                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">필요</p>
-                <p className="text-base font-bold text-foreground">1개</p>
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">필요</p>
+                <p className="text-lg font-bold text-amber-700 dark:text-amber-300">1개</p>
               </div>
             </div>
-            <div className="flex-1 flex items-center gap-3 rounded-xl bg-secondary/80 px-4 py-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 shadow-md">
-                <span className="text-base">&#x1FAA8;</span>
+            <div className="flex-1 flex items-center gap-3 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 border border-emerald-200/50 dark:border-emerald-700/30 px-4 py-3">
+              <div className="relative flex h-10 w-10 items-center justify-center">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-300 to-emerald-500 shadow-lg" />
+                <div className="absolute inset-[3px] rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-inner" />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent via-white/20 to-white/40" />
+                <span className="relative text-emerald-900 font-bold text-xs">葉</span>
               </div>
               <div>
-                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">보유</p>
-                <p className="text-base font-bold text-foreground">{coins}개</p>
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">보유</p>
+                <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{coins}개</p>
               </div>
             </div>
           </div>
