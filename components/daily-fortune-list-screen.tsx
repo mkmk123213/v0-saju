@@ -27,9 +27,8 @@ export default function DailyFortuneListScreen({
     return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`
   }
 
-  const formatBirthDate = (dateStr?: string) => {
+  const formatBirthDateShort = (dateStr?: string) => {
     if (!dateStr) return "생년월일 없음"
-    // birthDate는 보통 YYYY-MM-DD 형태라서 Date 파싱 대신 안전하게 split
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
       const [y, mo, da] = dateStr.split("-")
       return `${y}.${mo}.${da}`
@@ -37,6 +36,17 @@ export default function DailyFortuneListScreen({
     const d = new Date(dateStr)
     if (Number.isNaN(d.getTime())) return String(dateStr)
     return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`
+  }
+
+  const formatBirthTime = (timeStr?: string) => {
+    if (!timeStr) return null
+    const [h, m] = timeStr.split(":")
+    const hour = Number(h)
+    const minute = m ? m.padStart(2, "0") : "00"
+    if (Number.isNaN(hour)) return null
+    const period = hour < 12 ? "오전" : "오후"
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    return `${period} ${String(displayHour).padStart(2, "0")}:${minute}`
   }
 
   return (
@@ -101,9 +111,12 @@ export default function DailyFortuneListScreen({
                           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
                         </div>
                         
-                        {/* Info row: Birth date, Gender */}
+                        {/* Info row: Birth date, Time, Gender, Calendar */}
                         <p className="text-xs text-muted-foreground mb-3">
-                          {formatBirthDate(result.sajuInput.birthDate)} · {result.sajuInput.gender === "male" ? "남성" : result.sajuInput.gender === "female" ? "여성" : "미지정"}
+                          {formatBirthDateShort(result.sajuInput.birthDate)}
+                          {formatBirthTime(result.sajuInput.birthTime) && ` · ${formatBirthTime(result.sajuInput.birthTime)}`}
+                          {` · ${result.sajuInput.gender === "male" ? "남성" : result.sajuInput.gender === "female" ? "여성" : "미지정"}`}
+                          {` · ${result.sajuInput.calendarType === "solar" ? "양력" : "음력"}`}
                         </p>
                         
                         {/* Zodiac & Sun sign badges */}

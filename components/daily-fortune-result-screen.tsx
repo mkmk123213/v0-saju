@@ -7,18 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
+  Activity,
+  BookOpen,
   Brain,
-  Calendar,
   ChevronLeft,
-  Cloud,
+  Clock,
   Coins,
+  Eye,
   Film,
   Heart,
-  KeyRound,
-  Map,
+  Key,
+  Lightbulb,
   Sparkles,
   Stars,
   Sun,
+  Target,
+  TrendingUp,
   User,
   Zap,
 } from "lucide-react";
@@ -45,15 +49,26 @@ function toBadgeTags(arr: any): string[] {
     .filter(Boolean);
 }
 
-function formatBirthDate(dateStr?: string) {
+function formatBirthDateShort(dateStr?: string) {
   if (!dateStr) return "생년월일 없음";
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
     const [y, mo, da] = dateStr.split("-");
-    return `${y}년 ${Number(mo)}월 ${Number(da)}일`;
+    return `${y}.${mo}.${da}`;
   }
   const date = new Date(dateStr);
   if (Number.isNaN(date.getTime())) return String(dateStr);
-  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function formatBirthTime(timeStr?: string) {
+  if (!timeStr) return null;
+  const [h, m] = timeStr.split(":");
+  const hour = Number(h);
+  const minute = m ? m.padStart(2, "0") : "00";
+  if (Number.isNaN(hour)) return null;
+  const period = hour < 12 ? "오전" : "오후";
+  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  return `${period} ${String(displayHour).padStart(2, "0")}:${minute}`;
 }
 
 function sectionText(sections: any, key: string) {
@@ -223,36 +238,13 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
             </div>
           </div>
 
-          <CardContent className="p-5 bg-white dark:bg-card">
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
-                <div className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-400">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>생년월일</span>
-                </div>
-                <p className="mt-1 text-sm font-semibold text-foreground">{formatBirthDate(sajuInput?.birthDate)}</p>
-              </div>
-
-              <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
-                <div className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-400">
-                  <User className="h-3.5 w-3.5" />
-                  <span>성별</span>
-                </div>
-                <p className="mt-1 text-sm font-semibold text-foreground">
-                  {sajuInput?.gender === "male" ? "남성" : "여성"}
-                </p>
-              </div>
-
-              <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
-                <div className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-400">
-                  <Sun className="h-3.5 w-3.5" />
-                  <span>달력</span>
-                </div>
-                <p className="mt-1 text-sm font-semibold text-foreground">
-                  {sajuInput?.calendarType === "solar" ? "양력" : "음력"}
-                </p>
-              </div>
-            </div>
+          <CardContent className="p-4 bg-white dark:bg-card">
+            <p className="text-sm text-muted-foreground">
+              {formatBirthDateShort(sajuInput?.birthDate)}
+              {formatBirthTime(sajuInput?.birthTime) && ` · ${formatBirthTime(sajuInput?.birthTime)}`}
+              {` · ${sajuInput?.gender === "male" ? "남성" : "여성"}`}
+              {` · ${sajuInput?.calendarType === "solar" ? "양력" : "음력"}`}
+            </p>
 
             {(zodiacAnimal || sunSign) && (
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -298,7 +290,7 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           <AccordionItem value="overall" className="border-none">
             <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
               <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="오늘의 바이브" icon={<Cloud className="h-5 w-5 text-amber-500" />} score={overall} />
+                <TitleRow title="오늘의 바이브" icon={<Sun className="h-5 w-5 text-amber-500" />} score={overall} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <TextBlock text={vibeText} />
@@ -342,7 +334,7 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           <AccordionItem value="spine" className="border-none">
             <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
               <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="소름포인트" icon={<Zap className="h-5 w-5 text-amber-500" />} />
+                <TitleRow title="소름포인트" icon={<Eye className="h-5 w-5 text-amber-500" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <TextBlock text={spineText} />
@@ -353,7 +345,7 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           <AccordionItem value="keywords" className="border-none">
             <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
               <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="오늘의 키워드" icon={<KeyRound className="h-5 w-5 text-amber-500" />} />
+                <TitleRow title="오늘의 키워드" icon={<Target className="h-5 w-5 text-amber-500" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-5">
                 <Grid9 todayKeys={resultSummary?.today_keys} />
@@ -364,7 +356,7 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           <AccordionItem value="cheat" className="border-none">
             <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
               <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="오늘의 운빨 치트키" icon={<KeyRound className="h-5 w-5 text-amber-500" />} />
+                <TitleRow title="오늘의 운빨 치트키" icon={<Key className="h-5 w-5 text-amber-500" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <TextBlock text={cheatkeyText} />
@@ -386,7 +378,7 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           <AccordionItem value="highlight" className="border-none">
             <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
               <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="미리 보는 하이라이트" icon={<Film className="h-5 w-5 text-amber-500" />} />
+                <TitleRow title="미리 보는 하이라이트" icon={<Lightbulb className="h-5 w-5 text-amber-500" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <TextBlock text={highlightText} />
@@ -397,7 +389,7 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           <AccordionItem value="mood" className="border-none">
             <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
               <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="시간대별 무드 세팅" icon={<Map className="h-5 w-5 text-amber-500" />} />
+                <TitleRow title="시간대별 무드 세팅" icon={<Clock className="h-5 w-5 text-amber-500" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <TextBlock text={moodText} />
@@ -408,15 +400,57 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           <AccordionItem value="evidence" className="border-none">
             <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
               <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
-                <TitleRow title="분석근거" icon={<Sun className="h-5 w-5 text-amber-500" />} />
+                <TitleRow title="분석근거" icon={<BookOpen className="h-5 w-5 text-amber-500" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 dark:from-amber-900/30 dark:via-orange-900/20 dark:to-amber-900/30 dark:border-amber-500/30 p-4">
-                  <div className="mb-3 flex items-center gap-2 font-semibold text-amber-700 dark:text-amber-400">
-                    <Sun className="h-4 w-4" />
-                    분석 근거
+                {/* Saju Chart Grid */}
+                <div className="mb-4 rounded-2xl border border-amber-200 bg-white dark:bg-card dark:border-amber-500/30 overflow-hidden">
+                  {/* Header Row */}
+                  <div className="grid grid-cols-4 text-center text-xs font-semibold text-muted-foreground border-b border-amber-200 dark:border-amber-500/30">
+                    <div className="py-2 border-r border-amber-200 dark:border-amber-500/30">대운</div>
+                    <div className="py-2 border-r border-amber-200 dark:border-amber-500/30">연운</div>
+                    <div className="py-2 border-r border-amber-200 dark:border-amber-500/30">월운</div>
+                    <div className="py-2">일운</div>
                   </div>
-                  <Separator className="mb-3 bg-amber-200 dark:bg-amber-500/30" />
+                  {/* Heavenly Stems Row */}
+                  <div className="grid grid-cols-4">
+                    {(resultSummary?.saju_pillars?.heavenly_stems ?? ["丙", "丙", "己", "己"]).map((stem: string, idx: number) => (
+                      <div
+                        key={`stem-${idx}`}
+                        className={`py-3 text-center border-r last:border-r-0 border-amber-200 dark:border-amber-500/30 ${
+                          idx < 2 ? "bg-rose-100 dark:bg-rose-900/30" : "bg-amber-100 dark:bg-amber-900/30"
+                        }`}
+                      >
+                        <div className="text-2xl font-bold text-foreground">{stem.charAt(0)}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{stem.length > 1 ? stem.slice(1) : ""}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Earthly Branches Row */}
+                  <div className="grid grid-cols-4">
+                    {(resultSummary?.saju_pillars?.earthly_branches ?? ["申", "午", "丑", "亥"]).map((branch: string, idx: number) => (
+                      <div
+                        key={`branch-${idx}`}
+                        className={`py-3 text-center border-r last:border-r-0 border-amber-200 dark:border-amber-500/30 ${
+                          idx < 2 ? "bg-yellow-100 dark:bg-yellow-900/30" : idx === 2 ? "bg-amber-100 dark:bg-amber-900/30" : "bg-emerald-100 dark:bg-emerald-900/30"
+                        }`}
+                      >
+                        <div className="text-2xl font-bold text-foreground">{branch.charAt(0)}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{branch.length > 1 ? branch.slice(1) : ""}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Sha Labels Row */}
+                  <div className="grid grid-cols-4 text-center text-[10px] text-muted-foreground border-t border-amber-200 dark:border-amber-500/30">
+                    {(resultSummary?.saju_pillars?.sha_labels ?? ["겁살", "육해살", "월살", "망신살"]).map((label: string, idx: number) => (
+                      <div key={`sha-${idx}`} className="py-1.5 border-r last:border-r-0 border-amber-200 dark:border-amber-500/30">
+                        {label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 dark:from-amber-900/30 dark:via-orange-900/20 dark:to-amber-900/30 dark:border-amber-500/30 p-4">
                   <div className="space-y-3">
                     <div className="rounded-2xl bg-white/80 dark:bg-amber-900/30 p-3">
                       <div className="mb-1 text-xs font-semibold text-amber-600 dark:text-amber-400">사주 분석</div>
