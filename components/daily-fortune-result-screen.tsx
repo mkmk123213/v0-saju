@@ -93,7 +93,6 @@ export default function DailyFortuneResultScreen({
   const sunSign = resultSummary?.profile_badges?.sun_sign ?? getSunSignFromBirthDate(sajuInput?.birthDate ?? "") ?? null
   const todayKeywords: string[] = Array.isArray(resultSummary?.today_keywords) ? resultSummary.today_keywords.slice(0, 3) : []
   const todayOneLiner: string | null = typeof resultSummary?.today_one_liner === "string" ? resultSummary.today_one_liner : null
-  const sajuChart = resultSummary?.saju_chart?.pillars ? resultSummary.saju_chart : null
   const todayLuckChart = resultSummary?.today_luck_chart?.pillars ? resultSummary.today_luck_chart : null
   return (
     <div className="flex min-h-screen flex-col starfield">
@@ -229,177 +228,7 @@ export default function DailyFortuneResultScreen({
             </div>
           </Card>
 
-          {sajuChart && (
-            <Card className="border-none glass shadow-sm">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Moon className="h-4 w-4 text-amber-500" />
-                    <h3 className="text-sm font-semibold text-card-foreground">사주 정보</h3>
-                  </div>
-                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                    연·월·일·시
-                  </span>
-                </div>
-
-                {(() => {
-                  const p = sajuChart.pillars
-                  const cols = [
-                    { label: "연주", v: p.year },
-                    { label: "월주", v: p.month },
-                    { label: "일주", v: p.day },
-                    { label: "시주", v: p.hour },
-                  ] as const
-
-                  return (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-4 gap-2 text-center">
-                        {cols.map((c) => (
-                          <div key={c.label} className="space-y-1">
-                            <div className="text-[11px] font-medium text-muted-foreground">{c.label}</div>
-                            <div className="rounded-xl overflow-hidden border border-border/60">
-                              <div className="bg-gradient-to-b from-amber-400/15 to-orange-500/10 px-2 py-2">
-                                <div className="text-lg font-bold text-card-foreground">
-                                  {c.v ? c.v.stem_hanja : "—"}
-                                </div>
-                                <div className="text-[11px] text-muted-foreground">
-                                  {c.v ? `${c.v.stem_yinyang}${c.v.stem_element}` : "정보 없음"}
-                                </div>
-                              </div>
-                              <div className="bg-muted/40 px-2 py-2">
-                                <div className="text-lg font-bold text-card-foreground">
-                                  {c.v ? c.v.branch_hanja : "—"}
-                                </div>
-                                <div className="text-[11px] text-muted-foreground">
-                                  {c.v ? `${c.v.branch_animal} · ${c.v.branch_element}` : "정보 없음"}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {Array.isArray(sajuChart.notes) && sajuChart.notes.length > 0 && (
-                        <div className="rounded-xl bg-muted/40 px-3 py-2">
-                          <p className="text-[11px] leading-relaxed text-muted-foreground">
-                            {sajuChart.notes[0]}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })()}
-              </CardContent>
-            </Card>
-          )}
-
-          {todayLuckChart && (
-            <Card className="border-none glass shadow-sm">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-amber-500" />
-                    <h3 className="text-sm font-semibold text-card-foreground">오늘의 흐름</h3>
-                  </div>
-                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                    대운·연운·월운·일운
-                  </span>
-                </div>
-
-                {(() => {
-                  const p = todayLuckChart.pillars
-                  const cols = [
-                    { key: "daewoon", label: "대운", v: p.daewoon, shinsal: todayLuckChart.labels?.daewoon },
-                    { key: "year", label: "연운", v: p.year, shinsal: todayLuckChart.labels?.year },
-                    { key: "month", label: "월운", v: p.month, shinsal: todayLuckChart.labels?.month },
-                    { key: "day", label: "일운", v: p.day, shinsal: todayLuckChart.labels?.day },
-                  ] as const
-
-                  const stemBg = (el?: string) => {
-                    switch (el) {
-                      case "목": return "bg-emerald-500/15"
-                      case "화": return "bg-rose-500/20"
-                      case "토": return "bg-amber-400/35"
-                      case "금": return "bg-slate-400/25"
-                      case "수": return "bg-sky-500/20"
-                      default: return "bg-muted/30"
-                    }
-                  }
-
-                  const branchBg = (el?: string) => {
-                    switch (el) {
-                      case "목": return "bg-emerald-500/10"
-                      case "화": return "bg-rose-500/10"
-                      case "토": return "bg-amber-400/20"
-                      case "금": return "bg-slate-400/15"
-                      case "수": return "bg-sky-500/12"
-                      default: return "bg-muted/20"
-                    }
-                  }
-
-                  return (
-                    <div className="space-y-3">
-                      {/* chart (screenshot-like) */}
-                      <div className="overflow-hidden rounded-xl border border-border/60">
-                        <div className="grid grid-cols-4">
-                          {cols.map((c) => (
-                            <div key={c.key} className="border-r border-border/60 last:border-r-0 bg-muted/10 px-2 py-2 text-center">
-                              <div className="text-[11px] font-semibold text-muted-foreground">{c.label}</div>
-                            </div>
-                          ))}
-
-                          {cols.map((c) => (
-                            <div
-                              key={`${c.key}-stem`}
-                              className={`border-r border-border/60 last:border-r-0 px-2 py-3 text-center ${stemBg(c.v?.stem_element)}`}
-                            >
-                              <div className="text-xl font-extrabold tracking-wide text-card-foreground">
-                                {c.v ? c.v.stem_hanja : "—"}
-                              </div>
-                              <div className="mt-0.5 text-[11px] font-medium text-muted-foreground">
-                                {c.v ? c.v.stem_kor : ""}
-                              </div>
-                            </div>
-                          ))}
-
-                          {cols.map((c) => (
-                            <div
-                              key={`${c.key}-branch`}
-                              className={`border-r border-border/60 last:border-r-0 px-2 py-3 text-center ${branchBg(c.v?.branch_element)}`}
-                            >
-                              <div className="text-xl font-extrabold tracking-wide text-card-foreground">
-                                {c.v ? c.v.branch_hanja : "—"}
-                              </div>
-                              <div className="mt-0.5 text-[11px] font-medium text-muted-foreground">
-                                {c.v ? c.v.branch_kor : ""}
-                              </div>
-                            </div>
-                          ))}
-
-                          {cols.map((c) => (
-                            <div
-                              key={`${c.key}-shinsal`}
-                              className="border-r border-border/60 last:border-r-0 bg-background px-2 py-2 text-center"
-                            >
-                              <div className="text-[11px] font-semibold text-muted-foreground">
-                                {c.shinsal ? String(c.shinsal) : ""}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {Array.isArray(todayLuckChart.notes) && todayLuckChart.notes.length > 0 && (
-                        <div className="rounded-xl bg-muted/40 px-3 py-2">
-                          <p className="text-[11px] leading-relaxed text-muted-foreground">{todayLuckChart.notes[0]}</p>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })()}
-              </CardContent>
-            </Card>
-          )}
+          {/* (요청사항) 사주 표는 제거. 오늘의 흐름은 '분석 근거' 하단에서 노출 */}
 
           {/* Loading */}
           {isLoading && (
@@ -620,7 +449,7 @@ export default function DailyFortuneResultScreen({
                         <Sparkles className="h-3.5 w-3.5 text-violet-500" />
                         <span className="text-xs font-bold text-violet-700 dark:text-violet-300">사주 분석</span>
                       </div>
-                      <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">{resultSummary.saju_brief}</p>
+                      <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{resultSummary.saju_brief}</p>
                     </div>
                   )}
 
@@ -630,10 +459,119 @@ export default function DailyFortuneResultScreen({
                         <Star className="h-3.5 w-3.5 text-blue-500" />
                         <span className="text-xs font-bold text-blue-700 dark:text-blue-300">별자리 분석</span>
                       </div>
-                      <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">{resultSummary.astro_brief}</p>
+                      <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{resultSummary.astro_brief}</p>
                     </div>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Today flow (moved under evidence) */}
+          {todayLuckChart && (
+            <Card className="border-none glass shadow-sm">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    <h3 className="text-sm font-semibold text-card-foreground">오늘의 흐름</h3>
+                  </div>
+                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    대운·연운·월운·일운
+                  </span>
+                </div>
+
+                {(() => {
+                  const p = todayLuckChart.pillars
+                  const cols = [
+                    { key: "daewoon", label: "대운", v: p.daewoon, shinsal: todayLuckChart.labels?.daewoon },
+                    { key: "year", label: "연운", v: p.year, shinsal: todayLuckChart.labels?.year },
+                    { key: "month", label: "월운", v: p.month, shinsal: todayLuckChart.labels?.month },
+                    { key: "day", label: "일운", v: p.day, shinsal: todayLuckChart.labels?.day },
+                  ] as const
+
+                  const stemBg = (el?: string) => {
+                    switch (el) {
+                      case "목": return "bg-emerald-500/15"
+                      case "화": return "bg-rose-500/20"
+                      case "토": return "bg-amber-400/35"
+                      case "금": return "bg-slate-400/25"
+                      case "수": return "bg-sky-500/20"
+                      default: return "bg-muted/30"
+                    }
+                  }
+
+                  const branchBg = (el?: string) => {
+                    switch (el) {
+                      case "목": return "bg-emerald-500/10"
+                      case "화": return "bg-rose-500/10"
+                      case "토": return "bg-amber-400/20"
+                      case "금": return "bg-slate-400/15"
+                      case "수": return "bg-sky-500/12"
+                      default: return "bg-muted/20"
+                    }
+                  }
+
+                  return (
+                    <div className="space-y-3">
+                      {/* chart (screenshot-like) */}
+                      <div className="overflow-hidden rounded-xl border border-border/60">
+                        <div className="grid grid-cols-4">
+                          {cols.map((c) => (
+                            <div key={c.key} className="border-r border-border/60 last:border-r-0 bg-muted/10 px-2 py-2 text-center">
+                              <div className="text-[11px] font-semibold text-muted-foreground">{c.label}</div>
+                            </div>
+                          ))}
+
+                          {cols.map((c) => (
+                            <div
+                              key={`${c.key}-stem`}
+                              className={`border-r border-border/60 last:border-r-0 px-2 py-3 text-center ${stemBg(c.v?.stem_element)}`}
+                            >
+                              <div className="text-xl font-extrabold tracking-wide text-card-foreground">
+                                {c.v ? c.v.stem_hanja : "—"}
+                              </div>
+                              <div className="mt-0.5 text-[11px] font-medium text-muted-foreground">
+                                {c.v ? c.v.stem_kor : ""}
+                              </div>
+                            </div>
+                          ))}
+
+                          {cols.map((c) => (
+                            <div
+                              key={`${c.key}-branch`}
+                              className={`border-r border-border/60 last:border-r-0 px-2 py-3 text-center ${branchBg(c.v?.branch_element)}`}
+                            >
+                              <div className="text-xl font-extrabold tracking-wide text-card-foreground">
+                                {c.v ? c.v.branch_hanja : "—"}
+                              </div>
+                              <div className="mt-0.5 text-[11px] font-medium text-muted-foreground">
+                                {c.v ? c.v.branch_kor : ""}
+                              </div>
+                            </div>
+                          ))}
+
+                          {cols.map((c) => (
+                            <div
+                              key={`${c.key}-shinsal`}
+                              className="border-r border-border/60 last:border-r-0 bg-background px-2 py-2 text-center"
+                            >
+                              <div className="text-[11px] font-semibold text-muted-foreground">
+                                {c.shinsal ? String(c.shinsal) : ""}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {Array.isArray(todayLuckChart.notes) && todayLuckChart.notes.length > 0 && (
+                        <div className="rounded-xl bg-muted/40 px-3 py-2">
+                          <p className="text-[11px] leading-relaxed text-muted-foreground">{todayLuckChart.notes[0]}</p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
               </CardContent>
             </Card>
           )}

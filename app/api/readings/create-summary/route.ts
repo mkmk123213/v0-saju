@@ -7,8 +7,46 @@ import { buildSajuChart, buildTodayLuckChart } from "@/lib/saju-chart";
 export const runtime = "nodejs";
 
 function clampInt(n: any, min = 0, max = 100) {
-  const x = typeof n === "number" && Number.isFinite(n) ? Math.round(n) : 0;
-  return Math.max(min, Math.min(max, x));
+  let x = 0;
+  if (typeof n === "number" && Number.isFinite(n)) x = n;
+  else if (typeof n === "string") {
+    const p = Number.parseFloat(n);
+    if (Number.isFinite(p)) x = p;
+  }
+  const r = Math.round(x);
+  return Math.max(min, Math.min(max, r));
+}
+
+function hashStr(s: string) {
+  // simple deterministic hash (FNV-1a like)
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0);
+}
+
+function defaultScores(seed: {
+  dayStemElement?: string | null;
+  dayGanji?: string | null;
+  sunSign?: string | null;
+  zodiac?: string | null;
+  luckDayGanji?: string | null;
+}) {
+  const base = `${seed.dayStemElement ?? ""}|${seed.dayGanji ?? ""}|${seed.luckDayGanji ?? ""}|${seed.sunSign ?? ""}|${seed.zodiac ?? ""}`;
+  const h = hashStr(base);
+  const pick = (offset: number, min: number, max: number) => {
+    const span = Math.max(1, max - min + 1);
+    const v = (hashStr(`${h}:${offset}`) % span) + min;
+    return v;
+  };
+  // 꽤 그럴듯한 범위 (너무 낮게 안 나오게)
+  const overall = pick(1, 52, 88);
+  const money = pick(2, 45, 85);
+  const love = pick(3, 45, 85);
+  const health = pick(4, 48, 90);
+  return { overall, money, love, health };
 }
 
 function makeDefaultKeywords(seed: { dayStemElement?: string | null; sunSign?: string | null }) {
@@ -142,8 +180,31 @@ function normalizeDailyResultSummary(
   out.scores.love = clampInt(out.scores.love);
   out.scores.health = clampInt(out.scores.health);
 
+  // 모델이 스키마 예시를 따라 0을 그대로 내보내는 경우가 많아서,
+  // 0(또는 비어있음)일 때는 입력 기반으로 "그럴듯한" 점수를 서버에서 보정한다.
+  const needFix =
+    out.scores.overall === 0 ||
+    out.scores.money === 0 ||
+    out.scores.love === 0 ||
+    out.scores.health === 0;
+  if (needFix) {
+    const d = sajuChart?.pillars?.day;
+    const t = todayLuckChart?.pillars?.day;
+    const seed = defaultScores({
+      dayStemElement: d?.stem_element ?? null,
+      dayGanji: d?.ganji_kor ?? null,
+      luckDayGanji: t?.ganji_kor ?? null,
+      sunSign: out.profile_badges?.sun_sign ?? null,
+      zodiac: out.profile_badges?.zodiac_animal ?? null,
+    });
+    out.scores.overall = out.scores.overall || seed.overall;
+    out.scores.money = out.scores.money || seed.money;
+    out.scores.love = out.scores.love || seed.love;
+    out.scores.health = out.scores.health || seed.health;
+  }
+
   // 서버 계산 표는 최종 주입
-  if (sajuChart) out.saju_chart = sajuChart;
+  // (요청사항: 사주 표(saju_chart)는 UI에서 제거. 오늘의 흐름만 제공)
   if (todayLuckChart) out.today_luck_chart = todayLuckChart;
 
   return out;
@@ -290,7 +351,7 @@ export async function POST(req: Request) {
 - today_one_liner: 1문장, 18~35자 정도의 은유/이미지(너무 길게 쓰지 마).
 - today_keywords: 해시태그 3개(각각 '주의/기회/태도' 역할) — 짧고 눈에 띄게.
 - sections.overall/money/love/health: 각각 2문장 이내(예시의 절반 정도 길이), 사주+별자리 근거가 보이게.
-- saju_brief/astro_brief: 각각 1~2문장(짧게), 근거 키워드(일간/일지/태양별자리)를 꼭 포함.
+- saju_brief/astro_brief: 각각 8~12문장(현재의 약 5배 분량), 근거 키워드(일간/일지/태양별자리)를 꼭 포함.
 - 흔한 덕담/추상적 조언 금지. ("긍정적으로" "힘내" 같은 문장 금지)
 - 각 섹션마다 "오늘 실제로 일어날 법한 장면" 1개는 꼭 넣어.
 
@@ -335,15 +396,6 @@ ${target_date}
   },
   "today_keywords": ["#키워드1", "#키워드2", "#키워드3"],
   "today_one_liner": "today_keywords의 분위기를 합쳐서 만든 오늘 요약 1문장(감성적이되 과장 금지)",
-  "saju_chart": {
-    "pillars": {
-      "year": { "stem_hanja": "", "stem_kor": "", "stem_element": "목|화|토|금|수", "stem_yinyang": "양|음", "branch_hanja": "", "branch_kor": "", "branch_animal": "", "branch_element": "목|화|토|금|수", "branch_yinyang": "양|음", "ganji_hanja": "", "ganji_kor": "" },
-      "month": { "stem_hanja": "", "stem_kor": "", "stem_element": "목|화|토|금|수", "stem_yinyang": "양|음", "branch_hanja": "", "branch_kor": "", "branch_animal": "", "branch_element": "목|화|토|금|수", "branch_yinyang": "양|음", "ganji_hanja": "", "ganji_kor": "" },
-      "day": { "stem_hanja": "", "stem_kor": "", "stem_element": "목|화|토|금|수", "stem_yinyang": "양|음", "branch_hanja": "", "branch_kor": "", "branch_animal": "", "branch_element": "목|화|토|금|수", "branch_yinyang": "양|음", "ganji_hanja": "", "ganji_kor": "" },
-      "hour": null
-    },
-    "notes": []
-  },
   "today_luck_chart": {
     "pillars": {
       "daewoon": { "stem_hanja": "", "stem_kor": "", "stem_element": "목|화|토|금|수", "stem_yinyang": "양|음", "branch_hanja": "", "branch_kor": "", "branch_animal": "", "branch_element": "목|화|토|금|수", "branch_yinyang": "양|음", "ganji_hanja": "", "ganji_kor": "" },
@@ -370,8 +422,8 @@ ${target_date}
     "time_window": "오전|점심|오후|저녁 중 하나",
     "verification": "사용자가 오늘 확인할 체크포인트 1개"
   },
-  "saju_brief": "사주 요약 2~3문장(짧게)",
-  "astro_brief": "별자리 요약 2~3문장(짧게)",
+  "saju_brief": "사주 분석(8~12문장, 디테일/신뢰감. 오행·간지·신살까지 자연스럽게)",
+  "astro_brief": "별자리 분석(8~12문장, 디테일/신뢰감. 태양궁 성향+오늘 흐름 연결)",
   "evidence": {
     "saju": ["사주 근거 1(짧게)", "사주 근거 2(짧게)"],
     "astro": ["별자리 근거 1(짧게)", "별자리 근거 2(짧게)"],
@@ -388,7 +440,7 @@ ${target_date}
     "action": { "value": "실천(짧게)", "why": "키워드 1개 포함" },
     "helper": { "value": "귀인(사람유형,짧게)", "why": "키워드 1개 포함" }
   },
-  "scores": { "overall": 0, "money": 0, "love": 0, "health": 0 }
+  "scores": { "overall": 72, "money": 61, "love": 66, "health": 70 }
 }
 
 세부 규칙:
@@ -401,7 +453,7 @@ ${target_date}
   - 예시 느낌: "안개 낀 아침을 지나 오후의 무지개를 기다리는 당신에게 건네는 따뜻한 주파수"
   - 키워드 문자열(#...)을 문장에 그대로 박지 말고, 의미/분위기로 녹여.
   - 과장/예언/공포 조장 금지. 25~60자.
-- saju_chart는 반드시 위 구조를 유지해 출력해(값은 서버에서 최종 보정된다).
+- today_luck_chart는 반드시 위 구조를 유지해 출력해(값은 서버 계산을 그대로 반영한다).
 - 간지 표기 규칙(신뢰감):
   - 천간+오행: 갑목, 을목, 병화, 정화, 무토, 기토, 경금, 신금, 임수, 계수
   - 지지+오행: 자수, 축토, 인목, 묘목, 진토, 사화, 오화, 미토, 신금, 유금, 술토, 해수
@@ -430,6 +482,7 @@ ${target_date}
 - 실천: 5~15분 안에 가능한 행동으로.
 - 귀인: 사람유형 + 등장 장면(짧게)로.
 - 점수는 0~100 정수.
+- 단, 0점은 금지(항상 35~95 범위에서 현실적으로 부여). 4개 점수는 모두 같은 값 금지.
 - JSON 외 텍스트 출력 금지.`;
     } else {
       userPrompt = `다음 입력으로 운세 요약을 JSON으로 생성해줘.
@@ -460,7 +513,7 @@ target_year: ${target_year ?? "없음"}
           top_p: 1,
           presence_penalty: 0,
           frequency_penalty: 0,
-          max_tokens: 700,
+          max_tokens: 1600,
           response_format: { type: "json_object" },
           messages: [
             { role: "system", content: system },
