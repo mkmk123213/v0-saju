@@ -1155,6 +1155,14 @@ target_year: ${target_year ?? "없음"}
       );
     }
 
+    // (선택) readings 테이블에 이번 결과에 사용한 코인을 기록해두고 싶다면
+    // coins_spent 같은 컬럼을 추가한 뒤 여기서 값을 남기면 돼.
+    // 컬럼이 아직 없다면 실패해도 흐름에 영향 없도록 무시.
+    try {
+      // @ts-expect-error - coins_spent 컬럼은 선택 적용(스키마에 없을 수 있음)
+      await supabaseAdmin.from("readings").update({ coins_spent: 1 }).eq("id", reading_id);
+    } catch {}
+
 
     const openaiRes = await fetchWithRetry(() =>
       fetch("https://api.openai.com/v1/chat/completions", {

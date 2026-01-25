@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, Star, Lock, Coins, Sparkles } from "lucide-react"
+import { ArrowLeft, Star, Sparkles } from "lucide-react"
 import type { SajuInput } from "@/app/page"
 import { getSunSignFromBirthDate } from "@/lib/astro"
 import { getZodiacAnimal } from "@/lib/saju-lite"
@@ -10,26 +10,14 @@ import { getZodiacAnimal } from "@/lib/saju-lite"
 interface YearlyFortuneResultScreenProps {
   sajuInput: SajuInput
   year: number
-  isDetailUnlocked: boolean
-  coins: number
-  resultId: string
   resultSummary?: any
-  resultDetail?: any | null
-  onUnlockDetail: (resultId: string) => void
-  onOpenCoinPurchase: () => void
   onBack: () => void
 }
 
 export default function YearlyFortuneResultScreen({
   sajuInput,
   year,
-  isDetailUnlocked,
-  coins,
-  resultId,
   resultSummary,
-  resultDetail,
-  onUnlockDetail,
-  onOpenCoinPurchase,
   onBack,
 }: YearlyFortuneResultScreenProps) {
   const formatDate = (dateStr: string) => {
@@ -165,117 +153,6 @@ export default function YearlyFortuneResultScreen({
             </CardContent>
           </Card>
 
-          {/* Detail Section */}
-          {isDetailUnlocked ? (
-            <Card className="border-none glass shadow-lg">
-              <CardContent className="p-5 space-y-4">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-sky-400" />
-                  <h3 className="font-bold text-card-foreground">상세 운세 풀이</h3>
-                </div>
-                <div className="space-y-4 text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                  {resultDetail?.combined?.core_theme && (
-                    <div>
-                      <h4 className="font-medium text-card-foreground mb-2">올해의 핵심 테마</h4>
-                      <p>{resultDetail.combined.core_theme}</p>
-                    </div>
-                  )}
-                  {resultDetail?.sections?.career?.text && (
-                    <div>
-                      <h4 className="font-medium text-card-foreground mb-2">일/커리어</h4>
-                      <p>{resultDetail.sections.career.text}</p>
-                    </div>
-                  )}
-                  {resultDetail?.sections?.money?.text && (
-                    <div>
-                      <h4 className="font-medium text-card-foreground mb-2">재물운</h4>
-                      <p>{resultDetail.sections.money.text}</p>
-                    </div>
-                  )}
-                  {resultDetail?.sections?.love?.text && (
-                    <div>
-                      <h4 className="font-medium text-card-foreground mb-2">애정운</h4>
-                      <p>{resultDetail.sections.love.text}</p>
-                    </div>
-                  )}
-                  {resultDetail?.sections?.health?.text && (
-                    <div>
-                      <h4 className="font-medium text-card-foreground mb-2">건강운</h4>
-                      <p>{resultDetail.sections.health.text}</p>
-                    </div>
-                  )}
-                  {resultDetail && (
-                    <pre className="text-xs whitespace-pre-wrap">{JSON.stringify(resultDetail, null, 2)}</pre>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border-none overflow-hidden shadow-xl relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-sky-500/10 to-cyan-500/10" />
-              <CardContent className="p-6 space-y-5 relative">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-cyan-500 flex items-center justify-center shadow-lg">
-                    <Lock className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-foreground text-lg">상세 운세 풀이</h3>
-                    <p className="text-xs text-muted-foreground">{year}년 분기별 상세 운세를 확인하세요</p>
-                  </div>
-                </div>
-
-                <div className="glass rounded-xl p-4 space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-foreground">
-                    <Sparkles className="h-4 w-4 text-sky-400" />
-                    <span>분기별 상세 운세</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-foreground">
-                    <Sparkles className="h-4 w-4 text-sky-400" />
-                    <span>월별 행운의 날</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-foreground">
-                    <Sparkles className="h-4 w-4 text-sky-400" />
-                    <span>주의해야 할 시기</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between rounded-xl bg-white/70 px-4 py-3">
-                  <div className="text-sm text-muted-foreground">필요 엽전</div>
-                  <div className="font-semibold text-foreground">9닢</div>
-                </div>
-                <div className="flex items-center justify-between rounded-xl bg-white/70 px-4 py-3">
-                  <div className="text-sm text-muted-foreground">보유 엽전</div>
-                  <div className="font-semibold text-foreground">{coins}닢</div>
-                </div>
-
-                {coins >= 9 ? (
-                  <Button
-                    onClick={() => onUnlockDetail(resultId)}
-                    className="w-full h-14 rounded-2xl bg-gradient-to-r from-sky-400 via-cyan-500 to-teal-400 text-white font-bold text-base shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] animate-pulse-glow relative overflow-hidden"
-                  >
-                    <span className="animate-shimmer absolute inset-0 rounded-2xl" />
-                    <span className="relative flex items-center justify-center gap-2">
-                      <Coins className="h-5 w-5" />
-                      엽전 9닢으로 운세보기 🔥
-                    </span>
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={onOpenCoinPurchase}
-                    className="w-full h-14 rounded-2xl bg-gradient-to-r from-sky-400 via-cyan-500 to-teal-400 text-white font-bold text-base shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] animate-pulse-glow relative overflow-hidden"
-                  >
-                    <span className="animate-shimmer absolute inset-0 rounded-2xl" />
-                    <span className="relative flex items-center justify-center gap-2">
-                      <Coins className="h-5 w-5" />
-                      엽전 환전하기 (900원) 🔥
-                    </span>
-                  </Button>
-                )}
-
-                <p className="text-center text-xs text-muted-foreground">9개의 엽전으로 상세 운세를 확인하세요</p>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>
