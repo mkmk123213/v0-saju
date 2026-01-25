@@ -100,43 +100,38 @@ export default function DailyFortuneListScreen({
                           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
                         </div>
                         
-                        {/* Info row: Birth date, Gender, Created */}
+                        {/* Info row: Birth date, Gender */}
                         <p className="text-xs text-muted-foreground mb-3">
-                          {formatBirthDate(result.sajuInput.birthDate)} · {result.sajuInput.gender === "male" ? "남성" : result.sajuInput.gender === "female" ? "여성" : "미지정"} · {formatDate(result.createdAt)} 조회
+                          {formatBirthDate(result.sajuInput.birthDate)} · {result.sajuInput.gender === "male" ? "남성" : result.sajuInput.gender === "female" ? "여성" : "미지정"}
                         </p>
                         
-                        {/* Bottom row: Zodiac + Sun sign (left) | Tags (right, fixed 3 cols) */}
-                        <div className="flex items-center justify-between">
-                          {/* Left: Zodiac & Sun sign */}
-                          <div className="flex items-center gap-1.5">
-                            {zodiac && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-muted/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                                <Star className="h-2.5 w-2.5 text-amber-500" />
-                                {zodiac}
-                              </span>
-                            )}
-                            {sun && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-muted/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                                <Sparkles className="h-2.5 w-2.5 text-amber-500" />
-                                {sun}
-                              </span>
-                            )}
-                          </div>
-                          
-                          {/* Right: Tags - always show 3 in a row */}
-                          {tags.length > 0 && (
-                            <div className="flex items-center gap-1">
-                              {tags.map((k: string) => (
-                                <span
-                                  key={k}
-                                  className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-400/15 to-orange-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300"
-                                >
-                                  {k}
-                                </span>
-                              ))}
-                            </div>
+                        {/* Zodiac & Sun sign badges */}
+                        <div className="flex items-center gap-1.5 mb-3">
+                          {zodiac && (
+                            <span className="inline-flex items-center rounded-full bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                              {zodiac}띠
+                            </span>
+                          )}
+                          {sun && (
+                            <span className="inline-flex items-center rounded-full bg-violet-500/15 px-2.5 py-1 text-[11px] font-semibold text-violet-700 dark:text-violet-300">
+                              {sun}
+                            </span>
                           )}
                         </div>
+                        
+                        {/* Bottom: Hashtags only */}
+                        {tags.length > 0 && (
+                          <div className="flex items-center gap-1.5 pt-2 border-t border-border/30">
+                            {tags.map((k: string) => (
+                              <span
+                                key={k}
+                                className="text-[11px] font-medium text-muted-foreground"
+                              >
+                                #{k}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   )
