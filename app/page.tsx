@@ -782,6 +782,7 @@ export default function Home() {
           onSubmit={handleDailyFortuneSubmit}
           onBack={() => setCurrentScreen("daily-fortune-list")}
           isLoading={isCreatingDaily}
+          coins={coins}
         />
       )}
 

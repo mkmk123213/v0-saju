@@ -15,6 +15,7 @@ interface DailyFortuneInputScreenProps {
   onSubmit: (input: SajuInput) => void
   onBack: () => void
   isLoading?: boolean
+  coins?: number
 }
 
 const relationshipOptions: { value: Relationship; label: string }[] = [
@@ -27,7 +28,7 @@ const relationshipOptions: { value: Relationship; label: string }[] = [
   { value: "acquaintance", label: "지인" },
 ]
 
-export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBack, isLoading = false }: DailyFortuneInputScreenProps) {
+export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBack, isLoading = false, coins = 0 }: DailyFortuneInputScreenProps) {
   const [relationship, setRelationship] = useState<Relationship>("self")
   const [name, setName] = useState("")
   const [birthDate, setBirthDate] = useState("")
@@ -324,7 +325,25 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
       </div>
 
       <div className="sticky bottom-0 border-t border-border glass px-6 py-4 relative z-10">
-        <div className="mx-auto max-w-sm">
+        <div className="mx-auto max-w-sm space-y-3">
+          {/* Coin Info */}
+          <div className="flex items-center justify-between rounded-xl bg-amber-50 dark:bg-amber-900/20 px-4 py-3 border border-amber-200 dark:border-amber-500/30">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-800/50">
+                <span className="text-lg">🪙</span>
+              </div>
+              <div>
+                <p className="text-xs text-amber-600 dark:text-amber-400">필요 엽전</p>
+                <p className="text-sm font-bold text-amber-700 dark:text-amber-300">1개</p>
+              </div>
+            </div>
+            <div className="h-8 w-px bg-amber-200 dark:bg-amber-500/30" />
+            <div className="text-right">
+              <p className="text-xs text-amber-600 dark:text-amber-400">보유 엽전</p>
+              <p className="text-sm font-bold text-amber-700 dark:text-amber-300">{coins}개</p>
+            </div>
+          </div>
+          
           <Button
             onClick={handleSubmit}
             disabled={!isValid || !!isLoading}

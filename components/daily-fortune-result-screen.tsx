@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import {
   Brain,
@@ -17,9 +16,9 @@ import {
   Heart,
   KeyRound,
   Map,
-  Moon,
   Sparkles,
   Stars,
+  Sun,
   User,
   Zap,
 } from "lucide-react";
@@ -70,29 +69,20 @@ function TitleRow({
   title,
   icon,
   score,
-  onOpenFull,
-  showFullButton,
 }: {
   title: string;
   icon: ReactNode;
   score?: number | null;
-  onOpenFull?: () => void;
-  showFullButton?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted/60">{icon}</div>
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10">{icon}</div>
         <div className="font-semibold text-foreground">{title}</div>
       </div>
       <div className="flex items-center gap-2">
         {typeof score === "number" && (
-          <div className="min-w-[52px] text-right text-2xl font-bold tabular-nums text-foreground">{score}</div>
-        )}
-        {showFullButton && (
-          <Button size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={onOpenFull}>
-            한눈에 보기
-          </Button>
+          <div className="min-w-[52px] text-right text-2xl font-bold tabular-nums text-amber-500">{score}</div>
         )}
       </div>
     </div>
@@ -130,12 +120,12 @@ function Grid9({ todayKeys }: { todayKeys: any }) {
   return (
     <div className="grid grid-cols-3 gap-3">
       {items.map((it) => (
-        <div key={it.key} className="rounded-2xl border bg-muted/30 p-3">
+        <div key={it.key} className="rounded-2xl border border-amber-200/50 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-900/20 dark:to-orange-900/20 dark:border-amber-500/20 p-3">
           <div className="flex flex-col items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-background">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white dark:bg-amber-900/30">
               <span className="text-base">{it.emoji}</span>
             </div>
-            <div className="text-xs font-medium text-muted-foreground text-center">{it.label}</div>
+            <div className="text-xs font-medium text-amber-700 dark:text-amber-400 text-center">{it.label}</div>
             <div className="text-sm font-semibold text-foreground text-center break-keep">{it.value}</div>
           </div>
         </div>
@@ -145,16 +135,6 @@ function Grid9({ todayKeys }: { todayKeys: any }) {
 }
 
 export default function DailyFortuneResultScreen({ sajuInput, date, resultSummary, onBack }: Props) {
-  const [fullOpen, setFullOpen] = useState(false);
-  const [fullTitle, setFullTitle] = useState("");
-  const [fullText, setFullText] = useState("");
-
-  const openFull = (title: string, text: string) => {
-    setFullTitle(title);
-    setFullText((text ?? "").toString());
-    setFullOpen(true);
-  };
-
   const scores = resultSummary?.scores ?? {};
   const sections = resultSummary?.sections ?? {};
   const premium = resultSummary?.premium_algo ?? {};
@@ -175,7 +155,7 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
   const spine = resultSummary?.spine_chill ?? null;
   const spineText =
     spine && typeof spine === "object"
-      ? `⚡️ ${spine?.time_window ?? "오늘"}\n${spine?.prediction ?? ""}\n\n✅ 체크포인트: ${spine?.verification ?? ""}`
+      ? `${spine?.time_window ?? "오늘"}\n${spine?.prediction ?? ""}\n\n체크포인트: ${spine?.verification ?? ""}`
       : "";
 
   const cheatkeyText = (premium?.cheatkey ?? "").toString().trim();
@@ -190,48 +170,49 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
   const sunSign = (resultSummary?.profile_badges?.sun_sign ?? getSunSignFromBirthDate(sajuInput?.birthDate ?? "")) as string;
 
   return (
-    <div className="flex min-h-screen flex-col relative overflow-hidden starfield">
-      {/* cosmic blobs */}
+    <div className="flex min-h-screen flex-col relative overflow-hidden bg-gradient-to-b from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30">
+      {/* Orange themed blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-primary/20 blur-[100px]" />
-        <div className="absolute bottom-40 -left-20 w-64 h-64 rounded-full bg-accent/15 blur-[80px]" />
+        <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-amber-400/20 blur-[100px]" />
+        <div className="absolute bottom-40 -left-20 w-64 h-64 rounded-full bg-orange-400/15 blur-[80px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-yellow-300/10 blur-[120px]" />
       </div>
 
       <div className="mx-auto w-full max-w-md px-4 pb-10 pt-6 relative z-10">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
-          <Button variant="ghost" className="h-9 px-2" onClick={onBack}>
+          <Button variant="ghost" className="h-9 px-2 hover:bg-amber-100 dark:hover:bg-amber-900/30" onClick={onBack}>
             <ChevronLeft className="mr-1 h-5 w-5" />
             이전
           </Button>
           <div className="flex items-center gap-2">
-            <Moon className="h-4 w-4 text-primary" />
+            <Sun className="h-5 w-5 text-amber-500" />
             <div className="font-bold text-foreground">오늘의 운세</div>
           </div>
-          <span className="rounded-full gradient-primary px-2.5 py-0.5 text-xs font-bold text-white">{date}</span>
+          <span className="rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-1 text-xs font-bold text-white shadow-lg">{date}</span>
         </div>
 
-        {/* Profile Card (기존 프로필 카드 톤으로 통일) */}
-        <Card className="border-none overflow-hidden shadow-xl glass mb-4">
-          <div className="relative px-5 py-5 gradient-cosmic">
+        {/* Profile Card - Orange Theme */}
+        <Card className="border-none overflow-hidden shadow-xl mb-4">
+          <div className="relative px-5 py-5 bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500">
             <div className="absolute inset-0 opacity-30">
-              <div className="absolute top-3 right-6 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
-              <div className="absolute bottom-0 left-8 h-20 w-20 rounded-full bg-white/10 blur-2xl" />
+              <div className="absolute top-3 right-6 h-24 w-24 rounded-full bg-white/20 blur-2xl" />
+              <div className="absolute bottom-0 left-8 h-20 w-20 rounded-full bg-yellow-200/20 blur-2xl" />
             </div>
 
             <div className="relative flex items-start justify-between gap-3">
               <div className="flex items-center gap-2">
-                <Stars className="h-4 w-4 text-white/90" />
-                <span className="text-sm font-medium text-white/90">오늘의 운세 보기</span>
+                <Sun className="h-4 w-4 text-white/90" />
+                <span className="text-sm font-medium text-white/90">오늘의 운세 결과</span>
               </div>
-              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur">
-                결과
+              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+                {date}
               </span>
             </div>
 
             <div className="relative mt-4 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
-                <User className="h-5 w-5 text-white" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
+                <User className="h-6 w-6 text-white" />
               </div>
               <div className="min-w-0">
                 <p className="truncate text-xl font-bold text-white">
@@ -242,18 +223,18 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
             </div>
           </div>
 
-          <CardContent className="p-5">
+          <CardContent className="p-5 bg-white dark:bg-card">
             <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl bg-muted/50 px-3 py-2">
-                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+                <div className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-400">
                   <Calendar className="h-3.5 w-3.5" />
                   <span>생년월일</span>
                 </div>
                 <p className="mt-1 text-sm font-semibold text-foreground">{formatBirthDate(sajuInput?.birthDate)}</p>
               </div>
 
-              <div className="rounded-xl bg-muted/50 px-3 py-2">
-                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+                <div className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-400">
                   <User className="h-3.5 w-3.5" />
                   <span>성별</span>
                 </div>
@@ -262,9 +243,9 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
                 </p>
               </div>
 
-              <div className="rounded-xl bg-muted/50 px-3 py-2">
-                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Moon className="h-3.5 w-3.5" />
+              <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+                <div className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-400">
+                  <Sun className="h-3.5 w-3.5" />
                   <span>달력</span>
                 </div>
                 <p className="mt-1 text-sm font-semibold text-foreground">
@@ -276,14 +257,14 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
             {(zodiacAnimal || sunSign) && (
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 {zodiacAnimal && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                    <Stars className="h-3.5 w-3.5 text-primary" />
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                    <Stars className="h-3.5 w-3.5 text-amber-500" />
                     {zodiacAnimal}
                   </span>
                 )}
                 {sunSign && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-900/30 px-3 py-1 text-xs font-medium text-orange-700 dark:text-orange-400">
+                    <Sparkles className="h-3.5 w-3.5 text-orange-500" />
                     {sunSign}
                   </span>
                 )}
@@ -293,17 +274,17 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
         </Card>
 
         {/* One liner */}
-        <Card className="border-none glass shadow-lg overflow-hidden mb-4">
-          <div className="px-5 py-4 bg-gradient-to-r from-primary/15 via-accent/10 to-transparent">
+        <Card className="border-none shadow-lg overflow-hidden mb-4 bg-white dark:bg-card">
+          <div className="px-5 py-4 bg-gradient-to-r from-amber-100/80 via-orange-50/50 to-transparent dark:from-amber-900/30 dark:via-orange-900/20 dark:to-transparent">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
+              <Sun className="h-4 w-4 text-amber-500" />
               <h3 className="font-bold text-foreground">오늘 한 줄</h3>
             </div>
             <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{summaryOneLiner || "오늘의 한 줄을 준비 중이야."}</p>
             {tags.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {tags.slice(0, 3).map((t: string) => (
-                  <Badge key={t} variant="secondary" className="bg-primary/10 text-primary">
+                  <Badge key={t} variant="secondary" className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
                     {t.startsWith("#") ? t : `#${t}`}
                   </Badge>
                 ))}
@@ -313,75 +294,55 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
         </Card>
 
         {/* Sections */}
-        <Accordion type="single" collapsible defaultValue="overall" className="space-y-2">
+        <Accordion type="single" collapsible defaultValue="overall" className="space-y-3">
           <AccordionItem value="overall" className="border-none">
-            <Card className="border-none glass shadow-lg overflow-hidden">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <TitleRow title="오늘의 바이브" icon={<Cloud className="h-5 w-5" />} score={overall} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
+                <TitleRow title="오늘의 바이브" icon={<Cloud className="h-5 w-5 text-amber-500" />} score={overall} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <div className="space-y-3">
-                  <TextBlock text={vibeText} />
-                  <Button variant="outline" className="w-full" onClick={() => openFull("오늘의 바이브", vibeText)}>
-                    전체 텍스트 보기
-                  </Button>
-                </div>
+                <TextBlock text={vibeText} />
               </AccordionContent>
             </Card>
           </AccordionItem>
 
           <AccordionItem value="money" className="border-none">
-            <Card className="border-none glass shadow-lg overflow-hidden">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <TitleRow title="머니 컨디션" icon={<Coins className="h-5 w-5" />} score={money} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
+                <TitleRow title="머니 컨디션" icon={<Coins className="h-5 w-5 text-amber-500" />} score={money} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <div className="space-y-3">
-                  <TextBlock text={moneyText} />
-                  <Button variant="outline" className="w-full" onClick={() => openFull("머니 컨디션", moneyText)}>
-                    전체 텍스트 보기
-                  </Button>
-                </div>
+                <TextBlock text={moneyText} />
               </AccordionContent>
             </Card>
           </AccordionItem>
 
           <AccordionItem value="love" className="border-none">
-            <Card className="border-none glass shadow-lg overflow-hidden">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <TitleRow title="심쿵 시그널" icon={<Heart className="h-5 w-5" />} score={love} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
+                <TitleRow title="심쿵 시그널" icon={<Heart className="h-5 w-5 text-rose-500" />} score={love} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <div className="space-y-3">
-                  <TextBlock text={loveText} />
-                  <Button variant="outline" className="w-full" onClick={() => openFull("심쿵 시그널", loveText)}>
-                    전체 텍스트 보기
-                  </Button>
-                </div>
+                <TextBlock text={loveText} />
               </AccordionContent>
             </Card>
           </AccordionItem>
 
           <AccordionItem value="health" className="border-none">
-            <Card className="border-none glass shadow-lg overflow-hidden">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <TitleRow title="에너지 수치" icon={<Zap className="h-5 w-5" />} score={health} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
+                <TitleRow title="에너지 수치" icon={<Zap className="h-5 w-5 text-orange-500" />} score={health} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <div className="space-y-3">
-                  <TextBlock text={healthText} />
-                  <Button variant="outline" className="w-full" onClick={() => openFull("에너지 수치", healthText)}>
-                    전체 텍스트 보기
-                  </Button>
-                </div>
+                <TextBlock text={healthText} />
               </AccordionContent>
             </Card>
           </AccordionItem>
 
           <AccordionItem value="spine" className="border-none">
-            <Card className="border-none glass shadow-lg overflow-hidden">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <TitleRow title="소름포인트" icon={<Zap className="h-5 w-5" />} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
+                <TitleRow title="소름포인트" icon={<Zap className="h-5 w-5 text-amber-500" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <TextBlock text={spineText} />
@@ -390,9 +351,9 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           </AccordionItem>
 
           <AccordionItem value="keywords" className="border-none">
-            <Card className="border-none glass shadow-lg overflow-hidden">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <TitleRow title="오늘의 키워드" icon={<KeyRound className="h-5 w-5" />} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
+                <TitleRow title="오늘의 키워드" icon={<KeyRound className="h-5 w-5 text-amber-500" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-5">
                 <Grid9 todayKeys={resultSummary?.today_keys} />
@@ -401,89 +362,69 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
           </AccordionItem>
 
           <AccordionItem value="cheat" className="border-none">
-            <Card className="border-none glass shadow-lg overflow-hidden">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <TitleRow title="오늘의 운빨 치트키" icon={<KeyRound className="h-5 w-5" />} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
+                <TitleRow title="오늘의 운빨 치트키" icon={<KeyRound className="h-5 w-5 text-amber-500" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <div className="space-y-3">
-                  <TextBlock text={cheatkeyText} />
-                  <Button variant="outline" className="w-full" onClick={() => openFull("오늘의 운빨 치트키", cheatkeyText)}>
-                    전체 텍스트 보기
-                  </Button>
-                </div>
+                <TextBlock text={cheatkeyText} />
               </AccordionContent>
             </Card>
           </AccordionItem>
 
           <AccordionItem value="mind" className="border-none">
-            <Card className="border-none glass shadow-lg overflow-hidden">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <TitleRow title="나만 몰랐던 내 마음" icon={<Brain className="h-5 w-5" />} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
+                <TitleRow title="나만 몰랐던 내 마음" icon={<Brain className="h-5 w-5 text-amber-500" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <div className="space-y-3">
-                  <TextBlock text={mindText} />
-                  <Button variant="outline" className="w-full" onClick={() => openFull("나만 몰랐던 내 마음", mindText)}>
-                    전체 텍스트 보기
-                  </Button>
-                </div>
+                <TextBlock text={mindText} />
               </AccordionContent>
             </Card>
           </AccordionItem>
 
           <AccordionItem value="highlight" className="border-none">
-            <Card className="border-none glass shadow-lg overflow-hidden">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <TitleRow title="미리 보는 하이라이트" icon={<Film className="h-5 w-5" />} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
+                <TitleRow title="미리 보는 하이라이트" icon={<Film className="h-5 w-5 text-amber-500" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <div className="space-y-3">
-                  <TextBlock text={highlightText} />
-                  <Button variant="outline" className="w-full" onClick={() => openFull("미리 보는 하이라이트", highlightText)}>
-                    전체 텍스트 보기
-                  </Button>
-                </div>
+                <TextBlock text={highlightText} />
               </AccordionContent>
             </Card>
           </AccordionItem>
 
           <AccordionItem value="mood" className="border-none">
-            <Card className="border-none glass shadow-lg overflow-hidden">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <TitleRow title="시간대별 무드 세팅" icon={<Map className="h-5 w-5" />} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
+                <TitleRow title="시간대별 무드 세팅" icon={<Map className="h-5 w-5 text-amber-500" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <div className="space-y-3">
-                  <TextBlock text={moodText} />
-                  <Button variant="outline" className="w-full" onClick={() => openFull("시간대별 무드 세팅", moodText)}>
-                    전체 텍스트 보기
-                  </Button>
-                </div>
+                <TextBlock text={moodText} />
               </AccordionContent>
             </Card>
           </AccordionItem>
 
           <AccordionItem value="evidence" className="border-none">
-            <Card className="border-none glass shadow-lg overflow-hidden">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <TitleRow title="분석근거" icon={<Moon className="h-5 w-5" />} />
+            <Card className="border-none shadow-lg overflow-hidden bg-white dark:bg-card border border-amber-200/50 dark:border-amber-500/20">
+              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-amber-50/50 dark:hover:bg-amber-900/20">
+                <TitleRow title="분석근거" icon={<Sun className="h-5 w-5 text-amber-500" />} />
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <div className="rounded-2xl border bg-gradient-to-br from-slate-900/80 via-indigo-900/60 to-slate-900/80 p-4 text-white">
-                  <div className="mb-3 flex items-center gap-2 font-semibold">
-                    <Moon className="h-4 w-4" />
+                <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 dark:from-amber-900/30 dark:via-orange-900/20 dark:to-amber-900/30 dark:border-amber-500/30 p-4">
+                  <div className="mb-3 flex items-center gap-2 font-semibold text-amber-700 dark:text-amber-400">
+                    <Sun className="h-4 w-4" />
                     분석 근거
                   </div>
-                  <Separator className="mb-3 bg-white/20" />
+                  <Separator className="mb-3 bg-amber-200 dark:bg-amber-500/30" />
                   <div className="space-y-3">
-                    <div className="rounded-2xl bg-white/10 p-3">
-                      <div className="mb-1 text-xs font-semibold text-white/80">사주 분석</div>
-                      <p className="whitespace-pre-line text-sm leading-relaxed text-white/90">{sajuBrief || "-"}</p>
+                    <div className="rounded-2xl bg-white/80 dark:bg-amber-900/30 p-3">
+                      <div className="mb-1 text-xs font-semibold text-amber-600 dark:text-amber-400">사주 분석</div>
+                      <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{sajuBrief || "-"}</p>
                     </div>
-                    <div className="rounded-2xl bg-white/10 p-3">
-                      <div className="mb-1 text-xs font-semibold text-white/80">별자리 분석</div>
-                      <p className="whitespace-pre-line text-sm leading-relaxed text-white/90">{astroBrief || "-"}</p>
+                    <div className="rounded-2xl bg-white/80 dark:bg-amber-900/30 p-3">
+                      <div className="mb-1 text-xs font-semibold text-amber-600 dark:text-amber-400">별자리 분석</div>
+                      <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{astroBrief || "-"}</p>
                     </div>
                   </div>
                 </div>
@@ -491,17 +432,6 @@ export default function DailyFortuneResultScreen({ sajuInput, date, resultSummar
             </Card>
           </AccordionItem>
         </Accordion>
-
-        <Dialog open={fullOpen} onOpenChange={setFullOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>{fullTitle}</DialogTitle>
-            </DialogHeader>
-            <div className="max-h-[70vh] overflow-auto pr-1">
-              <TextBlock text={fullText} />
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
