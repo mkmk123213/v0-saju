@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -105,6 +106,16 @@ export default function DailyFortuneResultScreen({
     ["실천", keys.action, Target, "from-fuchsia-400 to-pink-500"],
     ["귀인", keys.helper, Users, "from-sky-400 to-blue-500"],
   ] as const
+
+type KeyModalItem = {
+  label: string
+  value: string
+  why?: string
+  Icon: any
+  gradient: string
+}
+
+const [keyModal, setKeyModal] = useState<KeyModalItem | null>(null)
 
   const sectionMeta = {
     overall: { title: "오늘의 바이브 ☁️", icon: Star, gradient: "from-amber-400 to-orange-500" },
@@ -515,22 +526,95 @@ export default function DailyFortuneResultScreen({
                               </div>
 
                               <div className="grid grid-cols-3 gap-2">
-                                {keyItems.map(([label, obj, IconComponent, gradient]) => (
-                                  <Card key={label} className="border-none glass shadow-sm card-mystical overflow-hidden">
-                                    <CardContent className="p-3 text-center">
-                                      <div
-                                        className={`mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} shadow-sm`}
-                                      >
-                                        <IconComponent className="h-4 w-4 text-white" />
-                                      </div>
-                                      <div className="mb-0.5 text-[10px] font-medium text-muted-foreground">{label}</div>
-                                      <div className="truncate text-xs font-bold text-card-foreground">{obj?.value ?? "-"}</div>
-                                    </CardContent>
-                                  </Card>
-                                ))}
+                                {keyItems.map(([label, obj, IconComponent, gradient]) => {
+  const value = (obj?.value ?? "-") as string
+  const why = (obj?.why ?? "") as string
+  return (
+    <button
+      key={label}
+      type="button"
+      className="block w-full text-left"
+      onClick={() =>
+        setKeyModal({
+          label,
+          value,
+          why,
+          Icon: IconComponent,
+          gradient,
+        })
+      }
+      aria-label={`${label} 상세 보기`}
+    >
+      <Card className="border-none glass shadow-sm card-mystical overflow-hidden hover:brightness-105 transition">
+        <CardContent className="p-3 text-center">
+          <div className={`mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} shadow-sm`}>
+            <IconComponent className="h-4 w-4 text-white" />
+          </div>
+          <div className="mb-0.5 text-[10px] font-medium text-muted-foreground">{label}</div>
+          <div className="truncate text-xs font-bold text-card-foreground">{value}</div>
+          <div className="mt-1 text-[10px] text-muted-foreground">탭하면 전체 보기</div>
+        </CardContent>
+      </Card>
+    </button>
+  )
+})}
                               </div>
                             </div>
                           </div>
+
+{keyModal &&
+  (() => {
+    const ModalIcon = keyModal.Icon
+    return (
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+        <div
+          className="absolute inset-0 bg-black/55 backdrop-blur-sm"
+          onClick={() => setKeyModal(null)}
+        />
+        <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-background/95 shadow-2xl backdrop-blur-xl">
+          <div className="p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${keyModal.gradient} shadow-sm`}
+                >
+                  <ModalIcon className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-sm font-extrabold text-card-foreground">{keyModal.label}</div>
+                  <div className="text-xs text-muted-foreground">전체 텍스트 보기</div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setKeyModal(null)}
+                className="rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted/20"
+                aria-label="닫기"
+              >
+                닫기
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-2xl bg-muted/15 p-4">
+              <div className="text-sm font-bold text-card-foreground whitespace-pre-line break-words leading-relaxed">
+                {keyModal.value}
+              </div>
+              {keyModal.why ? (
+                <p className="mt-3 text-xs text-muted-foreground whitespace-pre-line leading-relaxed">
+                  {keyModal.why}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="mt-4 text-[11px] text-muted-foreground">
+              팁: 짧게 보이는 카드 텍스트를 탭하면 전체 내용을 확인할 수 있어요.
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  })()}
 </AccordionContent>
                       </AccordionItem>
                     </Accordion>
