@@ -79,6 +79,81 @@ function makeOneLiner(keywords: string[]) {
   return `오늘은 ${moodA}로 균형 잡고, ${moodB}를 살려 ${moodC}로 마무리하는 날이야.`;
 }
 
+function tokenFromStem(stemKor?: string | null, stemElement?: string | null) {
+  if (!stemKor || !stemElement) return "";
+  const m: Record<string, string> = { 갑: "갑", 을: "을", 병: "병", 정: "정", 무: "무", 기: "기", 경: "경", 신: "신", 임: "임", 계: "계" };
+  const s = m[stemKor] ?? "";
+  return s && stemElement ? `${s}${stemElement}` : "";
+}
+
+function tokenFromBranch(branchKor?: string | null, branchElement?: string | null) {
+  if (!branchKor || !branchElement) return "";
+  const b = `${branchKor}${branchElement}`;
+  return b;
+}
+
+function ensureMentions(text: string, mustInclude: string[]) {
+  const t = (text ?? "").toString();
+  const missing = mustInclude.filter((m) => m && !t.includes(m));
+  if (missing.length === 0) return t;
+  const suffix = ` (근거: ${missing.slice(0, 2).join("·")})`;
+  return (t + suffix).trim();
+}
+
+function normalizeSpineChill(seedKey: string) {
+  // 다양한 일상 시나리오를 deterministic하게 뽑아 반복을 줄임
+  const h = hashStr(seedKey);
+  const pick = <T,>(arr: T[]) => arr[h % arr.length];
+  const time = pick(["오전", "점심", "오후", "저녁"]);
+
+  // "친구" 편중 방지: 직장/메신저/결제/지연/실수/문서/기기/가족/헬스/이동 등으로 분산
+  const scenarios = [
+    {
+      prediction: "알림이 한꺼번에 와서 답장 순서가 꼬일 수 있어.",
+      verification: "메신저/메일 미확인 뱃지 3개 이상 뜨는지",
+    },
+    {
+      prediction: "결제 직전에 ‘한 번 더’ 확인할 항목이 튀어나와.",
+      verification: "정기결제/장바구니에서 삭제 1건 생기는지",
+    },
+    {
+      prediction: "회의/전화에서 한 단어 때문에 오해가 생길 뻔해.",
+      verification: "‘그 말은 이런 뜻?’ 확인 질문이 오가는지",
+    },
+    {
+      prediction: "작업/문서에서 숫자·날짜가 한 번 헷갈릴 수 있어.",
+      verification: "수정 이력/재전송이 1번 생기는지",
+    },
+    {
+      prediction: "이동 중 갑작스런 지연으로 스케줄이 10분 밀릴 수 있어.",
+      verification: "버스/지하철/택시 대기 시간이 평소보다 늘었는지",
+    },
+    {
+      prediction: "몸이 먼저 신호를 줘서 ‘쉬어야 할 타이밍’이 와.",
+      verification: "어깨·목 뻐근함이 느껴져 스트레칭을 하게 되는지",
+    },
+    {
+      prediction: "생각보다 빨리 ‘도와줄 사람 유형’이 등장해 진행이 풀려.",
+      verification: "모르는 번호/동료/상담원이 해결 키워드를 주는지",
+    },
+    {
+      prediction: "기기/앱에서 로그인·인증이 한 번 더 요구될 수 있어.",
+      verification: "인증 문자/OTP가 추가로 필요한지",
+    },
+    {
+      prediction: "집안/가족 쪽에서 작은 부탁이 들어올 가능성이 있어.",
+      verification: "장보기/정리/확인 요청 같은 연락이 오는지",
+    },
+    {
+      prediction: "무심코 한 말이 ‘말조심’ 포인트로 돌아올 수 있어.",
+      verification: "농담/표현을 정정하거나 웃으며 수습하는지",
+    },
+  ];
+
+  const s = pick(scenarios);
+  return { prediction: s.prediction, time_window: time, verification: s.verification };
+}
+
 function countLines(s: string) {
   return (s.match(/\n/g) || []).length + 1;
 }
@@ -181,6 +256,24 @@ function normalizeDailyResultSummary(
 ) {
   const out: any = rs && typeof rs === "object" ? rs : {};
 
+  // --- fixed ganji tokens (to reduce internal inconsistency) ---
+  const d = sajuChart?.pillars?.day;
+  const ld = todayLuckChart?.pillars?.day;
+  const lm = todayLuckChart?.pillars?.month;
+  const ly = todayLuckChart?.pillars?.year;
+  const dw = todayLuckChart?.pillars?.daewoon;
+  const dayStemTok = tokenFromStem(d?.stem_kor, d?.stem_element);
+  const dayBranchTok = tokenFromBranch(d?.branch_kor, d?.branch_element);
+  const luckDayStemTok = tokenFromStem(ld?.stem_kor, ld?.stem_element);
+  const luckDayBranchTok = tokenFromBranch(ld?.branch_kor, ld?.branch_element);
+  const luckMonthStemTok = tokenFromStem(lm?.stem_kor, lm?.stem_element);
+  const luckMonthBranchTok = tokenFromBranch(lm?.branch_kor, lm?.branch_element);
+  const luckYearStemTok = tokenFromStem(ly?.stem_kor, ly?.stem_element);
+  const luckYearBranchTok = tokenFromBranch(ly?.branch_kor, ly?.branch_element);
+  const daewoonStemTok = tokenFromStem(dw?.stem_kor, dw?.stem_element);
+  const daewoonBranchTok = tokenFromBranch(dw?.branch_kor, dw?.branch_element);
+  const mustDaily = [dayStemTok || dayBranchTok, luckDayStemTok || luckDayBranchTok].filter(Boolean);
+
   // profile_badges
   out.profile_badges = out.profile_badges && typeof out.profile_badges === "object" ? out.profile_badges : {};
   out.profile_badges.zodiac_animal =
@@ -193,7 +286,7 @@ function normalizeDailyResultSummary(
       : getSunSignFromBirthDate(profile.birth_date) ?? "";
 
   // today_keywords
-  const dayStemEl = sajuChart?.pillars?.day?.stem_element ?? null;
+  const dayStemEl = d?.stem_element ?? null;
   const sunSign = out.profile_badges.sun_sign ?? null;
   if (!Array.isArray(out.today_keywords) || out.today_keywords.filter((x: any) => typeof x === "string" && x.trim()).length < 3) {
     out.today_keywords = makeDefaultKeywords({ dayStemElement: dayStemEl, sunSign });
@@ -208,8 +301,7 @@ function normalizeDailyResultSummary(
 
   // saju/astro briefs(절대 비지 않게)
   if (typeof out.saju_brief !== "string" || !out.saju_brief.trim()) {
-    const d = sajuChart?.pillars?.day
-    const t = todayLuckChart?.pillars?.day
+    const t = ld
     out.saju_brief = d && t
       ? `일주 ${d.ganji_kor}의 ${d.stem_element} 기운이 오늘 일운 ${t.ganji_kor}의 ${t.branch_element}와 만나, 속도 조절이 핵심이야.`
       : "사주 흐름을 기준으로 오늘은 ‘속도 조절’이 핵심이야.";
@@ -296,6 +388,40 @@ function normalizeDailyResultSummary(
     if (typeof v !== "string" || !v.trim()) out.sections[k] = fallback[k];
   });
 
+  // 내부 통일성: 각 섹션에 '실제 계산된' 간지 단서가 최소 2개는 반드시 들어가도록 보정
+  // (모델이 다른 간지를 섞어 말이 안 맞는 경우 UX 신뢰감이 크게 떨어져서 방어)
+  out.sections.overall = ensureMentions(out.sections.overall, [...mustDaily, daewoonStemTok || daewoonBranchTok, luckYearStemTok || luckYearBranchTok].filter(Boolean) as string[]);
+  out.sections.money = ensureMentions(out.sections.money, [...mustDaily, luckMonthStemTok || luckMonthBranchTok].filter(Boolean) as string[]);
+  out.sections.love = ensureMentions(out.sections.love, [...mustDaily, luckDayBranchTok || luckMonthBranchTok].filter(Boolean) as string[]);
+  out.sections.health = ensureMentions(out.sections.health, [...mustDaily, luckDayStemTok || luckMonthStemTok].filter(Boolean) as string[]);
+
+  // spine_chill: "친구" 편중 방지 + 캐시/모델 편차 방어
+  const seedKey = `${profile?.id ?? profile?.user_id ?? "user"}|${ld?.ganji_kor ?? ""}|${lm?.ganji_kor ?? ""}|${ly?.ganji_kor ?? ""}`;
+  const sc = out.spine_chill && typeof out.spine_chill === "object" ? out.spine_chill : null;
+  const pred = typeof sc?.prediction === "string" ? sc.prediction : "";
+  const tooGeneric = !pred.trim() || pred.trim().length < 12;
+  const friendBiased = /(친구|지인|동창|썸|애인)/.test(pred);
+  if (!sc || tooGeneric || friendBiased) {
+    out.spine_chill = normalizeSpineChill(seedKey);
+  } else {
+    // time_window 정규화
+    const tw = typeof sc.time_window === "string" ? sc.time_window : "";
+    const ok = ["오전", "점심", "오후", "저녁"].includes(tw);
+    out.spine_chill = {
+      prediction: sc.prediction,
+      time_window: ok ? sc.time_window : "오후",
+      verification: typeof sc.verification === "string" && sc.verification.trim() ? sc.verification : "오늘 실제로 확인 가능한 1가지가 있었는지",
+    };
+  }
+
+  // ensure each section mentions the computed tokens at least once (prevents "말이 안 맞는" 느낌)
+  (Object.keys(out.sections) as (keyof typeof out.sections)[]).forEach((k) => {
+    const v = out.sections?.[k];
+    if (typeof v === "string" && v.trim() && mustDaily.length) {
+      out.sections[k] = ensureMentions(v, mustDaily);
+    }
+  });
+
   // scores
   out.scores = out.scores && typeof out.scores === "object" ? out.scores : {};
   out.scores.overall = clampInt(out.scores.overall);
@@ -329,6 +455,14 @@ function normalizeDailyResultSummary(
   // 서버 계산 표는 최종 주입
   // (요청사항: 사주 표(saju_chart)는 UI에서 제거. 오늘의 흐름만 제공)
   if (todayLuckChart) out.today_luck_chart = todayLuckChart;
+
+  // also ensure saju/astro briefs include at least one computed token so the story doesn't drift
+  if (typeof out.saju_brief === "string" && out.saju_brief.trim() && mustDaily.length) {
+    out.saju_brief = ensureMentions(out.saju_brief, [mustDaily[0]]);
+  }
+  if (typeof out.astro_brief === "string" && out.astro_brief.trim() && mustDaily.length) {
+    out.astro_brief = ensureMentions(out.astro_brief, [mustDaily[1] ?? mustDaily[0]]);
+  }
 
   return out;
 }
@@ -458,6 +592,20 @@ export async function POST(req: Request) {
       ? `대운:${todayLuckChart.pillars.daewoon?.ganji_kor ?? "-"} 연운:${todayLuckChart.pillars.year.ganji_kor} 월운:${todayLuckChart.pillars.month.ganji_kor} 일운:${todayLuckChart.pillars.day.ganji_kor}`
       : "";
 
+    // 모델이 간지/오행을 섞어 말이 안 맞는 경우가 많아,
+    // "사용 가능한 토큰"을 프롬프트에 명시해 통일성을 올린다.
+    const dTokStem = tokenFromStem(sajuChart?.pillars?.day?.stem_kor, sajuChart?.pillars?.day?.stem_element);
+    const dTokBranch = tokenFromBranch(sajuChart?.pillars?.day?.branch_kor, sajuChart?.pillars?.day?.branch_element);
+    const ldTokStem = tokenFromStem(todayLuckChart?.pillars?.day?.stem_kor, todayLuckChart?.pillars?.day?.stem_element);
+    const ldTokBranch = tokenFromBranch(todayLuckChart?.pillars?.day?.branch_kor, todayLuckChart?.pillars?.day?.branch_element);
+    const lmTokStem = tokenFromStem(todayLuckChart?.pillars?.month?.stem_kor, todayLuckChart?.pillars?.month?.stem_element);
+    const lmTokBranch = tokenFromBranch(todayLuckChart?.pillars?.month?.branch_kor, todayLuckChart?.pillars?.month?.branch_element);
+    const lyTokStem = tokenFromStem(todayLuckChart?.pillars?.year?.stem_kor, todayLuckChart?.pillars?.year?.stem_element);
+    const lyTokBranch = tokenFromBranch(todayLuckChart?.pillars?.year?.branch_kor, todayLuckChart?.pillars?.year?.branch_element);
+    const dwTokStem = tokenFromStem(todayLuckChart?.pillars?.daewoon?.stem_kor, todayLuckChart?.pillars?.daewoon?.stem_element);
+    const dwTokBranch = tokenFromBranch(todayLuckChart?.pillars?.daewoon?.branch_kor, todayLuckChart?.pillars?.daewoon?.branch_element);
+    const allowedGanjiTokens = [dTokStem, dTokBranch, ldTokStem, ldTokBranch, lmTokStem, lmTokBranch, lyTokStem, lyTokBranch, dwTokStem, dwTokBranch].filter(Boolean);
+
     const system = `너는 "사주(동양) + 서양 점성술(별자리)"을 결합해
 짧고 강렬하게, 근거가 살아있는 한국어 운세를 쓰는 전문가야.
 
@@ -473,7 +621,7 @@ export async function POST(req: Request) {
 - 예시처럼 "일주/일운" 같은 간지를 자연스럽게 끼워 넣되, 문장은 예시의 절반 길이로 더 압축해.
 - today_one_liner: 1문장, 18~35자 정도의 은유/이미지(너무 길게 쓰지 마).
 - today_keywords: 해시태그 3개(각각 '주의/기회/태도' 역할) — 짧고 눈에 띄게.
-- sections.overall/money/love/health: 각각 2문장 이내(예시의 절반 정도 길이), 사주+별자리 근거가 보이게.
+- sections.overall/money/love/health: 각각 2~4문장(기존의 2배 분량), 사주+별자리 근거가 보이게.
 - saju_brief/astro_brief: 각각 8~12문장(현재의 약 5배 분량), 근거 키워드(일간/일지/태양별자리)를 꼭 포함.
 - 흔한 덕담/추상적 조언 금지. ("긍정적으로" "힘내" 같은 문장 금지)
 - 각 섹션마다 "오늘 실제로 일어날 법한 장면" 1개는 꼭 넣어.
@@ -508,6 +656,15 @@ ${astro_summary}
 [오늘 흐름 간지(서버 계산, 그대로 사용)]
 ${luckCompact}
 
+[사용 가능한 간지/오행 토큰(이 목록만 사용)]
+- 일간(토큰): ${dTokStem || "-"}
+- 일지(토큰): ${dTokBranch || "-"}
+- 일운(토큰): ${ldTokStem || "-"}, ${ldTokBranch || "-"}
+- 월운(토큰): ${lmTokStem || "-"}, ${lmTokBranch || "-"}
+- 연운(토큰): ${lyTokStem || "-"}, ${lyTokBranch || "-"}
+- 대운(토큰): ${dwTokStem || "-"}, ${dwTokBranch || "-"}
+- ⚠️ 규칙: 본문/근거에서 "갑목" 같은 토큰은 위 목록에 있는 것만 사용해. 목록 외 토큰(예: 다른 천간/지지) 금지.
+
 [운세 날짜]
 ${target_date}
 
@@ -529,10 +686,10 @@ ${target_date}
     "notes": []
   },
   "sections": {
-    "overall": "총운(1~2문장, 예시의 절반 길이)",
-    "money": "금전운(1~2문장, 예시의 절반 길이)",
-    "love": "애정운(1~2문장, 예시의 절반 길이)",
-    "health": "건강운(1~2문장, 예시의 절반 길이)"
+    "overall": "총운(2~4문장, 기존보다 더 구체적으로)",
+    "money": "금전운(2~4문장, 기존보다 더 구체적으로)",
+    "love": "애정운(2~4문장, 기존보다 더 구체적으로)",
+    "health": "건강운(2~4문장, 기존보다 더 구체적으로)"
   },
   "section_evidence": {
     "overall": ["근거 1(짧게)", "근거 2(짧게)"],
@@ -541,7 +698,7 @@ ${target_date}
     "health": ["근거 1(짧게)", "근거 2(짧게)"]
   },
   "spine_chill": {
-    "prediction": "오늘 실제로 벌어질 가능성이 높은 관찰 1문장(20~45자)",
+    "prediction": "오늘 실제로 벌어질 가능성이 높은 관찰 2문장(40~90자)",
     "time_window": "오전|점심|오후|저녁 중 하나",
     "verification": "사용자가 오늘 확인할 체크포인트 1개"
   },
@@ -581,21 +738,23 @@ ${target_date}
   - 천간+오행: 갑목, 을목, 병화, 정화, 무토, 기토, 경금, 신금, 임수, 계수
   - 지지+오행: 자수, 축토, 인목, 묘목, 진토, 사화, 오화, 미토, 신금, 유금, 술토, 해수
   - 본문에서는 위 형태로 붙여 써(예: "일주의 병화", "일운의 해수").
-- sections 4개는 각각 1~2문장만.
-  - 길이: 각 섹션 40~90자 내외(예시의 절반 수준).
+- sections 4개는 각각 2~4문장.
+  - 길이: 각 섹션 80~160자 내외(기존의 약 2배).
   - 반드시 2개의 간지 단서를 포함: (일간/일지 중 1개) + (일운/월운/연운/대운 중 1개).
   - "오늘 실제로 일어날 법한 장면" 1개를 문장에 끼워 넣어.
 
 길이 규칙(매우 중요):
-- sections.overall/money/love/health는 각각 1~2문장.
-- 각 섹션은 40~90자(공백 포함) 정도로, 위 예시의 절반 길이로 압축.
+- sections.overall/money/love/health는 각각 2~4문장.
+- 각 섹션은 80~160자(공백 포함) 정도로, 기존보다 2배 더 자세하게.
 - 각 섹션 문장 안에 반드시 "간지 근거"를 최소 1개 포함(예: 일간 병화/일운 기토/일운 해수/월운/연운/대운 등).
 - 각 섹션 문장 안에 "현실 장면" 1개 포함(예: 회의/메신저/결제/약속/식사/퇴근길 등).
 - section_evidence는 각 섹션당 2개씩:
   - 반드시 '사주 요약(연주/오행/띠/리듬/집중)' 또는 '별자리 요약(강점/주의 키워드)' 중 최소 1개 요소를 포함해.
   - "왜 그렇게 말하는지"가 보이게 원인→현상 형태로.
 - spine_chill은 반드시 포함:
-  - prediction: 오늘 실제로 겪을 법한 구체 상황 1개(연락/일정/지출/실수/만남 중 하나).
+  - prediction: 오늘 실제로 겪을 법한 구체 상황 1개.
+    - 아래 카테고리 중 하나로 작성하고, 친구/지인에 편중되지 않게 해:
+      (업무/메신저/결제/이동지연/문서실수/기기인증/가족부탁/컨디션신호/우연한도움/약속변경)
   - time_window: 오전/점심/오후/저녁 중 하나로 고정.
   - verification: 사용자가 오늘 "맞았다/아니다" 판단 가능한 체크포인트 1개.
 - 흔한 문장("긍정적으로 생각해"류) 금지. 더 구체적으로.
