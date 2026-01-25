@@ -79,6 +79,121 @@ function makeOneLiner(keywords: string[]) {
   return `오늘은 ${moodA}로 균형 잡고, ${moodB}를 살려 ${moodC}로 마무리하는 날이야.`;
 }
 
+function isBlankKeyValue(v: any) {
+  if (v == null) return true;
+  const s = String(v).trim();
+  return !s || s === "-" || s === "—" || s.toLowerCase() === "null" || s.toLowerCase() === "undefined";
+}
+
+function makeDefaultTodayKeys(seed: {
+  dayStemElement?: string | null;
+  sunSign?: string | null;
+  zodiac?: string | null;
+  dayGanji?: string | null;
+  luckDayGanji?: string | null;
+  keywords: string[];
+}) {
+  const kw = (seed.keywords || []).map(asHashtagWord);
+  const k1 = kw[0] || "조심";
+  const k2 = kw[1] || "기회";
+  const k3 = kw[2] || "성장";
+
+  const el = seed.dayStemElement ?? "토";
+  const base = `${seed.dayGanji ?? ""}|${seed.luckDayGanji ?? ""}|${seed.sunSign ?? ""}|${seed.zodiac ?? ""}`;
+  const h = hashStr(base);
+  const pick = <T,>(arr: T[]) => arr[h % arr.length];
+  const pickN = (min: number, max: number) => {
+    const span = Math.max(1, max - min + 1);
+    return (hashStr(`${h}:n`) % span) + min;
+  };
+
+  const colorByEl: Record<string, string[]> = {
+    "목": ["초록", "올리브", "민트"],
+    "화": ["레드", "코랄", "버건디"],
+    "토": ["머스타드", "베이지", "샌드"],
+    "금": ["화이트", "실버", "라이트그레이"],
+    "수": ["네이비", "블루", "딥퍼플"],
+  };
+
+  const tabooByEl: Record<string, string[]> = {
+    "목": ["계획만 세우기", "약속 미루기", "결정 미루기"],
+    "화": ["감정 섞인 답장", "충동 결제", "말로 밀어붙이기"],
+    "토": ["정리 안 하고 시작", "대충 넘기기", "과식·과음"],
+    "금": ["지나친 냉정", "완벽주의로 지연", "비교/평가"],
+    "수": ["밤샘", "감정 과몰입", "미확인 정보 공유"],
+  };
+
+  const talismanByEl: Record<string, string[]> = {
+    "목": ["잎사귀 키링", "연두 펜", "나무 향"],
+    "화": ["따뜻한 향수", "빨간 포인트", "작은 캔들"],
+    "토": ["노트/메모", "미니 파우치", "정리 클립"],
+    "금": ["반짝이는 액세서리", "금속 키링", "심플한 시계"],
+    "수": ["물병", "블루 이어폰", "차분한 향"],
+  };
+
+  const spotByEl: Record<string, string[]> = {
+    "목": ["식물 많은 카페", "공원 산책길", "창가 자리"],
+    "화": ["햇빛 드는 곳", "활기찬 거리", "운동 공간"],
+    "토": ["정리된 책상", "도서관", "조용한 회의실"],
+    "금": ["깔끔한 매장", "새 노트 산 곳", "정돈된 공간"],
+    "수": ["물가/분수", "조용한 골목", "차분한 라운지"],
+  };
+
+  const foodByEl: Record<string, string[]> = {
+    "목": ["샐러드", "허브티", "과일"],
+    "화": ["매콤한 국물", "따뜻한 라떼", "구운 고기"],
+    "토": ["든든한 밥", "감자/고구마", "된장국"],
+    "금": ["담백한 면", "두부", "흰살생선"],
+    "수": ["미역국", "수분 많은 과일", "차(티)"],
+  };
+
+  const itemByEl: Record<string, string[]> = {
+    "목": ["메모지", "펜", "가벼운 가방"],
+    "화": ["핸드크림", "립밤", "미니 향"],
+    "토": ["파우치", "정리용 케이블", "에코백"],
+    "금": ["충전기", "이어폰", "명함/카드지갑"],
+    "수": ["물병", "우산", "보온 텀블러"],
+  };
+
+  const actionByEl: Record<string, string[]> = {
+    "목": ["10분 정리", "5분 계획", "짧은 산책"],
+    "화": ["답장 전 10초 멈춤", "결제 전 재확인", "5분 호흡"],
+    "토": ["체크리스트 3개", "책상 정돈", "물 한 컵"],
+    "금": ["우선순위 1개만", "불필요 알림 끄기", "정리/삭제"],
+    "수": ["감정 기록 3줄", "미온수 한 컵", "잠깐 휴식"],
+  };
+
+  const helperTypes = [
+    "디테일 챙기는 동료",
+    "빠르게 답 주는 상담원",
+    "차분한 성격의 선배",
+    "정리 잘하는 친구(필요할 때만)",
+    "현실 조언하는 가족",
+  ];
+
+  const num = pickN(1, 9);
+  const color = pick(colorByEl[el] ?? colorByEl["토"]);
+  const taboo = pick(tabooByEl[el] ?? tabooByEl["토"]);
+  const talisman = pick(talismanByEl[el] ?? talismanByEl["토"]);
+  const spot = pick(spotByEl[el] ?? spotByEl["토"]);
+  const food = pick(foodByEl[el] ?? foodByEl["토"]);
+  const item = pick(itemByEl[el] ?? itemByEl["토"]);
+  const action = pick(actionByEl[el] ?? actionByEl["토"]);
+  const helper = pick(helperTypes);
+
+  return {
+    color: { value: color, why: `${k2}를 살리려면 눈에 띄는 포인트가 필요해. ${color}가 리듬을 잡아줘.` },
+    taboo: { value: taboo, why: `${k1} 모드인 오늘은 ${taboo}가 실수로 이어지기 쉬워.` },
+    talisman: { value: talisman, why: `${k3}를 남기려면 작은 루틴이 좋아. ${talisman}이 신호가 돼.` },
+    lucky_spot: { value: spot, why: `${k2}는 장소가 열어줘. ${spot}에서 집중이 살아나.` },
+    number: { value: String(num), why: `${k1}과 ${k2} 사이 균형을 잡는 숫자야. 중요한 선택에 한 번 더 체크.` },
+    food: { value: food, why: `${k3}를 위한 에너지 보충. ${food}로 컨디션을 안정시키자.` },
+    item: { value: item, why: `${k1} 방어용. ${item} 하나면 흐름이 덜 흔들려.` },
+    action: { value: action, why: `${k2}는 작은 실행에서 터져. ${action}만 해도 오늘 운이 바뀐다.` },
+    helper: { value: helper, why: `${k3}는 혼자보다 ‘도움’에서 커져. ${helper} 유형이 힌트 줄 확률이 높아.` },
+  };
+}
+
 function tokenFromStem(stemKor?: string | null, stemElement?: string | null) {
   if (!stemKor || !stemElement) return "";
   const m: Record<string, string> = { 갑: "갑", 을: "을", 병: "병", 정: "정", 무: "무", 기: "기", 경: "경", 신: "신", 임: "임", 계: "계" };
@@ -298,6 +413,26 @@ function normalizeDailyResultSummary(
   if (typeof out.today_one_liner !== "string" || !out.today_one_liner.trim()) {
     out.today_one_liner = makeOneLiner(out.today_keywords);
   }
+
+  // today_keys(9개 치트키) - 모델/캐시 편차로 비거나 '-'가 자주 나와서 서버에서 강제 보정
+  out.today_keys = out.today_keys && typeof out.today_keys === "object" ? out.today_keys : {};
+  const defaultKeys = makeDefaultTodayKeys({
+    dayStemElement: dayStemEl,
+    sunSign: out.profile_badges.sun_sign ?? null,
+    zodiac: out.profile_badges.zodiac_animal ?? null,
+    dayGanji: d?.ganji_kor ?? null,
+    luckDayGanji: ld?.ganji_kor ?? null,
+    keywords: out.today_keywords ?? [],
+  });
+  (Object.keys(defaultKeys) as (keyof typeof defaultKeys)[]).forEach((k) => {
+    const cur = out.today_keys?.[k] && typeof out.today_keys[k] === "object" ? out.today_keys[k] : {};
+    const v = cur?.value;
+    const w = cur?.why;
+    out.today_keys[k] = {
+      value: isBlankKeyValue(v) ? defaultKeys[k].value : String(v),
+      why: isBlankKeyValue(w) ? defaultKeys[k].why : String(w),
+    };
+  });
 
   // saju/astro briefs(절대 비지 않게)
   if (typeof out.saju_brief !== "string" || !out.saju_brief.trim()) {
