@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Calendar, Clock, User, Sun, Sparkles, Star, Coins } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ArrowLeft, Calendar, Clock, User, Sun, Sparkles, Star, Coins, Trash2 } from "lucide-react"
 import type { SajuInput, SavedProfile, Relationship } from "@/app/page"
 
 interface DailyFortuneInputScreenProps {
@@ -37,6 +38,7 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
   const [gender, setGender] = useState<"male" | "female">("male")
   const [calendarType, setCalendarType] = useState<"solar" | "lunar">("solar")
   const [selectedProfileId, setSelectedProfileId] = useState<string>("")
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   const isExistingSelected = selectedProfileId !== "" && selectedProfileId !== "new"
 
@@ -164,69 +166,75 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
 
       <div className="flex-1 px-6 pb-8 relative z-10">
         <div className="mx-auto max-w-sm space-y-6">
-          {savedProfiles.length > 0 && (
+          
             <Card className="border-none glass shadow-sm">
               <CardContent className="p-5 space-y-3">
                 <Label className="text-sm font-medium text-foreground">운세를 볼 사람을 선택해주세요</Label>
-                <Select value={selectedProfileId} onValueChange={handleProfileSelect}>
-                  <SelectTrigger className="h-12 rounded-xl border-border bg-secondary/50">
-                    <SelectValue placeholder="저장된 프로필 또는 새로 입력" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    <SelectItem value="new">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        새로운 사람 입력
-                      </div>
-                    </SelectItem>
-                    {savedProfiles.map((profile) => (
-                      <SelectItem key={profile.id} value={profile.id}>
+                <div className="flex items-center gap-2">
+                  <Select value={selectedProfileId} onValueChange={handleProfileSelect}>
+                    <SelectTrigger className="h-12 flex-1 rounded-xl border-border bg-secondary/50">
+                      <SelectValue placeholder="저장된 프로필 또는 새로 입력" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="new">
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4" />
-                          {relationshipLabel(profile.relationship)} · {profile.name} ({profile.birthDate})
+                          새로운 사람 입력
                         </div>
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              
-            {isExistingSelected && onDeleteProfile && (
-              <div className="mt-3">
-                <Button
-                  type="button"
-                  variant="destructive"
-                  className="w-full"
-                  onClick={async () => {
-                    if (!confirm("이 프로필을 삭제할까? (삭제 후에는 목록에 보이지 않아)")) return
-                    await onDeleteProfile(selectedProfileId)
-                    handleProfileSelect("new")
-                    setSelectedProfileId("new")
-                  }}
-                >
-                  선택한 프로필 삭제
-                </Button>
-              </div>
-            )}
-</CardContent>
-            </Card>
-          )}
+                      {savedProfiles.map((profile) => (
+                        <SelectItem key={profile.id} value={profile.id}>
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            {relationshipLabel(profile.relationship)} · {profile.name} ({profile.birthDate})
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-          <Card className="border-none glass shadow-sm">
-            <CardContent className="p-5 space-y-3">
-              <Label className="text-sm font-medium text-foreground">관계</Label>
-              <Select value={relationship} onValueChange={(v) => setRelationship(v as Relationship)}>
-                <SelectTrigger className="h-12 rounded-xl border-border bg-secondary/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {relationshipOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-12 w-12 rounded-xl border-border bg-secondary/40 px-0"
+                    disabled={!isExistingSelected || !onDeleteProfile}
+                    onClick={() => setDeleteConfirmOpen(true)}
+                    aria-label="프로필 삭제"
+                    title="프로필 삭제"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                  <DialogContent className="sm:max-w-[360px]">
+                    <DialogHeader>
+                      <DialogTitle>프로필을 삭제할까?</DialogTitle>
+                      <DialogDescription>
+                        삭제하면 목록에서 더 이상 보이지 않아. (나중에 복구 기능은 아직 없어)
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-2">
+                      <Button type="button" variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+                        취소
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={async () => {
+                          if (!onDeleteProfile || !isExistingSelected) return
+                          await onDeleteProfile(selectedProfileId)
+                          setDeleteConfirmOpen(false)
+                          handleProfileSelect("new")
+                          setSelectedProfileId("new")
+                        }}
+                      >
+                        삭제
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                </CardContent>
           </Card>
 
           <Card className="border-none glass shadow-sm">
@@ -237,6 +245,7 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
               <Input
                 type="text"
                 value={name}
+                disabled={isExistingSelected}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="이름을 입력해주세요"
                 className="h-12 rounded-xl border-border bg-secondary/50 px-4"
@@ -253,6 +262,7 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
                 <input
                   type="date"
                   value={birthDate}
+                disabled={isExistingSelected}
                   onChange={(e) => setBirthDate(e.target.value)}
                   className="h-12 w-full rounded-xl border border-border bg-secondary/50 px-4 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
@@ -270,6 +280,7 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
                 <input
                   type="time"
                   value={birthTime}
+                disabled={isExistingSelected}
                   onChange={(e) => setBirthTime(e.target.value)}
                   placeholder="예: 14:30"
                   className="h-12 w-full rounded-xl border border-border bg-secondary/50 px-4 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
@@ -286,7 +297,7 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
               <RadioGroup
                 value={gender}
                 onValueChange={(v) => setGender(v as "male" | "female")}
-                className="flex gap-3"
+                className={`flex gap-3 ${isExistingSelected ? "pointer-events-none opacity-70" : ""}`}
               >
                 <label
                   className={`flex flex-1 cursor-pointer items-center justify-center rounded-xl border-2 py-3 transition-all ${
@@ -318,7 +329,7 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
               <RadioGroup
                 value={calendarType}
                 onValueChange={(v) => setCalendarType(v as "solar" | "lunar")}
-                className="flex gap-3"
+                className={`flex gap-3 ${isExistingSelected ? "pointer-events-none opacity-70" : ""}`}
               >
                 <label
                   className={`flex flex-1 cursor-pointer items-center justify-center rounded-xl border-2 py-3 transition-all ${

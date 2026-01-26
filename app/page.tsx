@@ -522,6 +522,18 @@ export default function Home() {
     setSelectedDailyResult(null)
     setCurrentScreen("daily-fortune-list")
   }
+
+  const handleDeleteProfile = async (profileId: string) => {
+    try {
+      const { error } = await supabase.from("profiles").update({ delete_yn: "Y" }).eq("id", profileId)
+      if (error) throw error
+      await refreshReadings()
+    } catch (e) {
+      console.error(e)
+      alert("프로필 삭제에 실패했어. 잠시 후 다시 시도해줘.")
+    }
+  }
+
   const handleNewDailyFortune = () => {
     setSajuInput(null)
     setSelectedDailyResult(null)
@@ -739,6 +751,7 @@ export default function Home() {
           onBack={() => setCurrentScreen("daily-fortune-list")}
           isLoading={isCreatingDaily}
           coins={coins}
+          onDeleteProfile={handleDeleteProfile}
         />
       )}
 
