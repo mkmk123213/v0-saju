@@ -211,7 +211,7 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
                     <DialogHeader>
                       <DialogTitle>프로필을 삭제할까?</DialogTitle>
                       <DialogDescription>
-                        삭제하면 목록에서 더 이상 보이지 않아. (나중에 복구 기능은 아직 없어)
+                        ⚠️ (경고) 프로필 삭제 시 더 이상 프로필 목록에서 조회되지 않아! 정말 삭제할래?
                       </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="gap-2 sm:gap-2">

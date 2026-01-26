@@ -244,12 +244,25 @@ export default function Home() {
   }
 
   const refreshProfiles = async () => {
-    const { data, error } = await supabase
+    // delete_yn 컬럼이 아직 DB에 없을 수 있어서(마이그레이션 전), 1) 필터 포함 조회를 시도하고
+    // 실패하면 2) 기존 스키마 기준으로 폴백 조회한다.
+    let res = await supabase
       .from("profiles")
-      .select("id,relationship,name,birth_date,birth_time,gender,calendar_type")
-      .or("delete_yn.is.null,delete_yn.neq.Y")
-      .or("delete_yn.is.null,delete_yn.neq.Y")
+      .select("id,relationship,name,birth_date,birth_time,gender,calendar_type,delete_yn")
+      .neq("delete_yn", "Y")
       .order("created_at", { ascending: false })
+
+    if (res.error) {
+      const msg = String((res.error as any)?.message ?? "")
+      if (msg.includes("delete_yn") || msg.includes("column") || msg.includes("does not exist")) {
+        res = await supabase
+          .from("profiles")
+          .select("id,relationship,name,birth_date,birth_time,gender,calendar_type")
+          .order("created_at", { ascending: false })
+      }
+    }
+
+    const { data, error } = res
     if (error) throw error
 
     // DB 값이 null/예상치 못한 값일 때도 UI가 터지지 않도록 기본값 보정
@@ -278,10 +291,22 @@ export default function Home() {
 
   const refreshReadings = async () => {
     // 먼저 profiles를 가져와서 profileMap을 구성
-    const { data: profilesData, error: profilesError } = await supabase
+    // delete_yn 컬럼이 없을 수 있으니 폴백 처리
+    let profilesRes = await supabase
       .from("profiles")
-      .select("id,relationship,name,birth_date,birth_time,gender,calendar_type")
-      .or("delete_yn.is.null,delete_yn.neq.Y")
+      .select("id,relationship,name,birth_date,birth_time,gender,calendar_type,delete_yn")
+      .neq("delete_yn", "Y")
+
+    if (profilesRes.error) {
+      const msg = String((profilesRes.error as any)?.message ?? "")
+      if (msg.includes("delete_yn") || msg.includes("column") || msg.includes("does not exist")) {
+        profilesRes = await supabase
+          .from("profiles")
+          .select("id,relationship,name,birth_date,birth_time,gender,calendar_type")
+      }
+    }
+
+    const { data: profilesData, error: profilesError } = profilesRes
     if (profilesError) throw profilesError
 
     const profileList: SavedProfile[] =
@@ -525,9 +550,11 @@ export default function Home() {
 
   const handleDeleteProfile = async (profileId: string) => {
     try {
-      const { error } = await supabase.from("profiles").update({ delete_yn: "Y" }).eq("id", profileId)
-      if (error) throw error
-      await refreshReadings()
+      await softDeleteProfile(profileId)
+      // 삭제 즉시 UI 반영(새로고침 전에도 목록에서 사라지게)
+      setSavedProfiles((prev) => prev.filter((p) => p.id !== profileId))
+      // DB 상태와 동기화(혹시 다른 곳에서도 영향이 있으면 반영)
+      await refreshProfiles()
     } catch (e) {
       console.error(e)
       alert("프로필 삭제에 실패했어. 잠시 후 다시 시도해줘.")
