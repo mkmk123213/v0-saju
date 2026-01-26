@@ -128,7 +128,8 @@ export default function Home() {
   const [sajuInput, setSajuInput] = useState<SajuInput | null>(null)
   // 오늘의 운세 입력 화면이 코인 충전 화면으로 넘어갔다 돌아와도 내용 유지되도록 draft를 상위에서 관리
   const [dailyDraft, setDailyDraft] = useState<DailyDraft>({
-    selectedProfileId: "",
+    // Radix Select는 value가 ""(빈 문자열)일 때 런타임 에러가 날 수 있어 기본값은 "new"로 둔다.
+    selectedProfileId: "new",
     relationship: "self",
     name: "",
     birthDate: "",
@@ -204,7 +205,7 @@ export default function Home() {
     setSelectedYearlyResult(null)
     setCoins(0)
     setDailyDraft({
-      selectedProfileId: "",
+      selectedProfileId: "new",
       relationship: "self",
       name: "",
       birthDate: "",

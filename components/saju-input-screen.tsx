@@ -34,9 +34,10 @@ export default function SajuInputScreen({ savedProfiles, onSubmit, onBack, onDel
   const [birthTime, setBirthTime] = useState("")
   const [gender, setGender] = useState<"male" | "female">("male")
   const [calendarType, setCalendarType] = useState<"solar" | "lunar">("solar")
-  const [selectedProfileId, setSelectedProfileId] = useState<string>("")
+  // Radix Select는 value가 ""(빈 문자열)일 때 런타임 에러가 날 수 있어 기본값은 "new"로 둔다.
+  const [selectedProfileId, setSelectedProfileId] = useState<string>("new")
 
-  const isExistingSelected = selectedProfileId !== "" && selectedProfileId !== "new"
+  const isExistingSelected = selectedProfileId !== "new" && selectedProfileId !== ""
 
   const handleProfileSelect = (profileId: string) => {
     setSelectedProfileId(profileId)

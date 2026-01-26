@@ -58,7 +58,8 @@ export default function DailyFortuneInputScreen({
   const [birthTime, setBirthTime] = useState(draft?.birthTime ?? "")
   const [gender, setGender] = useState<"male" | "female">(draft?.gender ?? "male")
   const [calendarType, setCalendarType] = useState<"solar" | "lunar">(draft?.calendarType ?? "solar")
-  const [selectedProfileId, setSelectedProfileId] = useState<string>(draft?.selectedProfileId ?? "")
+  // Radix Select는 value가 ""(빈 문자열)일 때 런타임 에러가 날 수 있어 기본값은 "new"로 둔다.
+  const [selectedProfileId, setSelectedProfileId] = useState<string>(draft?.selectedProfileId || "new")
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   // draft가 바뀌어 다시 마운트되었을 때 1회만 초기화(사용자 입력 중 덮어쓰기 방지)
@@ -66,7 +67,7 @@ export default function DailyFortuneInputScreen({
     if (didInit.current) return
     didInit.current = true
     if (!draft) return
-    setSelectedProfileId(draft.selectedProfileId)
+    setSelectedProfileId(draft.selectedProfileId || "new")
     setRelationship(draft.relationship)
     setName(draft.name)
     setBirthDate(draft.birthDate)
@@ -89,7 +90,7 @@ export default function DailyFortuneInputScreen({
     })
   }, [selectedProfileId, relationship, name, birthDate, birthTime, gender, calendarType, onDraftChange])
 
-  const isExistingSelected = selectedProfileId !== "" && selectedProfileId !== "new"
+  const isExistingSelected = selectedProfileId !== "new" && selectedProfileId !== ""
 
   const relationshipLabel = (value?: Relationship) =>
     relationshipOptions.find((r) => r.value === (value ?? "self"))?.label ?? "본인"
