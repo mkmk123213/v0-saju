@@ -2,7 +2,7 @@
 
 import { supabase } from "@/lib/supabaseClient"
 import { apiCreateSummary } from "@/lib/api/readings"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import LoginScreen from "@/components/login-screen"
 import MainScreen from "@/components/main-screen"
@@ -137,6 +137,14 @@ export default function Home() {
     gender: "male",
     calendarType: "solar",
   })
+
+  // DailyFortuneInputScreen에서 draft를 올려주는 콜백은 반드시 stable 해야 한다.
+  // (인라인 함수로 넘기면 매 렌더마다 onDraftChange 레퍼런스가 바뀌어,
+  //  자식 useEffect가 반복 실행되며 "Maximum update depth exceeded" 크래시가 날 수 있음)
+  const handleDailyDraftChange = useCallback((d: DailyDraft | undefined) => {
+    if (!d) return
+    setDailyDraft(d)
+  }, [])
   const [coins, setCoins] = useState(0)
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [userName, setUserName] = useState<string>("")
@@ -952,10 +960,7 @@ export default function Home() {
           coins={coins}
           onDeleteProfile={handleDeleteProfile}
           draft={dailyDraft}
-          onDraftChange={(d) => {
-            if (!d) return
-            setDailyDraft(d as DailyDraft)
-          }}
+          onDraftChange={handleDailyDraftChange}
         />
       )}
 
