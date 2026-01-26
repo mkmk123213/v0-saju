@@ -114,6 +114,13 @@ export default function Home() {
   const [previousScreen, setPreviousScreen] = useState<Screen>("main")
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
+  // 브라우저 뒤로가기/앞으로가기 동작을 위해 화면 전환을 history에 기록한다.
+  // (기존에는 setState로만 화면을 바꿔서 히스토리가 쌓이지 않아 뒤로가기가 안 됨)
+  const currentScreenRef = useRef<Screen>("login")
+  const sajuResultsRef = useRef<SajuResult[]>([])
+  const dailyResultsRef = useRef<DailyFortuneResult[]>([])
+  const yearlyResultsRef = useRef<YearlyFortuneResult[]>([])
+
   const [savedProfiles, setSavedProfiles] = useState<SavedProfile[]>([])
 
   const [savedResults, setSavedResults] = useState<SajuResult[]>([])
@@ -163,6 +170,83 @@ export default function Home() {
   const [coinDialogMessage, setCoinDialogMessage] = useState<string>("")
   const coinRetryRef = useRef<null | (() => void)>(null)
   const userIdRef = useRef<string>("")
+
+  useEffect(() => {
+    currentScreenRef.current = currentScreen
+  }, [currentScreen])
+
+  useEffect(() => {
+    sajuResultsRef.current = savedResults
+  }, [savedResults])
+
+  useEffect(() => {
+    dailyResultsRef.current = dailyFortuneResults
+  }, [dailyFortuneResults])
+
+  useEffect(() => {
+    yearlyResultsRef.current = yearlyFortuneResults
+  }, [yearlyFortuneResults])
+
+  const isValidScreen = (v: any): v is Screen =>
+    [
+      "login",
+      "main",
+      "saju-input",
+      "result",
+      "result-list",
+      "coin-purchase",
+      "daily-fortune-list",
+      "daily-fortune-input",
+      "daily-fortune-result",
+      "yearly-fortune-list",
+      "yearly-fortune-input",
+      "yearly-fortune-result",
+    ].includes(String(v))
+
+  const getScreenFromHash = (): Screen | null => {
+    if (typeof window === "undefined") return null
+    const raw = String(window.location.hash || "").replace(/^#/, "").trim()
+    if (!raw) return null
+    return isValidScreen(raw) ? (raw as Screen) : null
+  }
+
+  const syncHistory = (next: Screen, state: Record<string, any> = {}, replace = false) => {
+    if (typeof window === "undefined") return
+    const url = `#${next}`
+    const payload = { screen: next, ...state }
+    try {
+      if (replace) window.history.replaceState(payload, "", url)
+      else window.history.pushState(payload, "", url)
+    } catch {
+      // ignore
+    }
+  }
+
+  // 앞으로 이동(히스토리 쌓기)
+  const navigate = useCallback((next: Screen, state: Record<string, any> = {}) => {
+    const prev = currentScreenRef.current
+    setPreviousScreen(prev)
+    setCurrentScreen(next)
+    syncHistory(next, { prevScreen: prev, ...state }, false)
+  }, [])
+
+  // 뒤로/교체 이동(히스토리 늘리지 않기)
+  const replaceScreen = useCallback((next: Screen, state: Record<string, any> = {}) => {
+    const prev = currentScreenRef.current
+    setPreviousScreen(prev)
+    setCurrentScreen(next)
+    syncHistory(next, { prevScreen: prev, ...state }, true)
+  }, [])
+
+  const goBack = useCallback(() => {
+    if (typeof window === "undefined") return
+    if (window.history.length > 1) {
+      window.history.back()
+      return
+    }
+    // fallback
+    replaceScreen("main")
+  }, [replaceScreen])
 
   const safeInt = (n: any, fallback = 0) => {
     const v = Number(n)
@@ -272,13 +356,13 @@ export default function Home() {
         userIdRef.current = nextUid
         setUserId(nextUid)
         setIsLoggedIn(true)
-        setCurrentScreen("main")
+        replaceScreen("main")
         applyUser()
         // 로그인/계정 변경 시 사용자 스코프 데이터 다시 로드
         setTimeout(() => refreshAll().catch(console.error), 0)
       } else {
         setIsLoggedIn(false)
-        setCurrentScreen("login")
+        replaceScreen("login")
         setUserName("")
         setUserId("")
         userIdRef.current = ""
@@ -295,12 +379,12 @@ export default function Home() {
         userIdRef.current = nextUid
         setUserId(nextUid)
         setIsLoggedIn(true)
-        setCurrentScreen("main")
+        replaceScreen("main")
         applyUser()
         setTimeout(() => refreshAll().catch(console.error), 0)
       } else {
         setIsLoggedIn(false)
-        setCurrentScreen("login")
+        replaceScreen("login")
         setUserName("")
         setUserId("")
         userIdRef.current = ""
@@ -312,6 +396,62 @@ export default function Home() {
       listener.subscription.unsubscribe()
     }
   }, [])
+
+  // -----------------------------
+  // History: 브라우저 뒤로가기/앞으로가기 지원
+  // -----------------------------
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const onPopState = (ev: PopStateEvent) => {
+      const st: any = ev.state || {}
+      let next: Screen | null = null
+
+      if (st?.screen && isValidScreen(st.screen)) next = st.screen as Screen
+      if (!next) next = getScreenFromHash()
+
+      // 로그인 상태에 맞지 않는 화면은 보정
+      if (!isLoggedIn) {
+        setCurrentScreen("login")
+        return
+      }
+
+      if (!next || next === "login") {
+        // 로그인 상태에서 login으로 되돌아가는 건 UX가 안 좋아서 main으로 보정
+        replaceScreen("main")
+        return
+      }
+
+      setCurrentScreen(next)
+      if (st?.prevScreen && isValidScreen(st.prevScreen)) setPreviousScreen(st.prevScreen as Screen)
+
+      // 선택된 결과 복원
+      if (next === "result" && st?.selectedSajuId) {
+        const found = sajuResultsRef.current.find((r) => r.id === st.selectedSajuId)
+        if (found) {
+          setSelectedResult(found)
+          setSajuInput(found.sajuInput)
+        }
+      }
+      if (next === "daily-fortune-result" && st?.selectedDailyId) {
+        const found = dailyResultsRef.current.find((r) => r.id === st.selectedDailyId)
+        if (found) {
+          setSelectedDailyResult(found)
+          setSajuInput(found.sajuInput)
+        }
+      }
+      if (next === "yearly-fortune-result" && st?.selectedYearlyId) {
+        const found = yearlyResultsRef.current.find((r) => r.id === st.selectedYearlyId)
+        if (found) {
+          setSelectedYearlyResult(found)
+          setSajuInput(found.sajuInput)
+        }
+      }
+    }
+
+    window.addEventListener("popstate", onPopState)
+    return () => window.removeEventListener("popstate", onPopState)
+  }, [isLoggedIn, replaceScreen])
 
   // -----------------------------
   // DB: 공통 refresh
@@ -530,14 +670,13 @@ export default function Home() {
   // -----------------------------
   // Navigation
   // -----------------------------
-  const handleBackToMain = () => setCurrentScreen("main")
+  const handleBackToMain = () => replaceScreen("main")
   const handleToggleDarkMode = () => setIsDarkMode((prev) => !prev)
 
   const handleOpenCoinPurchase = () => {
-    setPreviousScreen(currentScreen)
-    setCurrentScreen("coin-purchase")
+    navigate("coin-purchase")
   }
-  const handleBackFromCoinPurchase = () => setCurrentScreen(previousScreen)
+  const handleBackFromCoinPurchase = () => goBack()
 
   // -----------------------------
   // Coin purchase (DEV): rpc_grant_coins
@@ -547,10 +686,10 @@ export default function Home() {
       const { error } = await supabase.rpc("rpc_grant_coins", { p_amount: amount })
       if (error) throw error
       await refreshCoins()
-      setCurrentScreen(previousScreen)
+      goBack()
     } catch (e) {
       console.error(e)
-      setCurrentScreen(previousScreen)
+      goBack()
     }
   }
 
@@ -559,12 +698,12 @@ export default function Home() {
   // -----------------------------
   const handleStartSaju = () => {
     setSelectedResult(null)
-    setCurrentScreen("result-list")
+    navigate("result-list")
   }
   const handleNewSaju = () => {
     setSajuInput(null)
     setSelectedResult(null)
-    setCurrentScreen("saju-input")
+    navigate("saju-input")
   }
 
   const handleSajuSubmit = async (input: SajuInput) => {
@@ -595,7 +734,7 @@ export default function Home() {
         year: defaultYear,
         result_summary,
       })
-      setCurrentScreen("result")
+      navigate("result", { selectedSajuId: reading_id })
     } catch (e: any) {
       console.error(e)
       if (e?.status === 402 && e?.detail?.error === "coin_required") {
@@ -621,10 +760,10 @@ export default function Home() {
   const handleViewResult = (result: SajuResult) => {
     setSelectedResult(result)
     setSajuInput(result.sajuInput)
-    setCurrentScreen("result")
+    navigate("result", { selectedSajuId: result.id })
   }
 
-  const handleBackToResultList = () => setCurrentScreen("result-list")
+  const handleBackToResultList = () => goBack()
 
 
   // -----------------------------
@@ -632,7 +771,7 @@ export default function Home() {
   // -----------------------------
   const handleStartDailyFortune = () => {
     setSelectedDailyResult(null)
-    setCurrentScreen("daily-fortune-list")
+    navigate("daily-fortune-list")
   }
 
   const handleDeleteProfile = async (profileId: string) => {
@@ -651,7 +790,7 @@ export default function Home() {
   const handleNewDailyFortune = () => {
     setSajuInput(null)
     setSelectedDailyResult(null)
-    setCurrentScreen("daily-fortune-input")
+    navigate("daily-fortune-input")
   }
 
   const handleDailyFortuneSubmit = async (input: SajuInput) => {
@@ -673,7 +812,7 @@ export default function Home() {
       if (existing) {
         setSelectedDailyResult(existing)
         setSajuInput(existing.sajuInput)
-        setCurrentScreen("daily-fortune-result")
+        navigate("daily-fortune-result", { selectedDailyId: existing.id })
         return
       }
     }
@@ -714,7 +853,7 @@ export default function Home() {
         date: today,
         result_summary,
       })
-      setCurrentScreen("daily-fortune-result")
+      navigate("daily-fortune-result", { selectedDailyId: reading_id })
     } catch (e: any) {
       console.error(e)
       if (e?.status === 402 && e?.detail?.error === "coin_required") {
@@ -739,7 +878,7 @@ export default function Home() {
   const handleViewDailyResult = (result: DailyFortuneResult) => {
     setSelectedDailyResult(result)
     setSajuInput(result.sajuInput)
-    setCurrentScreen("daily-fortune-result")
+    navigate("daily-fortune-result", { selectedDailyId: result.id })
   }
 
   // (상세 유료보기 기능 제거)
@@ -749,12 +888,12 @@ export default function Home() {
   // -----------------------------
   const handleStartYearlyFortune = () => {
     setSelectedYearlyResult(null)
-    setCurrentScreen("yearly-fortune-list")
+    navigate("yearly-fortune-list")
   }
   const handleNewYearlyFortune = () => {
     setSajuInput(null)
     setSelectedYearlyResult(null)
-    setCurrentScreen("yearly-fortune-input")
+    navigate("yearly-fortune-input")
   }
 
   const handleYearlyFortuneSubmit = async (input: SajuInput) => {
@@ -785,7 +924,7 @@ export default function Home() {
         year: defaultYear,
         result_summary,
       })
-      setCurrentScreen("yearly-fortune-result")
+      navigate("yearly-fortune-result", { selectedYearlyId: reading_id })
     } catch (e: any) {
       console.error(e)
       if (e?.status === 402 && e?.detail?.error === "coin_required") {
@@ -810,7 +949,7 @@ export default function Home() {
   const handleViewYearlyResult = (result: YearlyFortuneResult) => {
     setSelectedYearlyResult(result)
     setSajuInput(result.sajuInput)
-    setCurrentScreen("yearly-fortune-result")
+    navigate("yearly-fortune-result", { selectedYearlyId: result.id })
   }
 
   // (상세보기 유료 기능 제거)
@@ -923,7 +1062,7 @@ export default function Home() {
         <SajuInputScreen
           savedProfiles={savedProfiles}
           onSubmit={handleSajuSubmit}
-          onBack={() => setCurrentScreen("result-list")}
+          onBack={goBack}
         />
       )}
 
@@ -955,7 +1094,7 @@ export default function Home() {
         <DailyFortuneInputScreen
           savedProfiles={savedProfiles}
           onSubmit={handleDailyFortuneSubmit}
-          onBack={() => setCurrentScreen("daily-fortune-list")}
+          onBack={goBack}
           isLoading={isCreatingDaily}
           coins={coins}
           onDeleteProfile={handleDeleteProfile}
@@ -969,7 +1108,7 @@ export default function Home() {
           sajuInput={selectedDailyResult?.sajuInput || sajuInput!}
           date={selectedDailyResult?.date || new Date().toISOString().slice(0, 10)}
           resultSummary={selectedDailyResult?.result_summary}
-          onBack={() => setCurrentScreen("daily-fortune-list")}
+          onBack={goBack}
         />
       )}
 
@@ -987,7 +1126,7 @@ export default function Home() {
         <YearlyFortuneInputScreen
           savedProfiles={savedProfiles}
           onSubmit={handleYearlyFortuneSubmit}
-          onBack={() => setCurrentScreen("yearly-fortune-list")}
+          onBack={goBack}
         />
       )}
 
@@ -996,7 +1135,7 @@ export default function Home() {
           sajuInput={selectedYearlyResult?.sajuInput || sajuInput!}
           year={selectedYearlyResult?.year || defaultYear}
           resultSummary={selectedYearlyResult?.result_summary}
-          onBack={() => setCurrentScreen("yearly-fortune-list")}
+          onBack={goBack}
         />
       )}
     </main>
