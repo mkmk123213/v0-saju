@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -18,6 +18,17 @@ interface DailyFortuneInputScreenProps {
   isLoading?: boolean
   coins?: number
   onDeleteProfile?: (profileId: string) => Promise<void> | void
+  // 코인 충전 화면으로 이동했다가 돌아와도 입력값을 유지하기 위한 draft
+  draft?: {
+    selectedProfileId: string
+    relationship: Relationship
+    name: string
+    birthDate: string
+    birthTime: string
+    gender: "male" | "female"
+    calendarType: "solar" | "lunar"
+  }
+  onDraftChange?: (draft: DailyFortuneInputScreenProps["draft"]) => void
 }
 
 const relationshipOptions: { value: Relationship; label: string }[] = [
@@ -30,15 +41,53 @@ const relationshipOptions: { value: Relationship; label: string }[] = [
   { value: "acquaintance", label: "지인" },
 ]
 
-export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBack, isLoading = false, coins = 0, onDeleteProfile }: DailyFortuneInputScreenProps) {
-  const [relationship, setRelationship] = useState<Relationship>("self")
-  const [name, setName] = useState("")
-  const [birthDate, setBirthDate] = useState("")
-  const [birthTime, setBirthTime] = useState("")
-  const [gender, setGender] = useState<"male" | "female">("male")
-  const [calendarType, setCalendarType] = useState<"solar" | "lunar">("solar")
-  const [selectedProfileId, setSelectedProfileId] = useState<string>("")
+export default function DailyFortuneInputScreen({
+  savedProfiles,
+  onSubmit,
+  onBack,
+  isLoading = false,
+  coins = 0,
+  onDeleteProfile,
+  draft,
+  onDraftChange,
+}: DailyFortuneInputScreenProps) {
+  const didInit = useRef(false)
+  const [relationship, setRelationship] = useState<Relationship>(draft?.relationship ?? "self")
+  const [name, setName] = useState(draft?.name ?? "")
+  const [birthDate, setBirthDate] = useState(draft?.birthDate ?? "")
+  const [birthTime, setBirthTime] = useState(draft?.birthTime ?? "")
+  const [gender, setGender] = useState<"male" | "female">(draft?.gender ?? "male")
+  const [calendarType, setCalendarType] = useState<"solar" | "lunar">(draft?.calendarType ?? "solar")
+  const [selectedProfileId, setSelectedProfileId] = useState<string>(draft?.selectedProfileId ?? "")
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+
+  // draft가 바뀌어 다시 마운트되었을 때 1회만 초기화(사용자 입력 중 덮어쓰기 방지)
+  useEffect(() => {
+    if (didInit.current) return
+    didInit.current = true
+    if (!draft) return
+    setSelectedProfileId(draft.selectedProfileId)
+    setRelationship(draft.relationship)
+    setName(draft.name)
+    setBirthDate(draft.birthDate)
+    setBirthTime(draft.birthTime)
+    setGender(draft.gender)
+    setCalendarType(draft.calendarType)
+  }, [draft])
+
+  // 입력 변경 시 draft를 상위로 올려서 화면 이동 후에도 유지
+  useEffect(() => {
+    if (!onDraftChange) return
+    onDraftChange({
+      selectedProfileId,
+      relationship,
+      name,
+      birthDate,
+      birthTime,
+      gender,
+      calendarType,
+    })
+  }, [selectedProfileId, relationship, name, birthDate, birthTime, gender, calendarType, onDraftChange])
 
   const isExistingSelected = selectedProfileId !== "" && selectedProfileId !== "new"
 

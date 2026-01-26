@@ -2,30 +2,20 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { LogOut, Sparkles, Heart, Coins, Sun, Star, Moon } from "lucide-react"
+import { Sparkles, Heart, Sun, Star, Moon } from "lucide-react"
 
 interface MainScreenProps {
-  coins: number
-  isDarkMode: boolean
-  onToggleDarkMode: () => void
   onStartSaju: () => void
   onStartDailyFortune: () => void
   onStartYearlyFortune: () => void
-  onLogout: () => void
-  onOpenCoinPurchase: () => void
   userName: string
 }
 
 export default function MainScreen({
   userName,
-  coins,
-  isDarkMode,
-  onToggleDarkMode,
   onStartSaju,
   onStartDailyFortune,
   onStartYearlyFortune,
-  onLogout,
-  onOpenCoinPurchase,
 }: MainScreenProps) {
   const today = new Date()
   const todayFormatted = `${today.getMonth() + 1}/${today.getDate()}`
@@ -47,30 +37,8 @@ export default function MainScreen({
           </div>
           <h1 className="text-lg font-bold gradient-text">너의 운명은</h1>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Dark/Light Mode Toggle Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleDarkMode}
-            className="rounded-full h-8 w-8 hover:bg-muted glass"
-          >
-            {isDarkMode ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-500" />}
-          </Button>
-          <Button
-            variant="ghost"
-            className="flex items-center gap-1.5 rounded-full glass px-3 py-2 h-auto hover:bg-primary/10"
-            onClick={onOpenCoinPurchase}
-          >
-            <div className="w-4 h-4 rounded-full gradient-gold flex items-center justify-center">
-              <Coins className="h-2.5 w-2.5 text-amber-900" />
-            </div>
-            <span className="font-semibold text-sm text-foreground">{coins}</span>
-          </Button>
-          <Button variant="ghost" size="icon" onClick={onLogout} className="rounded-full h-8 w-8 hover:bg-muted">
-            <LogOut className="h-4 w-4 text-muted-foreground" />
-          </Button>
-        </div>
+        {/* 우측 상단 컨트롤(다크모드/엽전/로그아웃)은 전역 고정 UI로 이동 */}
+        <div className="w-28" />
       </header>
 
       {/* Main Content */}

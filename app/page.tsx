@@ -79,6 +79,16 @@ export interface DailyFortuneResult {
   result_summary?: any
 }
 
+type DailyDraft = {
+  selectedProfileId: string
+  relationship: Relationship
+  name: string
+  birthDate: string
+  birthTime: string
+  gender: "male" | "female"
+  calendarType: "solar" | "lunar"
+}
+
 export interface YearlyFortuneResult {
   id: string
   sajuInput: SajuInput
@@ -116,6 +126,16 @@ export default function Home() {
   const [selectedYearlyResult, setSelectedYearlyResult] = useState<YearlyFortuneResult | null>(null)
 
   const [sajuInput, setSajuInput] = useState<SajuInput | null>(null)
+  // 오늘의 운세 입력 화면이 코인 충전 화면으로 넘어갔다 돌아와도 내용 유지되도록 draft를 상위에서 관리
+  const [dailyDraft, setDailyDraft] = useState<DailyDraft>({
+    selectedProfileId: "",
+    relationship: "self",
+    name: "",
+    birthDate: "",
+    birthTime: "",
+    gender: "male",
+    calendarType: "solar",
+  })
   const [coins, setCoins] = useState(0)
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [userName, setUserName] = useState<string>("")
@@ -183,6 +203,15 @@ export default function Home() {
     setYearlyFortuneResults([])
     setSelectedYearlyResult(null)
     setCoins(0)
+    setDailyDraft({
+      selectedProfileId: "",
+      relationship: "self",
+      name: "",
+      birthDate: "",
+      birthTime: "",
+      gender: "male",
+      calendarType: "solar",
+    })
   }
 
   const now = useMemo(() => new Date(), [])
@@ -333,10 +362,11 @@ export default function Home() {
   const refreshReadings = async () => {
     // 먼저 profiles를 가져와서 profileMap을 구성
     // delete_yn 컬럼이 없을 수 있으니 폴백 처리
+    // ⚠️ 결과 카드에서는 삭제된 프로필로 만든 과거 결과도 이름/생년월일이 보이게 해야 해서
+    // profiles를 가져올 때는 delete_yn으로 필터링하지 않는다(목록 UI에서는 refreshProfiles가 필터링).
     let profilesRes = await supabase
       .from("profiles")
       .select("id,relationship,name,birth_date,birth_time,gender,calendar_type,delete_yn")
-      .neq("delete_yn", "Y")
 
     if (profilesRes.error) {
       const msg = String((profilesRes.error as any)?.message ?? "")
@@ -388,6 +418,7 @@ export default function Home() {
       const prof = r.profile_id ? profileMap.get(r.profile_id) : undefined
       const input = {
         ...inputRaw,
+        profileId: r.profile_id ?? undefined,
         name: inputRaw.name || prof?.name || "",
         birthDate: inputRaw.birthDate || prof?.birthDate || "",
         birthTime: inputRaw.birthTime || prof?.birthTime || "unknown",
@@ -616,6 +647,39 @@ export default function Home() {
 
   const handleDailyFortuneSubmit = async (input: SajuInput) => {
     if (isCreatingSummary) return
+
+    // KST 기준 "오늘"
+    const today = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Seoul",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date())
+
+    // ✅ 동일 프로필/오늘 결과가 이미 있으면(=이미 결제/생성됨) 코인 없어도 바로 재열람
+    if (input.profileId) {
+      const existing = dailyFortuneResults.find(
+        (r) => r?.date === today && r?.sajuInput?.profileId === input.profileId
+      )
+      if (existing) {
+        setSelectedDailyResult(existing)
+        setSajuInput(existing.sajuInput)
+        setCurrentScreen("daily-fortune-result")
+        return
+      }
+    }
+
+    // ✅ 엽전이 부족하면 API 호출 전에 즉시 팝업(서버에서도 재검증함)
+    if ((coins ?? 0) < 1) {
+      await openCoinDialog({
+        requiredCoins: 1,
+        balanceCoins: coins ?? 0,
+        message: "결과를 보려면 엽전 1닢이 필요해.",
+        onRetry: () => handleDailyFortuneSubmit(input),
+      })
+      return
+    }
+
     setIsCreatingSummary(true)
     setIsCreatingDaily(true)
     try {
@@ -625,9 +689,6 @@ export default function Home() {
 
       setSajuInput(input)
       const profileId = input.profileId ? input.profileId : await upsertProfileFromInput(input)
-      // KST 기준 "오늘" (UTC ISO는 자정 근처에서 날짜가 어긋날 수 있음)
-      const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date())
-
       const { reading_id, result_summary } = await apiCreateSummary({
         profile_id: profileId,
         type: "daily",
@@ -760,19 +821,82 @@ export default function Home() {
         }}
       />
 
+      {/* 전역 상단 우측 컨트롤: 어디서든 다크/라이트, 엽전, 로그아웃 노출 */}
+      {isLoggedIn && currentScreen !== "login" ? (
+        <div className="fixed top-4 right-4 z-[60] flex items-center gap-2">
+          {/* Dark/Light */}
+          <button
+            type="button"
+            onClick={handleToggleDarkMode}
+            aria-label="다크/라이트 모드 전환"
+            className="rounded-full h-8 w-8 inline-flex items-center justify-center hover:bg-muted glass"
+          >
+            {isDarkMode ? (
+              <span className="inline-flex items-center justify-center">
+                {/* lucide 아이콘을 직접 import하지 않고, 기존 스타일 유지 위해 MainScreen 버튼과 동일하게 */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2" />
+                  <path d="M12 20v2" />
+                  <path d="m4.93 4.93 1.41 1.41" />
+                  <path d="m17.66 17.66 1.41 1.41" />
+                  <path d="M2 12h2" />
+                  <path d="M20 12h2" />
+                  <path d="m6.34 17.66-1.41 1.41" />
+                  <path d="m19.07 4.93-1.41 1.41" />
+                </svg>
+              </span>
+            ) : (
+              <span className="inline-flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-500">
+                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                </svg>
+              </span>
+            )}
+          </button>
+
+          {/* Coins */}
+          <button
+            type="button"
+            onClick={handleOpenCoinPurchase}
+            className="flex items-center gap-1.5 rounded-full glass px-3 py-2 h-auto hover:bg-primary/10"
+            aria-label="엽전 충전"
+          >
+            <div className="w-4 h-4 rounded-full gradient-gold flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-900">
+                <circle cx="8" cy="8" r="6" />
+                <path d="M18.09 10.37A6 6 0 1 1 10.37 18.09" />
+                <path d="M7 6h1v4" />
+                <path d="m16.71 13.88.7.71-2.82 2.82" />
+              </svg>
+            </div>
+            <span className="font-semibold text-sm text-foreground">{coins}</span>
+          </button>
+
+          {/* Logout */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            aria-label="로그아웃"
+            className="rounded-full h-8 w-8 inline-flex items-center justify-center hover:bg-muted"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" x2="9" y1="12" y2="12" />
+            </svg>
+          </button>
+        </div>
+      ) : null}
+
       {currentScreen === "login" && <LoginScreen onLogin={handleLogin} />}
 
       {currentScreen === "main" && (
         <MainScreen
           userName={userName}
-          coins={coins}
-          isDarkMode={isDarkMode}
-          onToggleDarkMode={handleToggleDarkMode}
           onStartSaju={handleStartSaju}
           onStartDailyFortune={handleStartDailyFortune}
           onStartYearlyFortune={handleStartYearlyFortune}
-          onLogout={handleLogout}
-          onOpenCoinPurchase={handleOpenCoinPurchase}
         />
       )}
 
@@ -826,6 +950,11 @@ export default function Home() {
           isLoading={isCreatingDaily}
           coins={coins}
           onDeleteProfile={handleDeleteProfile}
+          draft={dailyDraft}
+          onDraftChange={(d) => {
+            if (!d) return
+            setDailyDraft(d as DailyDraft)
+          }}
         />
       )}
 
