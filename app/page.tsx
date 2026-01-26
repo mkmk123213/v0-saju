@@ -356,7 +356,9 @@ export default function Home() {
         userIdRef.current = nextUid
         setUserId(nextUid)
         setIsLoggedIn(true)
-        replaceScreen("main")
+        if (currentScreenRef.current === "login") {
+          replaceScreen("main")
+        }
         applyUser()
         // 로그인/계정 변경 시 사용자 스코프 데이터 다시 로드
         setTimeout(() => refreshAll().catch(console.error), 0)
@@ -379,7 +381,10 @@ export default function Home() {
         userIdRef.current = nextUid
         setUserId(nextUid)
         setIsLoggedIn(true)
-        replaceScreen("main")
+        if (currentScreenRef.current === "login") {
+          replaceScreen("main")
+        }
+
         applyUser()
         setTimeout(() => refreshAll().catch(console.error), 0)
       } else {

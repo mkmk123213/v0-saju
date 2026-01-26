@@ -761,16 +761,19 @@ async function fetchWithRetry(fetcher: () => Promise<Response>, retries = 3) {
 }
 
 
-async function rpcSpendForReading(supabaseUser: any, reading_id: string) {
-  // Supabase SQL: rpc_unlock_detail(p_reading_id uuid)
-  const { error } = await supabaseUser.rpc("rpc_unlock_detail", { p_reading_id: reading_id });
+async function spendOneCoinForReading(supabaseAdmin: any, user_id: string, reading_id: string) {
+  // 결제(엽전 1닢 차감) = coin_ledger 원장에 -1 기록
+  // 언락 테이블/로직은 사용하지 않음(결제=readings 생성 정책)
+  const { error } = await supabaseAdmin.from("coin_ledger").insert({
+    user_id,
+    delta: -1,
+    reason: "unlock_detail",
+    ref_table: "readings",
+    ref_id: reading_id,
+  });
   return error ?? null;
 }
 
-function isSchemaCacheNotFound(err: any) {
-  const msg = String(err?.message ?? "");
-  return /schema cache|could not find the function|function public\.rpc_unlock_detail/i.test(msg);
-}
 
 export async function POST(req: Request) {
   try {
@@ -1083,7 +1086,7 @@ target_year: ${target_year ?? "없음"}
     // - cache miss라도, 기존 row가 있고(result_summary가 비어있는 placeholder)면 같은 id로 재시도(무료)
     const REQUIRED_COINS = 1;
 
-    // user-context client (RLS 적용) for rpc_get_coin_balance / rpc_unlock_detail(엽전 차감)
+    // user-context client (RLS 적용) for rpc_get_coin_balance (잔액 확인)
     const url = env("NEXT_PUBLIC_SUPABASE_URL") || env("SUPABASE_URL");
     const anonKey = env("NEXT_PUBLIC_SUPABASE_ANON_KEY") || env("SUPABASE_ANON_KEY");
     if (!url || !anonKey) return NextResponse.json({ error: "SUPABASE_PUBLIC_ENV_MISSING" }, { status: 500 });
@@ -1165,26 +1168,13 @@ target_year: ${target_year ?? "없음"}
 
     // ✅ 결제(엽전 차감)는 최초 1회만
     if (shouldCharge) {
-      const payErr = await rpcSpendForReading(supabaseUser, reading_id);
+      const payErr = await spendOneCoinForReading(supabaseAdmin, user_id, reading_id);
       if (payErr) {
         // 결제 실패면 (이번 요청에서 만든 row라면) 정리(목록에 빈 카드 남지 않게)
         if (needsInsert) {
           await supabaseAdmin.from("readings").delete().eq("id", reading_id);
         }
         const msg = String(payErr.message ?? "");
-
-      // ⚠️ Supabase PostgREST schema cache에 함수가 안 보일 때(보통 EXECUTE 권한 문제)
-      if (isSchemaCacheNotFound(payErr)) {
-        return NextResponse.json(
-          {
-            error: "payment_failed",
-            message: "결과 결제 처리 중 오류가 발생했어.",
-            detail:
-              "rpc_unlock_detail 함수 실행 권한이 없거나 API 스키마 캐시가 갱신되지 않았어. Supabase SQL Editor에서 다음을 실행해줘: GRANT EXECUTE ON FUNCTION public.rpc_unlock_detail(uuid) TO authenticated; 그리고 Settings > API에서 Reload schema 눌러줘.\n원본: " + msg,
-          },
-          { status: 500 }
-        );
-      }
 
 
       // ✅ 코인 부족이 아닌 다른 오류를 'coin_required'로 뭉개지 않도록 분기
@@ -1235,7 +1225,7 @@ if (needsInsert) {
               return NextResponse.json(
                 {
                   error: "coin_spend_not_applied",
-                  message: "엽전 차감이 반영되지 않았어. 결제 로직(rpc_unlock_detail)을 확인해줘.",
+                  message: "엽전 차감이 반영되지 않았어. 결제 로직(coin_ledger 기록)을 확인해줘.",
                   detail: `before=${balance_before}, after=${balance_after}`,
                 },
                 { status: 500 }
@@ -1243,12 +1233,12 @@ if (needsInsert) {
             }
           }
         } catch {
-          // balance 재확인 실패는 치명적이지 않게 무시(이미 unlock 성공)
+          // balance 재확인 실패는 치명적이지 않게 무시(이미 차감 성공)
         }
       }
     }
 
-    // (참고) coins_spent 컬럼은 사용하지 않음(원장은 coin_ledger / unlocks로 관리)
+    // (참고) coins_spent 컬럼은 사용하지 않음(원장은 coin_ledger로 관리)
 
     const openaiRes = await fetchWithRetry(() =>
       fetch("https://api.openai.com/v1/chat/completions", {
