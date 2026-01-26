@@ -42,13 +42,13 @@ export default function CoinRequiredDialog({
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
               <Coins className="h-4 w-4 text-primary" />
             </span>
-            결과 보려면 엽전이 필요해
+            엽전이 부족해요!
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="text-sm text-muted-foreground">
-            {message?.trim() ? message : "결과를 보려면 엽전이 필요해. (딱 한 번만 내면 돼!)"}
+            {message?.trim() ? message : "결과를 보려면 엽전 1닢이 필요해."}
           </div>
 
           <Card className="p-4 space-y-2">
@@ -73,7 +73,7 @@ export default function CoinRequiredDialog({
               </span>
             </Button>
             <Button variant="secondary" className="w-full" onClick={onClose}>
-              지금은 나중에 볼래
+              다음에 보기
             </Button>
           </div>
         </div>

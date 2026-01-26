@@ -119,6 +119,7 @@ export default function Home() {
   const [coins, setCoins] = useState(0)
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [userName, setUserName] = useState<string>("")
+  const [userId, setUserId] = useState<string>("")
 
   // API 중복 호출 방지
   const [isCreatingSummary, setIsCreatingSummary] = useState(false)
@@ -132,6 +133,7 @@ export default function Home() {
   const [coinDialogBalance, setCoinDialogBalance] = useState(0)
   const [coinDialogMessage, setCoinDialogMessage] = useState<string>("")
   const coinRetryRef = useRef<null | (() => void)>(null)
+  const userIdRef = useRef<string>("")
 
   const safeInt = (n: any, fallback = 0) => {
     const v = Number(n)
@@ -172,6 +174,17 @@ export default function Home() {
     fn?.()
   }
 
+  const resetUserScopedState = () => {
+    setSavedProfiles([])
+    setSavedResults([])
+    setSelectedResult(null)
+    setDailyFortuneResults([])
+    setSelectedDailyResult(null)
+    setYearlyFortuneResults([])
+    setSelectedYearlyResult(null)
+    setCoins(0)
+  }
+
   const now = useMemo(() => new Date(), [])
   const defaultYear = useMemo(() => now.getFullYear(), [now])
 
@@ -198,8 +211,14 @@ export default function Home() {
       const user = data.user
       if (!user) {
         setUserName("")
+        setUserId("")
+        userIdRef.current = ""
         return
       }
+
+      // 로그인 계정 기준으로 결과/프로필 리스트가 섞이지 않게 userId로 스코프를 잡아둠
+      setUserId(user.id)
+      userIdRef.current = user.id
       const meta: any = user.user_metadata || {}
       const name = meta.full_name || meta.name || (user.email ? user.email.split("@")[0] : "손님")
       setUserName(String(name))
@@ -207,25 +226,47 @@ export default function Home() {
 
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
+        const nextUid = data.session.user.id
+        if (userIdRef.current && userIdRef.current !== nextUid) {
+          // 계정이 바뀌었는데 이전 상태가 남아있으면 카드가 섞여 보여서 초기화
+          resetUserScopedState()
+        }
+        userIdRef.current = nextUid
+        setUserId(nextUid)
         setIsLoggedIn(true)
         setCurrentScreen("main")
         applyUser()
+        // 로그인/계정 변경 시 사용자 스코프 데이터 다시 로드
+        setTimeout(() => refreshAll().catch(console.error), 0)
       } else {
         setIsLoggedIn(false)
         setCurrentScreen("login")
         setUserName("")
+        setUserId("")
+        userIdRef.current = ""
+        resetUserScopedState()
       }
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
+        const nextUid = session.user.id
+        if (userIdRef.current && userIdRef.current !== nextUid) {
+          resetUserScopedState()
+        }
+        userIdRef.current = nextUid
+        setUserId(nextUid)
         setIsLoggedIn(true)
         setCurrentScreen("main")
         applyUser()
+        setTimeout(() => refreshAll().catch(console.error), 0)
       } else {
         setIsLoggedIn(false)
         setCurrentScreen("login")
         setUserName("")
+        setUserId("")
+        userIdRef.current = ""
+        resetUserScopedState()
       }
     })
 
@@ -322,9 +363,15 @@ export default function Home() {
 
     const profileMap = new Map(profileList.map((p) => [p.id, p]))
 
+    const { data: u, error: uerr } = await supabase.auth.getUser()
+    if (uerr) throw uerr
+    const uid = u.user?.id
+    if (!uid) throw new Error("not_authenticated")
+
     const { data, error } = await supabase
       .from("readings_public_view")
       .select("*")
+      .eq("user_id", uid)
       .order("created_at", { ascending: false })
     if (error) throw error
 
@@ -516,7 +563,7 @@ export default function Home() {
         await openCoinDialog({
           requiredCoins: e?.detail?.required_coins ?? 1,
           balanceCoins: e?.detail?.balance_coins,
-          message: e?.detail?.message ?? "결과를 보려면 엽전이 필요해.",
+          message: e?.detail?.message ?? "결과를 보려면 엽전 1닢이 필요해.",
           onRetry: () => handleSajuSubmit(input),
       })
       } else if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
@@ -604,7 +651,7 @@ export default function Home() {
         await openCoinDialog({
           requiredCoins: e?.detail?.required_coins ?? 1,
           balanceCoins: e?.detail?.balance_coins,
-          message: e?.detail?.message ?? "결과를 보려면 엽전이 필요해.",
+          message: e?.detail?.message ?? "결과를 보려면 엽전 1닢이 필요해.",
           onRetry: () => handleDailyFortuneSubmit(input),
       })
       } else if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {
@@ -675,7 +722,7 @@ export default function Home() {
         await openCoinDialog({
           requiredCoins: e?.detail?.required_coins ?? 1,
           balanceCoins: e?.detail?.balance_coins,
-          message: e?.detail?.message ?? "결과를 보려면 엽전이 필요해.",
+          message: e?.detail?.message ?? "결과를 보려면 엽전 1닢이 필요해.",
           onRetry: () => handleYearlyFortuneSubmit(input),
       })
       } else if (e?.status === 402 && e?.detail?.error === "OPENAI_INSUFFICIENT_QUOTA") {

@@ -193,47 +193,49 @@ export default function DailyFortuneInputScreen({ savedProfiles, onSubmit, onBac
                     </SelectContent>
                   </Select>
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-12 w-12 rounded-xl border-border bg-secondary/40 px-0"
-                    disabled={!isExistingSelected || !onDeleteProfile}
-                    onClick={() => setDeleteConfirmOpen(true)}
-                    aria-label="프로필 삭제"
-                    title="프로필 삭제"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {isExistingSelected && onDeleteProfile ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-12 w-12 rounded-xl border-border bg-secondary/40 px-0"
+                      onClick={() => setDeleteConfirmOpen(true)}
+                      aria-label="프로필 삭제"
+                      title="프로필 삭제"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : null}
                 </div>
 
-                <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-                  <DialogContent className="sm:max-w-[360px]">
-                    <DialogHeader>
-                      <DialogTitle>프로필을 삭제할까?</DialogTitle>
-                      <DialogDescription>
-                        ⚠️ (경고) 프로필 삭제 시 더 이상 프로필 목록에서 조회되지 않아! 정말 삭제할래?
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2 sm:gap-2">
-                      <Button type="button" variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
-                        취소
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={async () => {
-                          if (!onDeleteProfile || !isExistingSelected) return
-                          await onDeleteProfile(selectedProfileId)
-                          setDeleteConfirmOpen(false)
-                          handleProfileSelect("new")
-                          setSelectedProfileId("new")
-                        }}
-                      >
-                        삭제
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                {isExistingSelected && onDeleteProfile ? (
+                  <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                    <DialogContent className="sm:max-w-[360px]">
+                      <DialogHeader>
+                        <DialogTitle>프로필을 삭제할까?</DialogTitle>
+                        <DialogDescription>
+                          ⚠️ 프로필 삭제 시 더 이상 프로필 목록에서 조회되지 않아! 정말 삭제할래?
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter className="gap-2 sm:gap-2">
+                        <Button type="button" variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+                          취소
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={async () => {
+                            await onDeleteProfile(selectedProfileId)
+                            setDeleteConfirmOpen(false)
+                            handleProfileSelect("new")
+                            setSelectedProfileId("new")
+                          }}
+                        >
+                          삭제
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                ) : null}
                 </CardContent>
           </Card>
 
