@@ -761,6 +761,16 @@ async function fetchWithRetry(fetcher: () => Promise<Response>, retries = 3) {
 }
 
 
+async function rpcSpendForReading(supabaseUser: any, reading_id: string) {
+  // Supabase SQL: rpc_unlock_detail(p_reading_id uuid)
+  const { error } = await supabaseUser.rpc("rpc_unlock_detail", { p_reading_id: reading_id });
+  return error ?? null;
+}
+
+function isSchemaCacheNotFound(err: any) {
+  const msg = String(err?.message ?? "");
+  return /schema cache|could not find the function|function public\.rpc_unlock_detail/i.test(msg);
+}
 
 export async function POST(req: Request) {
   try {
@@ -863,29 +873,25 @@ export async function POST(req: Request) {
     const dwTokBranch = tokenFromBranch(todayLuckChart?.pillars?.daewoon?.branch_kor, todayLuckChart?.pillars?.daewoon?.branch_element);
     const allowedGanjiTokens = [dTokStem, dTokBranch, ldTokStem, ldTokBranch, lmTokStem, lmTokBranch, lyTokStem, lyTokBranch, dwTokStem, dwTokBranch].filter(Boolean);
 
-    const system = `너는 "사주(동양) + 서양 점성술(별자리)"을 결합해
-짧고 강렬하게, 근거가 살아있는 한국어 운세를 쓰는 전문가야.
+    const system = `너는 "사주(동양 명리) + 서양 점성술(별자리)"을 함께 보는 전문 상담가야.
+사용자가 읽자마자 "근거가 있다"라고 느끼게, 오늘 하루에 딱 맞는 현실적인 조언을 줘.
 
 말투:
-- 무조건 반말체, 친근하고 스윗하게. 존댓말 금지.
+- 무조건 반말체. 친근하고 스윗하지만 가볍지 않게(연애 조언 과잉 금지).
+- 단정적인 불행 예언/공포 조장/의학·법률 단정은 금지. 대신 '가능성/경향'으로 말해.
 
-목표:
-- 읽는 사람이 "소름"이라고 느낄 만큼 구체적이고 정확해 보이게 써.
-- 공포 조장/단정적 불행 예언/의학·법률 단정은 금지.
-- 오늘 하루에 초점을 맞춘 실천 조언을 줘.
+핵심 원칙(신뢰감):
+- 사주 근거는 반드시 (일간/일지/일운/월운/연운/대운) 중 최소 2개를 엮어서 써.
+- 별자리 근거는 태양궁(=sun sign) 성향 + 오늘 흐름(리듬/집중/관계/결정)을 연결해.
+- "오늘 실제로 일어날 법한 장면"을 각 섹션마다 최소 1개 포함해(업무/메신저/결제/이동/문서/가족/컨디션 등).
 
-문장 스타일(중요):
-- 예시처럼 "일주/일운" 같은 간지를 자연스럽게 끼워 넣되, 문장은 예시의 절반 길이로 더 압축해.
-- today_one_liner: 1문장, 18~35자 정도의 은유/이미지(너무 길게 쓰지 마).
-- today_keywords: 해시태그 3개(각각 '주의/기회/태도' 역할) — 짧고 눈에 띄게.
-- sections.overall/money/love/health: 각각 2~4문장(기존의 2배 분량), 사주+별자리 근거가 보이게.
-- saju_brief/astro_brief: 각각 8~12문장(현재의 약 5배 분량), 근거 키워드(일간/일지/태양별자리)를 꼭 포함.
-- 흔한 덕담/추상적 조언 금지. ("긍정적으로" "힘내" 같은 문장 금지)
-- 각 섹션마다 "오늘 실제로 일어날 법한 장면" 1개는 꼭 넣어.
+표현 스타일:
+- 문장은 짧게 끊어서 리듬 있게. 한 문단에 정보가 몰리지 않게 줄바꿈을 적극 사용해.
+- 흔한 덕담 금지("힘내", "긍정적으로" 같은 문장 금지). 대신 구체 행동/상황으로.
+- 너무 현학적 용어 나열 금지. 간지/오행은 '단서'처럼 자연스럽게.
 
 재현성 규칙(매우 중요):
-- 입력이 완전히 같으면 결과 문장/표현/선택을 최대한 동일하게 유지해.
-- 동의어 바꿔치기/말투 변주/랜덤 예시 변경 금지.
+- 입력이 완전히 같으면 표현/구성/예시를 최대한 동일하게 유지해(동의어 바꿔치기/랜덤 예시 금지).
 - JSON 키 순서와 필드 구조를 절대 바꾸지 마.
 - JSON만 출력(설명문/마크다운/코드블록 금지).`;
 
@@ -912,6 +918,9 @@ ${astro_summary}
 
 [오늘 흐름 간지(서버 계산, 그대로 사용)]
 ${luckCompact}
+
+[오늘의 흐름 표 원본(today_luck_chart, 서버 계산 JSON - 이 값을 그대로 출력 JSON에 채워)]
+${JSON.stringify(todayLuckChart ?? {}, null, 2)}
 
 [사용 가능한 간지/오행 토큰(이 목록만 사용)]
 - 일간(토큰): ${dTokStem || "-"}
@@ -978,8 +987,8 @@ ${target_date}
     "helper": { "value": "귀인(사람유형,짧게)", "why": "키워드 1개 포함" }
   },
   "premium_algo": {
-    "cheatkey": "🔑 오늘의 운빨 치트키(6~10문장, 아주 현실적인 상황/조언 포함)",
-    "mind": "🧠 나만 몰랐던 내 마음(6~10문장, 감정의 근거와 다루는 방법)",
+    "cheatkey": "🔑 오늘의 운빨 치트키(6~7줄, 줄바꿈 포함. 아주 현실적인 상황/조언 포함)",
+    "mind": "🧠 나만 몰랐던 내 마음(6~7줄, 줄바꿈 포함. 감정의 근거와 다루는 방법)",
     "highlight": "🎬 미리 보는 하이라이트(6~10문장, 오늘 벌어질 법한 장면 중심)",
     "mood_setting": "🗺️ 시간대별 무드 세팅(아래 포맷을 따라 4파트 + 해시태그 포함, 줄바꿈 유지)
 
@@ -1004,16 +1013,21 @@ ${target_date}
   - 형식: '#' + 공백 없는 한국어(2~9자), 총 3개
   - 중복/유사어 금지, 각각 역할 분리(주의/기회/태도)
   - 예: #말조심이보약 #아이디어폭발 #내적성장데이
-- today_one_liner는 today_keywords 3개를 모두 참고해서, 오늘 하루를 요약하는 시적인 1문장으로 써.
-  - 예시 느낌: "안개 낀 아침을 지나 오후의 무지개를 기다리는 당신에게 건네는 따뜻한 주파수"
-  - 키워드 문자열(#...)을 문장에 그대로 박지 말고, 의미/분위기로 녹여.
-  - 과장/예언/공포 조장 금지. 25~60자.
-- today_luck_chart는 반드시 위 구조를 유지해 출력해(값은 서버 계산을 그대로 반영한다).
+- today_one_liner는 "오늘한줄" 영역이야. 4~5줄로 써(줄바꿈 포함).
+  - 각 줄은 1문장(짧게 12~28자), 총 4~5줄 고정.
+  - today_keywords 3개 분위기를 모두 녹여(해시태그 문자열을 그대로 박지 말고 의미로).
+  - 과장/예언/공포 조장 금지. 현실적인 이미지/상황으로.
+- today_luck_chart는 반드시 위 구조를 유지해 출력해.
+  - ⚠️ 위에 제공된 [오늘의 흐름 표 원본] JSON 값을 그대로 복사해서 모든 필드를 채워(빈 문자열 금지).
+  - stem_hanja/branch_hanja는 한자 1글자, stem_kor/branch_kor는 해당 한자의 한글(예: 丙=병, 申=신)로 정확히.
 - 간지 표기 규칙(신뢰감):
   - 천간+오행: 갑목, 을목, 병화, 정화, 무토, 기토, 경금, 신금, 임수, 계수
   - 지지+오행: 자수, 축토, 인목, 묘목, 진토, 사화, 오화, 미토, 신금, 유금, 술토, 해수
   - 본문에서는 위 형태로 붙여 써(예: "일주의 병화", "일운의 해수").
-- sections 4개는 각각 2~4문장.
+- sections(오늘의 바이브/머니 컨디션/심쿵 시그널/에너지 수치)은 각 항목 4~5줄로 써(줄바꿈 포함).
+  - 각 줄은 1문장, 4~5줄 고정.
+  - 각 섹션마다 '오늘 실제로 일어날 법한 장면' 1개 포함.
+  - 반드시 2개의 간지 단서를 포함: (일간/일지 중 1개) + (일운/월운/연운/대운 중 1개).
   - 길이: 각 섹션 80~160자 내외(기존의 약 2배).
   - 반드시 2개의 간지 단서를 포함: (일간/일지 중 1개) + (일운/월운/연운/대운 중 1개).
   - "오늘 실제로 일어날 법한 장면" 1개를 문장에 끼워 넣어.
@@ -1038,7 +1052,8 @@ ${target_date}
 - 금기: 오늘 하루 "하지 말아야 할 구체 행동"으로.
 - 실천: 5~15분 안에 가능한 행동으로.
 - 귀인: 사람유형 + 등장 장면(짧게)로.
-- premium_algo.cheatkey/mind/highlight는 각각 6~10문장(줄바꿈 포함 가능)으로, 너무 일반론 금지.
+- premium_algo.cheatkey(오늘의 운빨치트키)와 premium_algo.mind(나만 몰랐던 내 마음)는 각각 6~7줄로 써(줄바꿈 포함, 각 줄 1문장).
+- premium_algo.highlight는 6~10문장(줄바꿈 포함 가능)으로, 너무 일반론 금지.
   - 반드시 사주 간지 단서 1개(위 토큰 목록에서) + 별자리 성향 1개를 자연스럽게 포함.
   - '오늘 실제로 일어날 법한 장면' 1개 포함(예: 회의/메신저/결제/이동지연/문서실수/가족부탁/컨디션신호).
   - 친구/지인/썸/애인 같은 특정 관계에 편중되지 않게, 업무/돈/컨디션/가족/기기/이동 등 다양한 상황을 섞어.
@@ -1066,9 +1081,9 @@ target_year: ${target_year ?? "없음"}
     // 🔒 결과보기는 최초 1회만 유료(엽전 1닢)
     // - 동일 프로필/날짜(또는 연도)로 이미 생성된 reading은 무료 재열람
     // - cache miss라도, 기존 row가 있고(result_summary가 비어있는 placeholder)면 같은 id로 재시도(무료)
-    const REQUIRED_COINS = type === "daily" ? 1 : 0;
+    const REQUIRED_COINS = 1;
 
-    // user-context client (RLS 적용) for rpc_get_coin_balance (엽전 잔액 확인)
+    // user-context client (RLS 적용) for rpc_get_coin_balance / rpc_unlock_detail(엽전 차감)
     const url = env("NEXT_PUBLIC_SUPABASE_URL") || env("SUPABASE_URL");
     const anonKey = env("NEXT_PUBLIC_SUPABASE_ANON_KEY") || env("SUPABASE_ANON_KEY");
     if (!url || !anonKey) return NextResponse.json({ error: "SUPABASE_PUBLIC_ENV_MISSING" }, { status: 500 });
@@ -1080,7 +1095,7 @@ target_year: ${target_year ?? "없음"}
     const needsInsert = !existingReadingId;
     // 💰 결제(엽전 차감)는 "새로운 reading을 처음 생성할 때" 1회만
     // - 동일 프로필/날짜(또는 연도)로 이미 생성된 reading이 있으면(캐시 hit / placeholder 포함) 재열람/재시도는 무료
-    const shouldCharge = needsInsert && REQUIRED_COINS > 0;
+    const shouldCharge = needsInsert;
 
     // ✅ 코인 검증은 서버에서 강제(클라 우회/버그 방지)
     let balance_before: number | null = null;
@@ -1148,8 +1163,92 @@ target_year: ${target_year ?? "없음"}
       }
     }
 
-    
-// (참고) coins_spent 컬럼은 사용하지 않음(원장은 coin_ledger / unlocks로 관리)
+    // ✅ 결제(엽전 차감)는 최초 1회만
+    if (shouldCharge) {
+      const payErr = await rpcSpendForReading(supabaseUser, reading_id);
+      if (payErr) {
+        // 결제 실패면 (이번 요청에서 만든 row라면) 정리(목록에 빈 카드 남지 않게)
+        if (needsInsert) {
+          await supabaseAdmin.from("readings").delete().eq("id", reading_id);
+        }
+        const msg = String(payErr.message ?? "");
+
+      // ⚠️ Supabase PostgREST schema cache에 함수가 안 보일 때(보통 EXECUTE 권한 문제)
+      if (isSchemaCacheNotFound(payErr)) {
+        return NextResponse.json(
+          {
+            error: "payment_failed",
+            message: "결과 결제 처리 중 오류가 발생했어.",
+            detail:
+              "rpc_unlock_detail 함수 실행 권한이 없거나 API 스키마 캐시가 갱신되지 않았어. Supabase SQL Editor에서 다음을 실행해줘: GRANT EXECUTE ON FUNCTION public.rpc_unlock_detail(uuid) TO authenticated; 그리고 Settings > API에서 Reload schema 눌러줘.\n원본: " + msg,
+          },
+          { status: 500 }
+        );
+      }
+
+
+      // ✅ 코인 부족이 아닌 다른 오류를 'coin_required'로 뭉개지 않도록 분기
+      const looksLikeCoinShortage = /coin|엽전|insufficient|not enough|balance|잔액/i.test(msg);
+      if (looksLikeCoinShortage) {
+        // 보유 엽전도 같이 내려줘서(클라 RPC 실패해도) UI에서 바로 표시 가능하게
+        let balance_coins = 0;
+        try {
+          const { data: bal } = await supabaseUser.rpc("rpc_get_coin_balance");
+          const n = Number(bal ?? 0);
+          balance_coins = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+        } catch {}
+        return NextResponse.json(
+          {
+            error: "coin_required",
+            message: "결과를 보려면 엽전 1닢이 필요해.",
+            required_coins: 1,
+            balance_coins,
+            detail: msg,
+          },
+          { status: 402 }
+        );
+      }
+
+        return NextResponse.json(
+          {
+            error: "payment_failed",
+            message: "결과 결제 처리 중 오류가 발생했어.",
+            detail: msg,
+          },
+          { status: 500 }
+        );
+      }
+
+      // ✅ "0코인인데 진행됨" 같은 케이스 방지: 실제 차감이 반영됐는지 확인
+      if (balance_before !== null) {
+        try {
+          const { data: bal2, error: bal2Err } = await supabaseUser.rpc("rpc_get_coin_balance");
+          if (!bal2Err) {
+            const n2 = Number(bal2 ?? 0);
+            const balance_after = Number.isFinite(n2) ? Math.max(0, Math.floor(n2)) : null;
+            const expectedMax = Math.max(0, (balance_before ?? 0) - REQUIRED_COINS);
+            if (balance_after !== null && balance_after > expectedMax) {
+              // 차감이 안 됐다면(결제 미적용) reading을 정리
+if (needsInsert) {
+                await supabaseAdmin.from("readings").delete().eq("id", reading_id);
+              }
+              return NextResponse.json(
+                {
+                  error: "coin_spend_not_applied",
+                  message: "엽전 차감이 반영되지 않았어. 결제 로직(rpc_unlock_detail)을 확인해줘.",
+                  detail: `before=${balance_before}, after=${balance_after}`,
+                },
+                { status: 500 }
+              );
+            }
+          }
+        } catch {
+          // balance 재확인 실패는 치명적이지 않게 무시(이미 unlock 성공)
+        }
+      }
+    }
+
+    // (참고) coins_spent 컬럼은 사용하지 않음(원장은 coin_ledger / unlocks로 관리)
 
     const openaiRes = await fetchWithRetry(() =>
       fetch("https://api.openai.com/v1/chat/completions", {
@@ -1164,7 +1263,7 @@ target_year: ${target_year ?? "없음"}
           top_p: 1,
           presence_penalty: 0,
           frequency_penalty: 0,
-          max_tokens: 1600,
+          max_tokens: 3200,
           response_format: { type: "json_object" },
           messages: [
             { role: "system", content: system },
@@ -1214,29 +1313,6 @@ target_year: ${target_year ?? "없음"}
 
     if (updErr) {
       return NextResponse.json({ error: "DB_UPDATE_FAILED", detail: String(updErr.message ?? updErr) }, { status: 500 });
-    }
-
-
-    // ✅ 신규 생성일 때만 결제(엽전 1닢) 처리: coin_ledger에 기록
-    if (shouldCharge && REQUIRED_COINS > 0) {
-      const { error: spendErr } = await supabaseAdmin.from("coin_ledger").insert({
-        user_id,
-        delta: -REQUIRED_COINS,
-        reason: "unlock_detail",
-        ref_table: "readings",
-        ref_id: reading_id,
-      });
-
-      if (spendErr) {
-        // 결제 기록 실패면 이번 요청에서 만든 reading 정리(무료로 결과가 남지 않게)
-        if (needsInsert) {
-          await supabaseAdmin.from("readings").delete().eq("id", reading_id);
-        }
-        return NextResponse.json(
-          { error: "COIN_SPEND_FAILED", detail: String(spendErr.message ?? spendErr) },
-          { status: 500 }
-        );
-      }
     }
 
     return NextResponse.json({
