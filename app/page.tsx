@@ -44,6 +44,7 @@ export type Relationship =
   | "acquaintance"
 
 export interface SajuInput {
+  profileId?: string
   relationship?: Relationship // 다른 input 화면들 빌드 깨짐 방지
   name: string
   birthDate: string
@@ -246,6 +247,8 @@ export default function Home() {
     const { data, error } = await supabase
       .from("profiles")
       .select("id,relationship,name,birth_date,birth_time,gender,calendar_type")
+      .or("delete_yn.is.null,delete_yn.neq.Y")
+      .or("delete_yn.is.null,delete_yn.neq.Y")
       .order("created_at", { ascending: false })
     if (error) throw error
 
@@ -278,6 +281,7 @@ export default function Home() {
     const { data: profilesData, error: profilesError } = await supabase
       .from("profiles")
       .select("id,relationship,name,birth_date,birth_time,gender,calendar_type")
+      .or("delete_yn.is.null,delete_yn.neq.Y")
     if (profilesError) throw profilesError
 
     const profileList: SavedProfile[] =
@@ -379,6 +383,7 @@ export default function Home() {
       birth_time: input.birthTime || null,
       gender: input.gender,
       calendar_type: input.calendarType,
+      delete_yn: "N",
     }
 
     const { data, error } = await supabase
@@ -392,7 +397,17 @@ export default function Home() {
     return data.id as string
   }
 
+  
   // -----------------------------
+  // Profiles: Soft delete (delete_yn='Y')
+  // -----------------------------
+  const softDeleteProfile = async (profileId: string) => {
+    const { error } = await supabase.from("profiles").update({ delete_yn: "Y" }).eq("id", profileId)
+    if (error) throw error
+    await Promise.all([refreshProfiles(), refreshReadings()])
+  }
+
+// -----------------------------
   // Auth handlers
   // -----------------------------
   const handleLogin = () => {}
@@ -450,7 +465,7 @@ export default function Home() {
       if (!uid) throw new Error("로그인이 필요해요")
 
       setSajuInput(input)
-      const profileId = await upsertProfileFromInput(input)
+      const profileId = input.profileId ? input.profileId : await upsertProfileFromInput(input)
 
       const { reading_id, result_summary } = await apiCreateSummary({
         profile_id: profileId,
@@ -523,8 +538,9 @@ export default function Home() {
       if (!uid) throw new Error("로그인이 필요해요")
 
       setSajuInput(input)
-      const profileId = await upsertProfileFromInput(input)
-      const today = new Date().toISOString().slice(0, 10)
+      const profileId = input.profileId ? input.profileId : await upsertProfileFromInput(input)
+      // KST 기준 "오늘" (UTC ISO는 자정 근처에서 날짜가 어긋날 수 있음)
+      const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date())
 
       const { reading_id, result_summary } = await apiCreateSummary({
         profile_id: profileId,
@@ -595,7 +611,7 @@ export default function Home() {
       if (!uid) throw new Error("로그인이 필요해요")
 
       setSajuInput(input)
-      const profileId = await upsertProfileFromInput(input)
+      const profileId = input.profileId ? input.profileId : await upsertProfileFromInput(input)
 
       const { reading_id, result_summary } = await apiCreateSummary({
         profile_id: profileId,

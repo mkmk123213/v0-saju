@@ -14,6 +14,7 @@ interface YearlyFortuneInputScreenProps {
   savedProfiles: SavedProfile[]
   onSubmit: (input: SajuInput) => void
   onBack: () => void
+  onDeleteProfile?: (profileId: string) => Promise<void> | void
 }
 
 const relationshipOptions: { value: Relationship; label: string }[] = [
@@ -26,7 +27,7 @@ const relationshipOptions: { value: Relationship; label: string }[] = [
   { value: "acquaintance", label: "지인" },
 ]
 
-export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBack }: YearlyFortuneInputScreenProps) {
+export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBack, onDeleteProfile }: YearlyFortuneInputScreenProps) {
   const [relationship, setRelationship] = useState<Relationship>("self")
   const [name, setName] = useState("")
   const [birthDate, setBirthDate] = useState("")
@@ -34,6 +35,8 @@ export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBa
   const [gender, setGender] = useState<"male" | "female">("male")
   const [calendarType, setCalendarType] = useState<"solar" | "lunar">("solar")
   const [selectedProfileId, setSelectedProfileId] = useState<string>("")
+
+  const isExistingSelected = selectedProfileId !== "" && selectedProfileId !== "new"
 
   const relationshipLabel = (value?: Relationship) =>
     relationshipOptions.find((r) => r.value === (value ?? "self"))?.label ?? "본인"
@@ -65,6 +68,7 @@ export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBa
   const handleSubmit = () => {
     if (!name || !birthDate) return
     onSubmit({
+      profileId: isExistingSelected ? selectedProfileId : undefined,
       relationship,
       name,
       birthDate,
@@ -123,7 +127,25 @@ export default function YearlyFortuneInputScreen({ savedProfiles, onSubmit, onBa
                     ))}
                   </SelectContent>
                 </Select>
-              </CardContent>
+              
+            {isExistingSelected && onDeleteProfile && (
+              <div className="mt-3">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="w-full"
+                  onClick={async () => {
+                    if (!confirm("이 프로필을 삭제할까? (삭제 후에는 목록에 보이지 않아)")) return
+                    await onDeleteProfile(selectedProfileId)
+                    handleProfileSelect("new")
+                    setSelectedProfileId("new")
+                  }}
+                >
+                  선택한 프로필 삭제
+                </Button>
+              </div>
+            )}
+</CardContent>
             </Card>
           )}
 
